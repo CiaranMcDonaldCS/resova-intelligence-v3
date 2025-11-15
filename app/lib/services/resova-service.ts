@@ -53,6 +53,10 @@ export class ResovaService {
       // Parse date range for API calls
       const resovaDateRange = ResovaReportingService.parseDateRange(dateRange);
 
+      // Calculate previous period for comparison
+      const previousPeriodRange = ResovaReportingService.calculatePreviousPeriod(resovaDateRange);
+      logger.info(`Previous period range calculated: ${JSON.stringify(previousPeriodRange)}`);
+
       // Calculate explicit start/end dates for availability calendar
       let availabilityStartDate: string;
       let availabilityEndDate: string;
@@ -91,7 +95,7 @@ export class ResovaService {
         availabilityEndDate = today;
       }
 
-      // Fetch data from all Reporting APIs in parallel
+      // Fetch data from all Reporting APIs in parallel (current + previous period)
       const [
         transactionsResponse,
         itemizedRevenue,
@@ -100,8 +104,13 @@ export class ResovaService {
         todaysBookingsRaw,
         futureBookingsRaw,
         inventoryItems,
-        availabilityInstances
+        availabilityInstances,
+        // Previous period data for accurate comparisons
+        previousTransactionsResponse,
+        previousAllBookings,
+        previousAllPayments
       ] = await Promise.all([
+        // CURRENT PERIOD DATA
         this.reportingService.getTransactions({
           limit: 100,
           date_field: 'created_at',
@@ -143,21 +152,42 @@ export class ResovaService {
         this.reportingService.getAvailabilityCalendar({
           start_date: availabilityStartDate,
           end_date: availabilityEndDate
+        }),
+        // PREVIOUS PERIOD DATA (for accurate trend comparisons)
+        this.reportingService.getTransactions({
+          limit: 100,
+          date_field: 'created_at',
+          range: previousPeriodRange.range,
+          start_date: previousPeriodRange.start_date,
+          end_date: previousPeriodRange.end_date
+        }),
+        this.reportingService.getAllBookings({
+          type: 'all',
+          date_range: previousPeriodRange
+        }),
+        this.reportingService.getAllPayments({
+          type: 'all',
+          date_range: previousPeriodRange
         })
       ]);
 
       const todaysBookings = todaysBookingsRaw;
       const futureBookings = futureBookingsRaw;
 
-      logger.info(`Fetched ${transactionsResponse.data.length} transactions, ${itemizedRevenue.length} revenue items, ${allBookings.length} bookings, ${todaysBookings.length} today's bookings, ${futureBookings.length} future bookings, ${allPayments.length} payments, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances`);
+      logger.info(`Fetched CURRENT PERIOD: ${transactionsResponse.data.length} transactions, ${itemizedRevenue.length} revenue items, ${allBookings.length} bookings, ${todaysBookings.length} today's bookings, ${futureBookings.length} future bookings, ${allPayments.length} payments, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances`);
+      logger.info(`Fetched PREVIOUS PERIOD: ${previousTransactionsResponse.data.length} transactions, ${previousAllBookings.length} bookings, ${previousAllPayments.length} payments`);
 
-      // Transform Resova data to our analytics format
+      // Transform Resova data to our analytics format (with previous period for accurate comparisons)
       const analyticsData = ResovaDataTransformer.transform(
         transactionsResponse.data,
         itemizedRevenue,
         allBookings,
         allPayments,
-        todaysBookings
+        todaysBookings,
+        // Previous period data for accurate trend calculations
+        previousTransactionsResponse.data,
+        previousAllBookings,
+        previousAllPayments
       );
 
       // Optionally fetch business insights from Core APIs

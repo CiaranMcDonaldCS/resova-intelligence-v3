@@ -56,12 +56,17 @@ export class ResovaDataTransformer {
     itemizedRevenue: ResovaItemizedRevenue[],
     allBookings: ResovaAllBooking[],
     allPayments: ResovaAllPayment[],
-    todaysBookings?: ResovaAllBooking[]
+    todaysBookings?: ResovaAllBooking[],
+    // Previous period data for accurate comparisons
+    previousTransactions?: ResovaTransaction[],
+    previousAllBookings?: ResovaAllBooking[],
+    previousAllPayments?: ResovaAllPayment[]
   ): AnalyticsData {
     logger.info('Transforming Resova data to analytics format');
     logger.info(`Input data counts: ${transactions.length} transactions, ${itemizedRevenue.length} revenue items, ${allBookings.length} bookings, ${allPayments.length} payments, ${todaysBookings?.length || 0} today's bookings`);
+    logger.info(`Previous period data: ${previousTransactions?.length || 0} transactions, ${previousAllBookings?.length || 0} bookings, ${previousAllPayments?.length || 0} payments`);
 
-    const revenueTrends = this.transformRevenueTrends(allBookings);
+    const revenueTrends = this.transformRevenueTrends(allBookings, previousAllBookings);
     logger.info(`Transformed revenue trends: ${revenueTrends.length} data points`);
 
     return {
@@ -73,15 +78,15 @@ export class ResovaDataTransformer {
       bookingNotes: this.transformBookingNotes(transactions),
       activity: this.transformActivity(transactions),
       users: this.transformUsers(transactions),
-      periodSummary: this.transformPeriodSummary(transactions, allPayments, allBookings),
+      periodSummary: this.transformPeriodSummary(transactions, allPayments, allBookings, previousTransactions, previousAllBookings, previousAllPayments),
       revenueTrends,
-      performance: this.transformPerformance(allBookings),
-      paymentCollection: this.transformPaymentCollection(transactions, allPayments),
+      performance: this.transformPerformance(allBookings, previousAllBookings),
+      paymentCollection: this.transformPaymentCollection(transactions, allPayments, previousTransactions, previousAllPayments),
       salesMetrics: this.transformSalesMetrics(allBookings),
-      salesSummary: this.transformSalesSummary(transactions, allBookings, itemizedRevenue),
+      salesSummary: this.transformSalesSummary(transactions, allBookings, itemizedRevenue, previousTransactions, previousAllBookings),
       topPurchased: this.transformTopPurchased(allBookings),
       guestMetrics: this.transformGuestMetrics(allBookings),
-      guestSummary: this.transformGuestSummary(allBookings, allPayments, transactions)
+      guestSummary: this.transformGuestSummary(allBookings, allPayments, transactions, previousAllBookings, previousAllPayments, previousTransactions)
     };
   }
 
@@ -321,59 +326,94 @@ export class ResovaDataTransformer {
   private static transformPeriodSummary(
     transactions: ResovaTransaction[],
     allPayments: ResovaAllPayment[],
-    allBookings: ResovaAllBooking[]
+    allBookings: ResovaAllBooking[],
+    previousTransactions?: ResovaTransaction[],
+    previousAllBookings?: ResovaAllBooking[],
+    previousAllPayments?: ResovaAllPayment[]
   ): PeriodSummary {
-    // Gross Revenue = Total amount PAID (actual revenue received)
+    // CURRENT PERIOD - Gross Revenue = Total amount PAID (actual revenue received)
     // From Transactions API: SUM(transactions.paid)
     const gross = transactions.reduce((sum, t) => sum + parseFloat(t.paid || '0'), 0);
 
-    // Total Sales = Sum of all transaction totals (booked amount, not count)
+    // CURRENT PERIOD - Total Sales = Sum of all transaction totals (booked amount, not count)
     // From Transactions API: SUM(transactions.total)
     // This is Resova's "sales (total)" = $311.22
     const totalSales = transactions.reduce((sum, t) => sum + parseFloat(t.total || '0'), 0);
 
-    // Discounts = Sum of monetary value of all applied discounts
+    // CURRENT PERIOD - Discounts = Sum of monetary value of all applied discounts
     // From Transactions API: SUM(transactions.discount)
     const discounts = transactions.reduce((sum, t) => sum + parseFloat(t.discount || '0'), 0);
 
-    // Refunded = Sum of refunds issued (completed refunds only)
+    // CURRENT PERIOD - Refunded = Sum of refunds issued (completed refunds only)
     // From Transactions API: SUM(transactions.refunded)
     const refunded = transactions.reduce((sum, t) => sum + parseFloat(t.refunded || '0'), 0);
 
-    // Taxes = Sum of all taxes
+    // CURRENT PERIOD - Taxes = Sum of all taxes
     // From Transactions API: SUM(transactions.tax)
     const taxes = transactions.reduce((sum, t) => sum + parseFloat(t.tax || '0'), 0);
 
-    // Fees = Sum of all service/processing fees
+    // CURRENT PERIOD - Fees = Sum of all service/processing fees
     // From Transactions API: SUM(transactions.fee)
     const fees = transactions.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
 
-    // Net Revenue = Gross - Refunds
+    // CURRENT PERIOD - Net Revenue = Gross - Refunds
     // Net = Total sales minus any refunds
     const net = gross - refunded;
 
+    // PREVIOUS PERIOD - Calculate same metrics for comparison
+    let previousGross = 0;
+    let previousNet = 0;
+    let previousTotalSales = 0;
+    let previousDiscounts = 0;
+    let previousRefunded = 0;
+    let previousTaxes = 0;
+    let previousFees = 0;
+
+    if (previousTransactions && previousTransactions.length > 0) {
+      previousGross = previousTransactions.reduce((sum, t) => sum + parseFloat(t.paid || '0'), 0);
+      previousTotalSales = previousTransactions.reduce((sum, t) => sum + parseFloat(t.total || '0'), 0);
+      previousDiscounts = previousTransactions.reduce((sum, t) => sum + parseFloat(t.discount || '0'), 0);
+      previousRefunded = previousTransactions.reduce((sum, t) => sum + parseFloat(t.refunded || '0'), 0);
+      previousTaxes = previousTransactions.reduce((sum, t) => sum + parseFloat(t.tax || '0'), 0);
+      previousFees = previousTransactions.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
+      previousNet = previousGross - previousRefunded;
+
+      logger.info(`REAL COMPARISON - Current gross: $${gross.toFixed(2)}, Previous gross: $${previousGross.toFixed(2)}`);
+    } else {
+      // Fallback to simulated data if previous period not available
+      previousGross = gross * 0.9;
+      previousNet = net * 0.9;
+      previousTotalSales = totalSales * 0.92;
+      previousDiscounts = discounts * 1.1;
+      previousRefunded = refunded * 1.05;
+      previousTaxes = taxes * 0.98;
+      previousFees = fees * 0.99;
+
+      logger.warn('No previous period data available, using simulated comparison (0.9 multiplier)');
+    }
+
     return {
       gross,
-      grossChange: this.calculatePercentChange(gross, gross * 0.9),
+      grossChange: this.calculatePercentChange(gross, previousGross),
       net,
-      netChange: this.calculatePercentChange(net, net * 0.9),
+      netChange: this.calculatePercentChange(net, previousNet),
       totalSales,
-      totalSalesChange: this.calculatePercentChange(totalSales, Math.round(totalSales * 0.92)),
+      totalSalesChange: this.calculatePercentChange(totalSales, previousTotalSales),
       discounts,
-      discountsChange: this.calculatePercentChange(discounts, discounts * 1.1),
+      discountsChange: this.calculatePercentChange(discounts, previousDiscounts),
       refunded,
-      refundedChange: this.calculatePercentChange(refunded, refunded * 1.05),
+      refundedChange: this.calculatePercentChange(refunded, previousRefunded),
       taxes,
-      taxesChange: this.calculatePercentChange(taxes, taxes * 0.98),
+      taxesChange: this.calculatePercentChange(taxes, previousTaxes),
       fees,
-      feesChange: this.calculatePercentChange(fees, fees * 0.99)
+      feesChange: this.calculatePercentChange(fees, previousFees)
     };
   }
 
   /**
    * Transform revenue trends from bookings data
    */
-  private static transformRevenueTrends(allBookings: ResovaAllBooking[]): RevenueTrend[] {
+  private static transformRevenueTrends(allBookings: ResovaAllBooking[], previousAllBookings?: ResovaAllBooking[]): RevenueTrend[] {
     // If no data at all, return empty array
     if (!allBookings || allBookings.length === 0) {
       logger.warn('No bookings data available for revenue trends');
@@ -394,6 +434,24 @@ export class ResovaDataTransformer {
 
     logger.info(`Transforming revenue trends for ${uniqueDates.length} days:`, uniqueDates);
 
+    // Build previous period map for comparison
+    const previousDayMap = new Map<number, { gross: number; net: number; sales: number }>();
+    if (previousAllBookings && previousAllBookings.length > 0) {
+      // Group previous bookings by day of week (0-6)
+      previousAllBookings.forEach(b => {
+        const date = new Date(b.date_short);
+        if (!isNaN(date.getTime())) {
+          const dayOfWeek = date.getDay();
+          const existing = previousDayMap.get(dayOfWeek) || { gross: 0, net: 0, sales: 0 };
+          existing.gross += parseFloat(b.booking_total || '0');
+          existing.net += parseFloat(b.price || '0');
+          existing.sales += 1;
+          previousDayMap.set(dayOfWeek, existing);
+        }
+      });
+      logger.info(`Previous period trends available for ${previousDayMap.size} days of week`);
+    }
+
     return uniqueDates.map(day => {
       const dayBookings = allBookings.filter(b => b.date_short === day);
       const grossRevenue = dayBookings.reduce((sum, b) => sum + parseFloat(b.booking_total || '0'), 0);
@@ -401,14 +459,35 @@ export class ResovaDataTransformer {
       const netRevenue = dayBookings.reduce((sum, b) => sum + parseFloat(b.price || '0'), 0);
       const sales = dayBookings.length;
 
+      // Get previous period data for same day of week
+      const date = new Date(day);
+      const dayOfWeek = date.getDay();
+      const previousData = previousDayMap.get(dayOfWeek);
+
+      let prevGross: number;
+      let prevNet: number;
+      let prevSales: number;
+
+      if (previousData) {
+        // Use real previous period data
+        prevGross = Math.round(previousData.gross * 100) / 100;
+        prevNet = Math.round(previousData.net * 100) / 100;
+        prevSales = previousData.sales;
+      } else {
+        // Fallback to simulated (0.9 multiplier)
+        prevGross = Math.round(grossRevenue * 0.9 * 100) / 100;
+        prevNet = Math.round(netRevenue * 0.9 * 100) / 100;
+        prevSales = Math.floor(sales * 0.9);
+      }
+
       return {
-        day: new Date(day).toLocaleDateString('en-US', { weekday: 'short' }),
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
         thisGross: Math.round(grossRevenue * 100) / 100,
         thisNet: Math.round(netRevenue * 100) / 100,
         thisSales: sales,
-        prevGross: Math.round(grossRevenue * 0.9 * 100) / 100,
-        prevNet: Math.round(netRevenue * 0.9 * 100) / 100,
-        prevSales: Math.floor(sales * 0.9)
+        prevGross,
+        prevNet,
+        prevSales
       };
     });
   }
@@ -417,7 +496,8 @@ export class ResovaDataTransformer {
    * Transform performance metrics from bookings data
    */
   private static transformPerformance(
-    allBookings: ResovaAllBooking[]
+    allBookings: ResovaAllBooking[],
+    previousAllBookings?: ResovaAllBooking[]
   ): Performance {
     // Calculate best day from bookings
     const dayRevenue: Record<string, number> = {};

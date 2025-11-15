@@ -1069,4 +1069,76 @@ export class ResovaReportingService {
     // Default to last 30 days
     return { range: '30' };
   }
+
+  /**
+   * Calculate previous period date range for comparison
+   * Returns the equivalent previous period based on the current range
+   */
+  static calculatePreviousPeriod(currentRange: ResovaDateRange): ResovaDateRange {
+    // If using a named range, map to equivalent previous period
+    const previousRangeMap: Record<string, ResovaDateRange['range']> = {
+      'today': 'yesterday',
+      'yesterday': undefined, // No previous for yesterday
+      'current_week': 'previous_week',
+      'previous_week': undefined, // Would need custom calculation
+      'current_month': 'previous_month',
+      'previous_month': undefined, // Would need custom calculation
+      'current_quarter': 'previous_quarter',
+      'previous_quarter': undefined, // Would need custom calculation
+    };
+
+    if (currentRange.range && previousRangeMap[currentRange.range]) {
+      return { range: previousRangeMap[currentRange.range] };
+    }
+
+    // For explicit date ranges or numeric ranges, calculate previous period
+    if (currentRange.start_date && currentRange.end_date) {
+      const startDate = new Date(currentRange.start_date);
+      const endDate = new Date(currentRange.end_date);
+      const durationDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Calculate previous period dates
+      const prevEndDate = new Date(startDate);
+      prevEndDate.setDate(prevEndDate.getDate() - 1);
+      const prevStartDate = new Date(prevEndDate);
+      prevStartDate.setDate(prevStartDate.getDate() - durationDays + 1);
+
+      return {
+        start_date: this.formatDate(prevStartDate),
+        end_date: this.formatDate(prevEndDate)
+      };
+    }
+
+    // For numeric ranges (7, 30, 90), use same range
+    // This will get data from the period before the current period
+    // e.g., if current is "30" (last 30 days), previous will also be "30" (the 30 days before that)
+    if (currentRange.range) {
+      const days = parseInt(currentRange.range, 10);
+      if (!isNaN(days)) {
+        const today = new Date();
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() - days);
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - days);
+
+        return {
+          start_date: this.formatDate(startDate),
+          end_date: this.formatDate(endDate)
+        };
+      }
+    }
+
+    // Fallback: return same range (will result in 0% change)
+    return currentRange;
+  }
+
+  /**
+   * Format date as YYYY-MM-DD
+   */
+  private static formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 }
