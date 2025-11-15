@@ -86,6 +86,46 @@ Centralized configuration with:
 - Security settings
 - Monitoring integration
 
+### 6. Resova Reporting API Integration ✅
+**Complete integration of all 7 Resova Reporting APIs**
+
+#### New API Integrations (V3)
+1. **Transactions Reporting API** (`app/api/reporting/transactions/route.ts`)
+   - GET endpoint with query parameter support
+   - Retrieves detailed transaction information
+   - Supports 12 query parameters (page, limit, skip, date ranges, etc.)
+   - Full transaction summary with bookings, customers, and payments
+
+2. **Itemized Revenue Reporting API** (`app/api/reporting/itemized-revenue/route.ts`)
+   - POST endpoint with date_range payload
+   - Detailed revenue breakdown by product/service
+   - Pricing details including base price, discounts, taxes
+   - Net revenue calculations
+
+3. **All Bookings Reporting API** (`app/api/reporting/bookings/route.ts`)
+   - POST endpoint with date_range payload
+   - Comprehensive booking information
+   - Customer and service details
+   - Participant information and booking metadata
+
+4. **All Payments Reporting API** (`app/api/reporting/payments/route.ts`)
+   - POST endpoint with date_range payload
+   - Payment details (amount, status, type, method)
+   - Transaction processing information
+   - Refund and adjustment tracking
+
+#### Existing API Integrations
+5. **Guests Reporting API** - Already integrated
+6. **Gift Vouchers Reporting API** - Already integrated
+7. **Extras Reporting API** - Already integrated
+
+**API Architecture**:
+- Next.js 16 App Router API routes
+- Proper authentication with X-API-KEY header
+- Comprehensive error handling (401, 400, 500)
+- TypeScript type safety
+- Consistent request/response patterns
+
 ## Technical Achievements
 
 ### Design System Consistency
@@ -116,6 +156,22 @@ Centralized configuration with:
 
 ```
 app/
+├── api/
+│   └── reporting/
+│       ├── transactions/
+│       │   └── route.ts           (New - Transactions API)
+│       ├── itemized-revenue/
+│       │   └── route.ts           (New - Itemized Revenue API)
+│       ├── bookings/
+│       │   └── route.ts           (New - All Bookings API)
+│       ├── payments/
+│       │   └── route.ts           (New - All Payments API)
+│       ├── guests/
+│       │   └── route.ts           (Existing - Guests API)
+│       ├── gift-vouchers/
+│       │   └── route.ts           (Existing - Gift Vouchers API)
+│       └── extras/
+│           └── route.ts           (Existing - Extras API)
 ├── components/
 │   ├── OwnersBox.tsx              (New - Executive summary)
 │   ├── AttentionRequired.tsx      (New - Critical alerts)
@@ -150,6 +206,7 @@ app/
 1. **dc15582**: Update MarkdownRenderer and Dashboard with V3 design tokens
 2. **98f146c**: Add Owner's Box executive summary component to V3
 3. **0a48a15**: Add Attention Required alerts component to V3
+4. **[Pending]**: Complete Resova Reporting API integration (4 new APIs)
 
 ## Next Steps (Future Enhancements)
 
