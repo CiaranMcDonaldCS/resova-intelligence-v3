@@ -17,13 +17,10 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ChartGrid } from './DynamicChart';
 import { mapChartSpecToData } from '@/app/lib/utils/chart-data-mapper';
-import PersonalizableFocusCards from './PersonalizableFocusCards';
-import ProactiveInsights from './ProactiveInsights';
-import WhatIfScenario from './WhatIfScenario';
 import DeepDiveModal from './DeepDiveModal';
 import OwnersBox from './OwnersBox';
 import AttentionRequired from './AttentionRequired';
-import { Calculator, Lightbulb, Zap, ChevronRight } from 'lucide-react';
+import QuickInsights from './QuickInsights';
 
 // Focus areas matching the design
 const FOCUS_AREAS = [
@@ -158,175 +155,73 @@ export default function DarkAiAssistant() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#121212] text-white">
-      <div className="max-w-6xl mx-auto w-full">
-      {/* Header */}
-      <header className="bg-transparent pt-4 px-4 sm:px-6 md:px-8 pb-2 flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm bg-black/30">
-        <img
-          alt="Resova AI logo"
-          className="h-12"
-          src="/logo.png"
+    <div className="min-h-screen flex flex-col bg-[#121212] text-white pb-24">
+      {/* Main Content - Centered Layout */}
+      <main className="flex-grow px-4 py-6 overflow-y-auto">
+        <div className="max-w-4xl mx-auto space-y-4">
+
+        {/* Welcome Message */}
+        {conversationHistory.length === 0 && !chatLoading && (
+          <div className="text-center py-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
+              A Modernized Resova Dashboard for Instant Clarity
+            </h1>
+            <p className="text-[#A0A0A0] text-sm">
+              Your business insights, powered by AI
+            </p>
+          </div>
+        )}
+
+        {/* Attention Required */}
+        <AttentionRequired
+          analyticsData={analyticsData}
+          onItemClick={(item) => {
+            setDeepDiveContent({
+              type: 'attention',
+              title: item.title,
+              description: item.description,
+              category: item.category,
+              priority: item.priority,
+              relatedQuestions: [
+                `How can I ${item.action?.toLowerCase()}?`,
+                `What caused ${item.title.toLowerCase()}?`,
+                `Show me more details about ${item.category}`
+              ]
+            });
+            setShowDeepDive(true);
+          }}
         />
-        <div className="flex items-center space-x-2">
-          <button className="text-gray-400 hover:text-white p-2 transition-colors">
-            <SettingsIcon sx={{ fontSize: 20 }} />
-          </button>
-          <button
-            onClick={logout}
-            className="text-gray-400 hover:text-white p-2 transition-colors"
-          >
-            <LogoutIcon sx={{ fontSize: 20 }} />
-          </button>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="flex-grow p-4 sm:p-6 md:p-8 space-y-6 pb-28 overflow-y-auto">
-        {/* Dashboard Overview Section */}
-        <div className="space-y-4">
-          {/* Owner's Box - Executive Summary */}
-          <OwnersBox analyticsData={analyticsData} />
+        {/* Owner's Box */}
+        <OwnersBox analyticsData={analyticsData} />
 
-          {/* Attention Required - Critical Action Items */}
-          <AttentionRequired
-            analyticsData={analyticsData}
-            onItemClick={(item) => {
-              setDeepDiveContent({
-                type: 'attention',
-                title: item.title,
-                description: item.description,
-                category: item.category,
-                priority: item.priority,
-                relatedQuestions: [
-                  `How can I ${item.action?.toLowerCase()}?`,
-                  `What caused ${item.title.toLowerCase()}?`,
-                  `Show me more details about ${item.category}`
-                ]
-              });
-              setShowDeepDive(true);
-            }}
-          />
-
-          {/* Critical Alerts - Only shown when there are high-priority insights */}
-          <ProactiveInsights
-            analyticsData={analyticsData}
-            onInsightClick={(insight) => {
-              setDeepDiveContent({
-                type: 'insight',
-                title: insight.title,
-                description: insight.message,
-                category: insight.type,
-                priority: insight.priority,
-                relatedQuestions: [
-                  `How can I ${insight.action?.toLowerCase()}?`,
-                  `What caused ${insight.title.toLowerCase()}?`,
-                  `Show me detailed analysis of ${insight.metric || 'this metric'}`
-                ]
-              });
-              setShowDeepDive(true);
-            }}
-          />
-
-          {/* Quick Actions Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-400" />
-                Quick Actions
-              </h2>
-            </div>
-            <PersonalizableFocusCards onCardClick={handleSend} />
+        {/* Quick Insights - Import the new component */}
+        {conversationHistory.length === 0 && !chatLoading && (
+          <div>
+            <h2 className="text-base font-semibold text-white mb-3">Quick Insights</h2>
+            <QuickInsights />
           </div>
+        )}
 
-          {/* Advanced Tools Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Calculator className="w-5 h-5 text-purple-400" />
-                Advanced Tools
-              </h2>
-            </div>
-
-            {/* What-If Scenario Planning */}
-            <div className="bg-[#1E1E1E] border border-[#383838] rounded-xl overflow-hidden">
-              <button
-                onClick={() => setShowWhatIf(!showWhatIf)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#2E2E2E] transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-500/10">
-                    <Calculator className="w-4 h-4 text-purple-400" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-semibold text-white">What-If Scenario Planning</p>
-                    <p className="text-xs text-[#A0A0A0]">Model business decisions and forecast outcomes</p>
-                  </div>
-                </div>
-                <ChevronRight className={`w-4 h-4 text-[#A0A0A0] transition-transform ${showWhatIf ? 'rotate-90' : ''}`} />
-              </button>
-
-              {showWhatIf && (
-                <div className="border-t border-[#383838]">
-                  <WhatIfScenario
-                    analyticsData={analyticsData}
-                    onRunScenario={(scenario, results) => {
-                      handleSend(`I just ran a ${scenario} scenario. ${results.length > 0 ? 'The results show ' + results.map(r => r.metric + ': ' + r.change).join(', ') + '.' : ''} What are the key risks and opportunities I should consider?`);
-                      setShowWhatIf(false);
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Welcome Message or Conversation */}
-        {conversationHistory.length === 0 && !chatLoading ? (
-          <div className="space-y-6">
-            {/* Welcome Card */}
-            <div className="bg-gradient-to-br from-[#2E2D72]/10 via-[#5E5CE6]/10 to-[#2E2D72]/10 border border-[#5E5CE6]/20 p-8 rounded-xl shadow-lg">
-              <div className="text-center max-w-2xl mx-auto">
-                <h1 className="text-2xl font-bold text-white mb-3 tracking-tight">
-                  What would you like to know about your business, Alex?
-                </h1>
-                <p className="text-base text-[#B0B0B0] leading-relaxed">
-                  Ask me questions about your revenue, bookings, customers, inventory, gift vouchers, or operations. I'll provide insights based on your real-time data.
-                </p>
-              </div>
-            </div>
-
-            {/* Suggested Questions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-              {SUGGESTED_QUESTIONS.map((question, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSend(question)}
-                  className="text-left text-sm bg-[#1E1E1E] p-3 rounded-lg border border-[#383838] hover:bg-white/5 transition-colors"
-                >
-                  "{question}"
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Conversation Messages */
+        {/* Conversation Messages */}
+        {conversationHistory.length > 0 && (
           <div className="space-y-6">
             {conversationHistory.map((msg: any, idx: number) => (
               <div key={idx}>
                 {msg.role === 'user' ? (
                   /* User Message */
-                  <div className="flex justify-end pt-4">
-                    <div className="bg-[#5E5CE6] text-white rounded-t-2xl rounded-bl-2xl px-4 py-3 max-w-[85%] md:max-w-[70%]">
+                  <div className="flex justify-end">
+                    <div className="bg-[#3D8DDA] text-white rounded-lg px-4 py-3 max-w-[85%]">
                       <p>{msg.content}</p>
                     </div>
                   </div>
                 ) : (
                   /* AI Assistant Message */
-                  <div className="space-y-6">
-                    <div className="flex items-start space-x-3 md:space-x-4">
-                      <div className="bg-gradient-to-br from-[#2E2D72] to-[#5E5CE6] rounded-full p-2 mt-1 flex-shrink-0">
-                        <AutoAwesomeIcon sx={{ fontSize: 20, color: 'white' }} />
-                      </div>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <span className="material-symbols-outlined text-[#3D8DDA] text-2xl mt-1">
+                        smart_toy
+                      </span>
                       <div className="flex-1 w-full space-y-4">
                         {/* Message Content */}
                         <div className="prose prose-invert prose-sm max-w-none">
@@ -349,7 +244,7 @@ export default function DarkAiAssistant() {
                                 <button
                                   key={qIdx}
                                   onClick={() => handleSend(question)}
-                                  className="text-xs text-white bg-white/10 px-3 py-1.5 rounded-full border border-transparent hover:bg-white/20 transition-colors"
+                                  className="text-xs text-white bg-[#1D212B] border border-[#383838] px-3 py-1.5 rounded-lg hover:border-[#3D8DDA] transition-colors"
                                 >
                                   {question}
                                 </button>
@@ -367,13 +262,13 @@ export default function DarkAiAssistant() {
             {/* Loading State */}
             {chatLoading && (
               <div className="flex items-start space-x-3">
-                <div className="bg-gradient-to-br from-[#2E2D72] to-[#5E5CE6] rounded-full p-2 mt-1 flex-shrink-0">
-                  <AutoAwesomeIcon sx={{ fontSize: 20, color: 'white' }} />
-                </div>
+                <span className="material-symbols-outlined text-[#3D8DDA] text-2xl mt-1">
+                  smart_toy
+                </span>
                 <div className="flex space-x-2 mt-3">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-[#A0A0A0] rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-[#A0A0A0] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-[#A0A0A0] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             )}
@@ -381,33 +276,33 @@ export default function DarkAiAssistant() {
             <div ref={messagesEndRef} />
           </div>
         )}
+        </div>
       </main>
-      </div>
 
       {/* Fixed Bottom Input */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-black/50 backdrop-blur-lg border-t border-[#383838]">
-        <div className="max-w-6xl mx-auto p-4 sm:px-6 md:px-8">
-        <div className="relative">
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={chatLoading}
-            className="w-full bg-[#1E1E1E] text-white border-2 border-[#383838] rounded-xl pl-5 pr-14 py-4 text-base focus:ring-[#5E5CE6] focus:border-[#5E5CE6] placeholder:text-[#6B6B6B] outline-none"
-            placeholder="Ask Resova AI..."
-            type="text"
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={chatLoading || !input.trim()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#5E5CE6] text-white rounded-lg w-10 h-10 flex items-center justify-center hover:bg-[#3333A3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
-            </svg>
-          </button>
-        </div>
+      <footer className="fixed bottom-0 left-0 right-0 bg-black/50 backdrop-blur-lg border-t border-[#383838] z-50">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="relative">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={chatLoading}
+              className="w-full bg-[#1D212B] text-white border border-[#383838] rounded-lg pl-4 pr-12 py-3 text-sm focus:ring-1 focus:ring-[#3D8DDA] focus:border-[#3D8DDA] placeholder:text-[#6B6B6B] outline-none"
+              placeholder="Ask a question about your business..."
+              type="text"
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={chatLoading || !input.trim()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#3D8DDA] text-white rounded-md p-2 flex items-center justify-center hover:bg-[#2c79c1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="material-symbols-outlined text-lg">
+                send
+              </span>
+            </button>
+          </div>
         </div>
       </footer>
 

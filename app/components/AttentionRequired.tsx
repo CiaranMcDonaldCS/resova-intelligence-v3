@@ -142,86 +142,82 @@ export default function AttentionRequired({ analyticsData, onItemClick }: Attent
     switch (type) {
       case 'critical':
         return {
-          border: 'border-[var(--danger)]',
-          bg: 'bg-[var(--danger)]/10',
-          icon: 'text-[var(--danger)]',
-          badge: 'bg-[var(--danger)] text-white',
+          border: 'border-[#EF4444]',
+          icon: 'text-[#EF4444]',
         };
       case 'warning':
         return {
-          border: 'border-[var(--warning)]',
-          bg: 'bg-[var(--warning)]/10',
-          icon: 'text-[var(--warning)]',
-          badge: 'bg-[var(--warning)] text-white',
+          border: 'border-[#F59E0B]',
+          icon: 'text-[#F59E0B]',
         };
       case 'info':
         return {
-          border: 'border-[var(--info)]',
-          bg: 'bg-[var(--info)]/10',
-          icon: 'text-[var(--info)]',
-          badge: 'bg-[var(--info)] text-white',
+          border: 'border-[#3D8DDA]',
+          icon: 'text-[#3D8DDA]',
         };
     }
   };
 
   return (
-    <div className="bg-[var(--background-secondary)] border border-[var(--border-primary)] rounded-xl p-4">
+    <div className="bg-[#1D212B] border border-[#383838] rounded-lg p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-[var(--danger)]" />
-          <h2 className="text-lg font-bold text-white tracking-tight">
+          <span className="material-symbols-outlined text-[#F59E0B] text-xl">
+            warning
+          </span>
+          <h2 className="text-base font-semibold text-white">
             Attention Required
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--text-secondary)]">
+          <span className="text-xs text-[#A0A0A0]">
             {sortedItems.length} {sortedItems.length === 1 ? 'item' : 'items'}
           </span>
         </div>
       </div>
 
       {/* Attention Items */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {sortedItems.map((item) => {
           const colors = getTypeColor(item.type);
           return (
             <button
               key={item.id}
               onClick={() => onItemClick?.(item)}
-              className={`w-full text-left bg-[var(--background-primary)] border ${colors.border} rounded-lg p-4 hover:${colors.bg} transition-all duration-200 group`}
+              className={`w-full text-left bg-[#121212] border ${colors.border} rounded-lg p-3 hover:border-[#3D8DDA] transition-all duration-200 group`}
             >
               <div className="flex items-start gap-3">
                 {/* Icon */}
-                <div className={`p-2 rounded-lg ${colors.bg} ${colors.icon} flex-shrink-0`}>
+                <div className={`flex-shrink-0 ${colors.icon}`}>
                   {getIcon(item.category)}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-white">
+                    <h3 className="text-sm font-medium text-white">
                       {item.title}
                     </h3>
                     {item.priority === 'high' && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${colors.badge} flex-shrink-0`}>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#EF4444] text-white flex-shrink-0">
                         Urgent
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[var(--text-secondary)] mb-2">
+                  <p className="text-xs text-[#A0A0A0] mb-2">
                     {item.description}
                   </p>
 
                   {/* Metric & Action */}
                   <div className="flex items-center justify-between">
                     {item.metric && (
-                      <span className="text-xs font-semibold text-white">
+                      <span className="text-xs font-medium text-white">
                         {item.metric}
                       </span>
                     )}
                     {item.action && (
-                      <div className="flex items-center gap-1 text-xs text-[var(--brand-primary)] group-hover:text-[var(--brand-primary-hover)]">
+                      <div className="flex items-center gap-1 text-xs text-[#3D8DDA] group-hover:text-[#2c79c1]">
                         <span>{item.action}</span>
                         <ChevronRight className="w-3 h-3" />
                       </div>
@@ -235,7 +231,7 @@ export default function AttentionRequired({ analyticsData, onItemClick }: Attent
       </div>
 
       {/* View All Link */}
-      <button className="w-full mt-4 text-xs text-[var(--text-secondary)] hover:text-white transition-colors text-center">
+      <button className="w-full mt-3 text-xs text-[#A0A0A0] hover:text-white transition-colors text-center">
         View all alerts →
       </button>
     </div>
