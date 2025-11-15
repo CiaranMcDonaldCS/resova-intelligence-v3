@@ -151,14 +151,30 @@ export default function AccountSetup() {
     setIsLoading(true);
 
     try {
+      // Log API key before saving to debug any modification issues
+      console.log('🔍 [AccountSetup] API Key BEFORE save:');
+      console.log(`   Raw value length: ${formData.resovaApiKey.length}`);
+      console.log(`   After trim length: ${formData.resovaApiKey.trim().length}`);
+      console.log(`   First 10 chars: ${formData.resovaApiKey.substring(0, 10)}`);
+      console.log(`   Last 4 chars: ${formData.resovaApiKey.substring(formData.resovaApiKey.length - 4)}`);
+
       // Save authentication
-      AuthStorage.save({
+      const authData = {
         resovaApiKey: formData.resovaApiKey.trim(),
         resovaApiUrl: formData.resovaApiUrl.trim(),
         claudeApiKey: formData.claudeApiKey.trim(),
         lastLogin: new Date().toISOString(),
         version: '1.0',
-      });
+      };
+
+      console.log('💾 [AccountSetup] Saving to AuthStorage...');
+      AuthStorage.save(authData);
+
+      // Verify what was saved
+      const savedAuth = AuthStorage.load();
+      console.log('✅ [AccountSetup] Loaded back from storage:');
+      console.log(`   Resova API Key length: ${savedAuth?.resovaApiKey.length}`);
+      console.log(`   Resova API Key: ${savedAuth?.resovaApiKey.substring(0, 10)}...${savedAuth?.resovaApiKey.substring(savedAuth.resovaApiKey.length - 4)}`);
 
       // Save configuration
       ConfigStorage.save({

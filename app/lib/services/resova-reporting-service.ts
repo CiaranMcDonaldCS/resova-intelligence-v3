@@ -458,6 +458,10 @@ export class ResovaReportingService {
     this.apiKey = options.apiKey;
     this.baseUrl = options.baseUrl || config.api.resova.baseUrl;
     this.timeout = options.timeout || config.api.resova.timeout;
+
+    logger.info('📡 ResovaReportingService initialized:');
+    logger.info(`   Base URL: ${this.baseUrl}`);
+    logger.info(`   Timeout: ${this.timeout}ms`);
   }
 
   // ==================== TRANSACTIONS REPORTING API ====================
@@ -784,28 +788,8 @@ export class ResovaReportingService {
   }
 
   // ==================== CORE API - ITEMS ====================
-
-  /**
-   * Fetch all items (services/products)
-   * GET /v1/items
-   */
-  async getItems(): Promise<ResovaItem[]> {
-    try {
-      const url = `${this.baseUrl}/items`;
-
-      logger.info(`Fetching all items`);
-
-      const response = await this.fetchWithTimeout(url, {
-        method: 'GET',
-        headers: this.getHeaders(),
-      });
-
-      return response.data || response;
-    } catch (error) {
-      this.handleError(error, 'getItems');
-      throw error;
-    }
-  }
+  // Note: Removed getItems() method - we use /reporting/inventory/items instead
+  // which doesn't require additional "inventory view" permissions
 
   /**
    * Fetch a specific item by ID
@@ -983,6 +967,8 @@ export class ResovaReportingService {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
+    logger.info(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+
     try {
       const response = await fetch(url, {
         ...options,
@@ -991,22 +977,29 @@ export class ResovaReportingService {
 
       clearTimeout(timeoutId);
 
+      logger.info(`✅ API Response: ${response.status} ${response.statusText} from ${url}`);
+
       if (!response.ok) {
         const errorText = await response.text();
+        logger.error(`❌ API Error Response (${response.status}): ${errorText}`);
         throw new ApiError(
           `Resova API error: ${response.statusText} - ${errorText}`,
           response.status
         );
       }
 
-      return await response.json();
+      const data = await response.json();
+      logger.info(`📦 Response data keys: ${Object.keys(data).join(', ')}`);
+      return data;
     } catch (error: any) {
       clearTimeout(timeoutId);
 
       if (error.name === 'AbortError') {
+        logger.error(`⏱️ Request timeout after ${this.timeout}ms: ${url}`);
         throw new NetworkError('Request timeout');
       }
 
+      logger.error(`❌ Fetch error: ${error.message}`);
       throw error;
     }
   }
@@ -1015,6 +1008,18 @@ export class ResovaReportingService {
    * Get request headers with X-API-KEY authentication
    */
   private getHeaders(): Record<string, string> {
+    logger.info(`📤 Request Headers - API Key: ${this.apiKey.substring(0, 8)}...${this.apiKey.substring(this.apiKey.length - 4)} (length: ${this.apiKey.length})`);
+
+    // Debug: Check for non-ASCII characters
+    const hasNonASCII = /[^\x00-\x7F]/.test(this.apiKey);
+    if (hasNonASCII) {
+      logger.warn('⚠️ API Key contains non-ASCII characters!');
+    }
+
+    // Debug: Show exact bytes at start and end
+    logger.info(`   Char codes (first 10): ${Array.from(this.apiKey.substring(0, 10)).map(c => c.charCodeAt(0)).join(',')}`);
+    logger.info(`   Char codes (last 4): ${Array.from(this.apiKey.substring(this.apiKey.length - 4)).map(c => c.charCodeAt(0)).join(',')}`);
+
     return {
       'X-API-KEY': this.apiKey,
       'Accept': 'application/json',

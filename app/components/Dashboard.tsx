@@ -62,21 +62,10 @@ export default function Dashboard() {
     );
   }
 
-  // No data state
+  // No data state - show loading instead of "Load Data" button
+  // Data will auto-load when service is ready (see AppContext line 276-281)
   if (!analyticsData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-slate-400">No analytics data available</p>
-          <button
-            onClick={() => fetchAnalytics()}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Load Data
-          </button>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Preparing your analytics..." />;
   }
 
   // Main render - Single screen with AI Assistant

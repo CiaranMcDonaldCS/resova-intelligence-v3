@@ -21,6 +21,11 @@ export class AnalyticsService {
   private claudeService: ClaudeService;
 
   constructor(credentials: Credentials) {
+    logger.info('🚀 AnalyticsService Initialization:');
+    logger.info(`   Resova API URL: ${credentials.resovaApiUrl}`);
+    logger.info(`   Resova API Key: ${credentials.resovaApiKey.substring(0, 8)}...${credentials.resovaApiKey.substring(credentials.resovaApiKey.length - 4)}`);
+    logger.info(`   Claude API Key: ${credentials.claudeApiKey.substring(0, 10)}...${credentials.claudeApiKey.substring(credentials.claudeApiKey.length - 4)}`);
+
     this.resovaService = new ResovaService({
       apiKey: credentials.resovaApiKey,
       baseUrl: credentials.resovaApiUrl,

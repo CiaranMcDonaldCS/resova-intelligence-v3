@@ -302,6 +302,210 @@ export interface BusinessInsights {
   customerIntelligence?: CustomerIntelligence;
   voucherIntelligence?: any; // VoucherIntelligence from resova-core types
   conversionIntelligence?: any; // ConversionIntelligence from resova-core types
+  // Advanced 5-layer intelligence framework
+  advancedIntelligence?: AdvancedIntelligence;
+}
+
+// ==================== ADVANCED INTELLIGENCE (5-LAYER FRAMEWORK) ====================
+
+export interface InsightMetadata {
+  source: string[];           // Which API(s) provided the data
+  calculation?: string;        // How it was computed (for derived insights)
+  confidence?: number;         // Statistical confidence 0-1 (for predictions)
+  sample_size?: number;        // Number of data points used
+  date_range?: string;        // Time period analyzed
+}
+
+// Layer 1: Raw Insights (Facts)
+export interface RawInsights {
+  revenue: {
+    gross_revenue: { value: number; metadata: InsightMetadata };
+    net_revenue: { value: number; metadata: InsightMetadata };
+    total_transactions: { value: number; metadata: InsightMetadata };
+    average_transaction_value: { value: number; metadata: InsightMetadata };
+    total_refunds: { value: number; metadata: InsightMetadata };
+    total_discounts: { value: number; metadata: InsightMetadata };
+  };
+  bookings: {
+    total_bookings: { value: number; metadata: InsightMetadata };
+    online_bookings: { value: number; metadata: InsightMetadata };
+    operator_bookings: { value: number; metadata: InsightMetadata };
+    cancelled_bookings: { value: number; metadata: InsightMetadata };
+    no_shows: { value: number; metadata: InsightMetadata };
+    bookings_by_day_of_week: { value: Record<string, number>; metadata: InsightMetadata };
+    bookings_by_hour: { value: Record<string, number>; metadata: InsightMetadata };
+  };
+  guests: {
+    total_guests: { value: number; metadata: InsightMetadata };
+    average_group_size: { value: number; metadata: InsightMetadata };
+    adult_child_ratio: { value: string; metadata: InsightMetadata };
+    waivers_completed: { value: number; metadata: InsightMetadata };
+    waivers_required: { value: number; metadata: InsightMetadata };
+  };
+  activities: {
+    active_count: { value: number; metadata: InsightMetadata };
+    bookings_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+    revenue_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+    capacity_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+  };
+  customers: {
+    total_customers: { value: number; metadata: InsightMetadata };
+    new_customers: { value: number; metadata: InsightMetadata };
+    returning_customers: { value: number; metadata: InsightMetadata };
+  };
+  vouchers: {
+    active_vouchers: { value: number; metadata: InsightMetadata };
+    active_value: { value: number; metadata: InsightMetadata };
+    redeemed_vouchers: { value: number; metadata: InsightMetadata };
+    redeemed_value: { value: number; metadata: InsightMetadata };
+    expired_vouchers: { value: number; metadata: InsightMetadata };
+    expired_value: { value: number; metadata: InsightMetadata };
+  };
+  capacity: {
+    total_capacity: { value: number; metadata: InsightMetadata };
+    slots_booked: { value: number; metadata: InsightMetadata };
+    slots_available: { value: number; metadata: InsightMetadata };
+  };
+}
+
+// Layer 2: Derived Insights (Calculations)
+export interface DerivedInsights {
+  efficiency: {
+    capacity_utilization_rate: { value: number; metadata: InsightMetadata };
+    revenue_per_available_slot: { value: number; metadata: InsightMetadata };
+    revenue_per_booking: { value: number; metadata: InsightMetadata };
+    revenue_per_guest: { value: number; metadata: InsightMetadata };
+    discount_cost_percentage: { value: number; metadata: InsightMetadata };
+    refund_rate: { value: number; metadata: InsightMetadata };
+    no_show_rate: { value: number; metadata: InsightMetadata };
+  };
+  growth: {
+    revenue_growth: { value: number; metadata: InsightMetadata };
+    booking_growth: { value: number; metadata: InsightMetadata };
+    guest_growth: { value: number; metadata: InsightMetadata };
+    new_customer_acquisition_rate: { value: number; metadata: InsightMetadata };
+    customer_retention_rate: { value: number; metadata: InsightMetadata };
+  };
+  customer_metrics: {
+    average_customer_lifetime_value: { value: number; metadata: InsightMetadata };
+    repeat_customer_rate: { value: number; metadata: InsightMetadata };
+    average_days_between_bookings: { value: number; metadata: InsightMetadata };
+    churn_risk_percentage: { value: number; metadata: InsightMetadata };
+  };
+  activity_performance: {
+    revenue_per_booking_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+    profit_margin_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+    booking_frequency_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+    utilization_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+    growth_rate_by_activity: { value: Record<string, number>; metadata: InsightMetadata };
+  };
+  time_patterns: {
+    peak_hours: { value: Array<{ hour: string; utilization: number }>; metadata: InsightMetadata };
+    low_demand_hours: { value: Array<{ hour: string; utilization: number }>; metadata: InsightMetadata };
+    best_performing_days: { value: Array<{ day: string; revenue: number }>; metadata: InsightMetadata };
+    worst_performing_days: { value: Array<{ day: string; revenue: number }>; metadata: InsightMetadata };
+  };
+  voucher_performance: {
+    redemption_rate: { value: number; metadata: InsightMetadata };
+    average_days_to_redemption: { value: number; metadata: InsightMetadata };
+    breakage_rate: { value: number; metadata: InsightMetadata };
+  };
+}
+
+// Layer 3: Connected Insights (Correlations)
+export interface ConnectedInsights {
+  revenue_drivers: {
+    top_revenue_activity: { value: { name: string; percentage: number; revenue: number }; metadata: InsightMetadata };
+    online_vs_operator_impact: { value: { online_avg: number; operator_avg: number; difference: number }; metadata: InsightMetadata };
+    group_size_revenue_correlation: { value: string; metadata: InsightMetadata };
+    discount_volume_impact: { value: string; metadata: InsightMetadata };
+  };
+  customer_behavior: {
+    repeat_booking_drivers: { value: Array<{ activity: string; repeat_rate: number }>; metadata: InsightMetadata };
+    cross_sell_patterns: { value: Array<{ activities: string[]; frequency: number }>; metadata: InsightMetadata };
+    segment_preferences: { value: Record<string, string[]>; metadata: InsightMetadata };
+    booking_lead_time_correlation: { value: string; metadata: InsightMetadata };
+    cancellation_patterns: { value: Record<string, number>; metadata: InsightMetadata };
+  };
+  capacity_optimization: {
+    expansion_opportunities: { value: Array<{ activity: string; reason: string; potential_revenue: number }>; metadata: InsightMetadata };
+    pricing_opportunities: { value: Array<{ activity: string; reason: string; current_utilization: number }>; metadata: InsightMetadata };
+    time_slot_optimization: { value: Array<{ time: string; action: string; impact: string }>; metadata: InsightMetadata };
+    bundle_opportunities: { value: Array<{ activities: string[]; co_booking_rate: number }>; metadata: InsightMetadata };
+  };
+  operational_efficiency: {
+    waiver_completion_impact: { value: string; metadata: InsightMetadata };
+    no_show_by_channel: { value: Record<string, number>; metadata: InsightMetadata };
+    payment_timing_patterns: { value: Record<string, string>; metadata: InsightMetadata };
+  };
+}
+
+// Layer 4: Predictive Insights (Forecasts)
+export interface PredictiveInsights {
+  revenue_forecast: {
+    next_30_days: { value: number; confidence_interval: { lower: number; upper: number }; metadata: InsightMetadata };
+    next_90_days: { value: number; confidence_interval: { lower: number; upper: number }; metadata: InsightMetadata };
+    basis: { value: string; metadata: InsightMetadata };
+  };
+  booking_forecast: {
+    next_7_days: { value: number; metadata: InsightMetadata };
+    next_30_days: { value: number; metadata: InsightMetadata };
+    next_90_days: { value: number; metadata: InsightMetadata };
+    capacity_fill_forecast: { value: Record<string, number>; metadata: InsightMetadata };
+  };
+  customer_predictions: {
+    at_risk_customers: { value: Array<{ name: string; email: string; clv: number; days_since_booking: number }>; metadata: InsightMetadata };
+    likely_to_return: { value: Array<{ name: string; email: string; probability: number; expected_revenue: number }>; metadata: InsightMetadata };
+  };
+  capacity_predictions: {
+    predicted_sellout_dates: { value: Record<string, string[]>; metadata: InsightMetadata };
+    forecasted_low_demand: { value: Array<{ date: string; activities: string[] }>; metadata: InsightMetadata };
+  };
+  voucher_predictions: {
+    expected_redemptions_30_days: { value: { count: number; value: number }; metadata: InsightMetadata };
+    breakage_forecast: { value: { count: number; value: number }; metadata: InsightMetadata };
+    voucher_liability: { value: number; metadata: InsightMetadata };
+  };
+}
+
+// Layer 5: Prescriptive Insights (Recommendations)
+export interface PrescriptiveInsight {
+  recommendation: string;
+  category: 'revenue' | 'customer' | 'operations' | 'pricing' | 'marketing' | 'capacity';
+  priority: 'high' | 'medium' | 'low';
+  impact: {
+    expected_revenue: number;
+    expected_bookings?: number;
+    expected_efficiency_gain?: number;
+  };
+  rationale: string;
+  data_supporting: string[];
+  actionable_steps: string[];
+}
+
+export interface PrescriptiveInsights {
+  revenue_optimization: PrescriptiveInsight[];
+  customer_retention: PrescriptiveInsight[];
+  operational_efficiency: PrescriptiveInsight[];
+  pricing_strategy: PrescriptiveInsight[];
+  marketing_focus: PrescriptiveInsight[];
+  capacity_planning: PrescriptiveInsight[];
+}
+
+// Combined Advanced Intelligence
+export interface AdvancedIntelligence {
+  raw: RawInsights;
+  derived: DerivedInsights;
+  connected: ConnectedInsights;
+  predictive: PredictiveInsights;
+  prescriptive: PrescriptiveInsights;
+  generated_at: string;
+  data_period: {
+    start_date: string;
+    end_date: string;
+    comparison_period_start?: string;
+    comparison_period_end?: string;
+  };
 }
 
 export interface RawApiData {

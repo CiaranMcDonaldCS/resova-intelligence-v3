@@ -14,7 +14,9 @@ import {
   ResovaGiftVoucher,
   GiftVoucherListResponse,
   ResovaBasket,
-  BasketListResponse
+  BasketListResponse,
+  ResovaItemReview,
+  ItemReviewsResponse
 } from '@/app/types/resova-core';
 
 export interface ResovaServiceOptions extends ServiceOptions {
@@ -1039,6 +1041,78 @@ export class ResovaService {
   }
 
   /**
+   * Get item reviews for a specific item
+   * GET /v1/items/{item_id}/reviews
+   */
+  async getItemReviews(itemId: string): Promise<ResovaItemReview[]> {
+    try {
+      logger.info(`Fetching reviews for item ${itemId}`);
+
+      const url = `${this.baseUrl}/items/${itemId}/reviews`;
+
+      const response = await this.fetchWithTimeout(url, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      // Response can be array or object with data property
+      if (Array.isArray(response)) {
+        return response as ResovaItemReview[];
+      }
+
+      if (response.data && Array.isArray(response.data)) {
+        return response.data as ResovaItemReview[];
+      }
+
+      logger.warn(`Unexpected response format for item ${itemId} reviews:`, response);
+      return [];
+    } catch (error) {
+      // If item has no reviews or endpoint fails, return empty array instead of throwing
+      if (error instanceof ApiError && (error.statusCode === 404 || error.statusCode === 400)) {
+        logger.info(`No reviews found for item ${itemId}`);
+        return [];
+      }
+
+      if (error instanceof NetworkError) {
+        logger.warn(`Network error fetching reviews for item ${itemId}:`, error.message);
+        return [];
+      }
+
+      logger.error(`Failed to fetch reviews for item ${itemId}`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all reviews for all items (batch fetch)
+   */
+  async getAllItemReviews(itemIds: string[]): Promise<ResovaItemReview[]> {
+    try {
+      logger.info(`Fetching reviews for ${itemIds.length} items`);
+
+      // Fetch reviews for all items in parallel (limit concurrency to 10 at a time)
+      const BATCH_SIZE = 10;
+      let allReviews: ResovaItemReview[] = [];
+
+      for (let i = 0; i < itemIds.length; i += BATCH_SIZE) {
+        const batch = itemIds.slice(i, i + BATCH_SIZE);
+        const batchReviews = await Promise.all(
+          batch.map(itemId => this.getItemReviews(itemId))
+        );
+
+        // Flatten array of arrays
+        allReviews = [...allReviews, ...batchReviews.flat()];
+      }
+
+      logger.info(`Fetched total of ${allReviews.length} reviews across ${itemIds.length} items`);
+      return allReviews;
+    } catch (error) {
+      logger.error('Failed to fetch all item reviews', error);
+      return []; // Return empty array instead of throwing to not break analytics
+    }
+  }
+
+  /**
    * Get baskets (single page)
    * GET /v1/baskets
    */
@@ -1287,7 +1361,7 @@ export class ResovaService {
             allBookings,
             [], // Empty vouchers array - will be calculated from transaction data instead
             inventoryItems, // Pass inventory items for activity profitability
-            availabilityInstances // Pass availability instances for capacity utilization
+            availabilityInstances?.data || [] // Extract data array from availability response
           );
 
           logger.info('Successfully added business insights');
@@ -1296,14 +1370,17 @@ export class ResovaService {
           try {
             logger.info('Fetching customer intelligence from Core APIs');
 
-            // Fetch customers, vouchers, and abandoned carts in parallel
-            const [customers, vouchers, abandonedCarts] = await Promise.all([
+            // Fetch customers, vouchers, abandoned carts, and reviews in parallel
+            const itemIds = inventoryItems.map(item => item.id.toString());
+
+            const [customers, vouchers, abandonedCarts, allReviews] = await Promise.all([
               this.getAllCustomers(3), // Fetch up to 3 pages (300 customers)
               this.getAllGiftVouchers(2), // Fetch up to 2 pages (200 vouchers)
-              this.getAbandonedCarts(2) // Fetch up to 2 pages (200 carts)
+              this.getAbandonedCarts(2), // Fetch up to 2 pages (200 carts)
+              this.getAllItemReviews(itemIds) // Fetch reviews for all items
             ]);
 
-            logger.info(`Fetched ${customers.length} customers, ${vouchers.length} vouchers, ${abandonedCarts.length} abandoned carts`);
+            logger.info(`Fetched ${customers.length} customers, ${vouchers.length} vouchers, ${abandonedCarts.length} abandoned carts, ${allReviews.length} reviews`);
 
             // Transform into intelligence
             if (!analyticsData.businessInsights) {
@@ -1337,6 +1414,7 @@ export class ResovaService {
               customers,
               vouchers,
               abandonedCarts,
+              reviews: allReviews, // Include all item reviews for guest sentiment analysis
               items: inventoryItems, // Use inventoryItems as items for backward compatibility
               futureBookings // Include future bookings for forward-looking analysis
             };
