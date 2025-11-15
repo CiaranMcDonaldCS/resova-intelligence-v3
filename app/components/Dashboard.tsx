@@ -18,12 +18,8 @@ export default function Dashboard() {
     refreshAnalytics
   } = useAnalytics();
 
-  // Fetch analytics on mount (only if service is initialized)
-  useEffect(() => {
-    if (analyticsService && !analyticsData && !analyticsLoading) {
-      fetchAnalytics();
-    }
-  }, [analyticsService, analyticsData, analyticsLoading, fetchAnalytics]);
+  // Analytics are automatically fetched by AppContext when service is ready
+  // No need to fetch here
 
   // Handle refresh
   const handleRefresh = async () => {

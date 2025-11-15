@@ -111,6 +111,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, [initializeAuth]);
 
+  // Auto-fetch analytics when service becomes available
+  useEffect(() => {
+    if (state.analyticsService && !state.analyticsData && !state.analyticsLoading) {
+      fetchAnalytics();
+    }
+  }, [state.analyticsService, state.analyticsData, state.analyticsLoading, fetchAnalytics]);
+
   // Logout and clear storage
   const logout = useCallback(() => {
     logger.info('User logging out');
