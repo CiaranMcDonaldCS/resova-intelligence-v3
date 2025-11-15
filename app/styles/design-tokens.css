@@ -1,0 +1,147 @@
+/**
+ * Resova Intelligence V3 - Design Tokens
+ * World-class design system
+ */
+
+:root {
+  /* ============================================
+     COLOR SYSTEM
+     ============================================ */
+
+  /* Primary Background Colors */
+  --background-primary: #0A0E1A;
+  --background-secondary: #141824;
+  --background-tertiary: #1C212E;
+  --background-elevated: #242938;
+
+  /* Brand Colors */
+  --brand-primary: #3B82F6;
+  --brand-primary-hover: #2563EB;
+  --brand-primary-light: rgba(59, 130, 246, 0.1);
+  --brand-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+
+  /* Semantic Colors */
+  --success: #10B981;
+  --success-light: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B;
+  --warning-light: rgba(245, 158, 11, 0.1);
+  --danger: #EF4444;
+  --danger-light: rgba(239, 68, 68, 0.1);
+  --info: #3B82F6;
+  --info-light: rgba(59, 130, 246, 0.1);
+
+  /* Text Colors */
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --text-tertiary: #6B7280;
+  --text-inverse: #0A0E1A;
+
+  /* Border Colors */
+  --border-primary: rgba(255, 255, 255, 0.08);
+  --border-secondary: rgba(255, 255, 255, 0.04);
+  --border-hover: rgba(255, 255, 255, 0.12);
+
+  /* ============================================
+     TYPOGRAPHY
+     ============================================ */
+
+  /* Font Families */
+  --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                  "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Consolas", "Monaco", "Courier New", monospace;
+
+  /* Type Scale (1.250 - Major Third) */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* Letter Spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* ============================================
+     SPACING (8px Grid)
+     ============================================ */
+
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* ============================================
+     SHADOWS & DEPTH
+     ============================================ */
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4),
+               0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5),
+               0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6),
+               0 10px 10px -5px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+  /* Glow Effects */
+  --glow-subtle: 0 0 15px rgba(59, 130, 246, 0.2);
+  --glow-medium: 0 0 25px rgba(59, 130, 246, 0.3);
+  --glow-strong: 0 0 40px rgba(59, 130, 246, 0.4);
+  --glow-success: 0 0 20px rgba(16, 185, 129, 0.3);
+  --glow-warning: 0 0 20px rgba(245, 158, 11, 0.3);
+  --glow-danger: 0 0 20px rgba(239, 68, 68, 0.3);
+  --glow-brand: 0 0 30px rgba(59, 130, 246, 0.4);
+
+  /* ============================================
+     BORDER RADIUS
+     ============================================ */
+
+  --radius-sm: 0.375rem;   /* 6px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-full: 9999px;
+
+  /* ============================================
+     TRANSITIONS
+     ============================================ */
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ============================================
+     Z-INDEX LAYERS
+     ============================================ */
+
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+}

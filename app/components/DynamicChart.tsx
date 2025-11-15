@@ -57,7 +57,7 @@ export function DynamicChart({ chart, height = 280 }: DynamicChartProps) {
     // Safety check for empty data
     if (!chart.data || chart.data.length === 0) {
       return (
-        <div className="flex items-center justify-center h-full min-h-[200px] text-[#A0A0A0] text-sm bg-[#1E1E1E]">
+        <div className="flex items-center justify-center h-full min-h-[200px] text-[var(--text-secondary)] text-sm bg-[var(--background-primary)]">
           No data available
         </div>
       );
@@ -109,40 +109,40 @@ export function DynamicChart({ chart, height = 280 }: DynamicChartProps) {
   const simpleMode = height === 280 || height === 350;
 
   if (simpleMode) {
-    return <div style={{ width: '100%', height: `${height}px`, minHeight: `${height}px`, backgroundColor: '#1E1E1E' }}>{renderChart()}</div>;
+    return <div style={{ width: '100%', height: `${height}px`, minHeight: `${height}px`, backgroundColor: 'var(--background-primary)' }}>{renderChart()}</div>;
   }
 
   return (
-    <div className="my-4 bg-[#1E1E1E] rounded-xl border border-[#383838] shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-      <div className="px-5 py-4 bg-gradient-to-r from-[#2E2E2E] to-[#1E1E1E] border-b border-[#383838]">
+    <div className="my-4 bg-[var(--background-primary)] rounded-xl border border-[var(--border-primary)] shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+      <div className="px-5 py-4 bg-gradient-to-r from-[var(--background-secondary)] to-[var(--background-primary)] border-b border-[var(--border-primary)]">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h4 className="text-sm font-semibold text-white tracking-tight">{chart.title}</h4>
-            <p className="text-xs text-[#A0A0A0] mt-1 leading-relaxed">{chart.description}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">{chart.description}</p>
           </div>
           <div className="flex items-center space-x-2 ml-4">
             <button
               onClick={handleCopyData}
-              className="p-1.5 rounded-lg hover:bg-[#2E2E2E] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-[var(--background-secondary)] transition-colors"
               title="Copy data to clipboard"
             >
               {copied ? (
-                <Check className="w-4 h-4 text-green-400" />
+                <Check className="w-4 h-4 text-[var(--success)]" />
               ) : (
-                <Copy className="w-4 h-4 text-[#A0A0A0]" />
+                <Copy className="w-4 h-4 text-[var(--text-secondary)]" />
               )}
             </button>
             <button
               onClick={handleDownloadCSV}
-              className="p-1.5 rounded-lg hover:bg-[#2E2E2E] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-[var(--background-secondary)] transition-colors"
               title="Download as CSV"
             >
-              <Download className="w-4 h-4 text-[#A0A0A0]" />
+              <Download className="w-4 h-4 text-[var(--text-secondary)]" />
             </button>
           </div>
         </div>
       </div>
-      <div className="p-6 w-full overflow-hidden bg-[#1E1E1E]">
+      <div className="p-6 w-full overflow-hidden bg-[var(--background-primary)]">
         <div className="w-full">
           {renderChart()}
         </div>
@@ -170,11 +170,11 @@ export function ChartGrid({ charts }: ChartGridProps) {
       {charts.map((chart, index) => (
         <div
           key={index}
-          className="bg-[#1E1E1E] border border-[#383838] rounded-xl p-4 md:p-5"
+          className="bg-[var(--background-primary)] border border-[var(--border-primary)] rounded-xl p-4 md:p-5"
         >
           {chart.title && (
             <div className="flex items-center mb-4">
-              <span className="material-symbols-outlined text-green-400 mr-2" style={{ fontSize: '20px' }}>
+              <span className="material-symbols-outlined text-[var(--success)] mr-2" style={{ fontSize: '20px' }}>
                 insights
               </span>
               <h3 className="font-semibold text-white">{chart.title}</h3>

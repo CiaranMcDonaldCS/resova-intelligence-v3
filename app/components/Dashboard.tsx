@@ -83,10 +83,10 @@ export default function Dashboard() {
   // Loading state
   if (analyticsLoading && !analyticsData) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-primary)] flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading analytics...</p>
+          <RefreshCw className="w-12 h-12 text-[var(--brand-primary)] animate-spin mx-auto mb-4" />
+          <p className="text-[var(--text-secondary)]">Loading analytics...</p>
         </div>
       </div>
     );
@@ -95,13 +95,13 @@ export default function Dashboard() {
   // Error state
   if (analyticsError) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-primary)] flex items-center justify-center">
         <div className="text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-            <p className="text-red-800 mb-4">{analyticsError}</p>
+          <div className="bg-[var(--background-secondary)] border border-[var(--danger)]/30 rounded-lg p-6 max-w-md">
+            <p className="text-[var(--danger)] mb-4">{analyticsError}</p>
             <button
               onClick={() => fetchAnalytics()}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="px-4 py-2 bg-[var(--danger)] text-white rounded-lg hover:bg-[var(--danger)]/90 transition-colors"
             >
               Try Again
             </button>
@@ -114,12 +114,12 @@ export default function Dashboard() {
   // No data state
   if (!analyticsData) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-primary)] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">No analytics data available</p>
+          <p className="text-[var(--text-secondary)]">No analytics data available</p>
           <button
             onClick={() => fetchAnalytics()}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="mt-4 px-4 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-[var(--brand-primary-hover)] transition-colors"
           >
             Load Data
           </button>
@@ -130,7 +130,7 @@ export default function Dashboard() {
 
   // Main render
   return (
-    <div className={`min-h-screen ${activeTab === 'assistant' ? 'bg-[#121212]' : 'bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/40'}`}>
+    <div className={`min-h-screen ${activeTab === 'assistant' ? 'bg-[var(--background-primary)]' : 'bg-[var(--background-primary)]'}`}>
       {/* Header - Hidden when assistant is active */}
       {activeTab !== 'assistant' && (
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm sticky top-0 z-50">

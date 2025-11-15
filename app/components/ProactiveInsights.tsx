@@ -271,30 +271,30 @@ export default function ProactiveInsights({ analyticsData, onInsightClick }: Pro
   const getIcon = (type: Insight['type']) => {
     switch (type) {
       case 'alert':
-        return <AlertTriangle className="w-4 h-4 text-red-400" />;
+        return <AlertTriangle className="w-4 h-4 text-[var(--danger)]" />;
       case 'warning':
-        return <AlertCircle className="w-4 h-4 text-yellow-400" />;
+        return <AlertCircle className="w-4 h-4 text-[var(--warning)]" />;
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
+        return <CheckCircle className="w-4 h-4 text-[var(--success)]" />;
       case 'opportunity':
-        return <Lightbulb className="w-4 h-4 text-blue-400" />;
+        return <Lightbulb className="w-4 h-4 text-[var(--brand-primary)]" />;
       default:
-        return <TrendingUp className="w-4 h-4 text-gray-400" />;
+        return <TrendingUp className="w-4 h-4 text-[var(--text-secondary)]" />;
     }
   };
 
   const getColor = (type: Insight['type']) => {
     switch (type) {
       case 'alert':
-        return 'border-red-400/30 bg-red-400/5';
+        return 'border-[var(--danger)]/30 bg-[var(--danger)]/5';
       case 'warning':
-        return 'border-yellow-400/30 bg-yellow-400/5';
+        return 'border-[var(--warning)]/30 bg-[var(--warning)]/5';
       case 'success':
-        return 'border-green-400/30 bg-green-400/5';
+        return 'border-[var(--success)]/30 bg-[var(--success)]/5';
       case 'opportunity':
-        return 'border-blue-400/30 bg-blue-400/5';
+        return 'border-[var(--brand-primary)]/30 bg-[var(--brand-primary)]/5';
       default:
-        return 'border-gray-400/30 bg-gray-400/5';
+        return 'border-[var(--text-secondary)]/30 bg-[var(--text-secondary)]/5';
     }
   };
 
@@ -308,16 +308,16 @@ export default function ProactiveInsights({ analyticsData, onInsightClick }: Pro
         className="flex items-center justify-between w-full text-left"
       >
         <div className="flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-amber-400" />
+          <Lightbulb className="w-4 h-4 text-[var(--warning)]" />
           <h3 className="text-sm font-semibold text-white">
             Proactive Insights
           </h3>
-          <span className="px-2 py-0.5 rounded-full bg-[#5E5CE6] text-white text-xs font-medium">
+          <span className="px-2 py-0.5 rounded-full bg-[var(--brand-primary)] text-white text-xs font-medium">
             {insights.length}
           </span>
         </div>
         <ChevronRight
-          className={`w-4 h-4 text-[#A0A0A0] transition-transform ${
+          className={`w-4 h-4 text-[var(--text-secondary)] transition-transform ${
             expanded ? 'rotate-90' : ''
           }`}
         />
@@ -336,10 +336,10 @@ export default function ProactiveInsights({ analyticsData, onInsightClick }: Pro
               {/* Dismiss Button */}
               <button
                 onClick={() => dismissInsight(insight.id)}
-                className="absolute top-2 right-2 p-1 rounded hover:bg-[#2E2E2E] transition-colors"
+                className="absolute top-2 right-2 p-1 rounded hover:bg-[var(--background-secondary)] transition-colors"
                 title="Dismiss"
               >
-                <X className="w-3 h-3 text-[#A0A0A0]" />
+                <X className="w-3 h-3 text-[var(--text-secondary)]" />
               </button>
 
               {/* Content */}
@@ -357,7 +357,7 @@ export default function ProactiveInsights({ analyticsData, onInsightClick }: Pro
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-[#A0A0A0] leading-relaxed ml-6">
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed ml-6">
                   {insight.message}
                 </p>
 
@@ -365,7 +365,7 @@ export default function ProactiveInsights({ analyticsData, onInsightClick }: Pro
                 {insight.action && (
                   <button
                     onClick={() => onInsightClick?.(insight)}
-                    className="mt-2 ml-6 text-xs text-[#5E5CE6] hover:text-[#7E7CFF] font-medium flex items-center gap-1"
+                    className="mt-2 ml-6 text-xs text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] font-medium flex items-center gap-1"
                   >
                     {insight.action}
                     <ChevronRight className="w-3 h-3" />

@@ -20,15 +20,16 @@ export default function LoginScreen({ onLogin, onBack }: LoginScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const environments = {
+    us: 'https://api.resova.us/v1',
+    eu: 'https://api.resova.eu/v1',
+    io: 'https://api.resova.io/v1',
+    staging1: 'https://api.staging1.resova.io/v1',
+  };
+
   const handleRegionChange = (newRegion: string) => {
     setRegion(newRegion);
-    if (newRegion === 'us') {
-      setResovaApiUrl('https://api.resova.us/v1');
-    } else if (newRegion === 'eu') {
-      setResovaApiUrl('https://api.resova.eu/v1');
-    } else if (newRegion === 'io') {
-      setResovaApiUrl('https://api.resova.io/v1');
-    }
+    setResovaApiUrl(environments[newRegion as keyof typeof environments] || environments.io);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,11 +78,11 @@ export default function LoginScreen({ onLogin, onBack }: LoginScreenProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Resova Environment
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {['us', 'eu', 'io'].map((r) => (
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {['us', 'eu', 'io', 'staging1'].map((r) => (
                 <button
                   key={r}
                   type="button"
@@ -92,7 +93,7 @@ export default function LoginScreen({ onLogin, onBack }: LoginScreenProps) {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {r.toUpperCase()}
+                  {r === 'staging1' ? 'STAGING' : r.toUpperCase()}
                 </button>
               ))}
             </div>

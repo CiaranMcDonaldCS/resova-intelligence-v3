@@ -204,15 +204,16 @@ export default function PersonalizableFocusCards({ onCardClick }: Personalizable
     savePreferences(DEFAULT_FOCUS_AREAS);
   };
 
+  // V3 Design System - Updated color palette
   const colorMap: Record<string, string> = {
-    'text-green-400': '#4ade80',
-    'text-yellow-400': '#facc15',
-    'text-gray-400': '#9ca3af',
-    'text-blue-400': '#60a5fa',
-    'text-purple-400': '#c084fc',
-    'text-orange-400': '#fb923c',
-    'text-pink-400': '#f472b6',
-    'text-teal-400': '#2dd4bf',
+    'text-green-400': '#10B981',  // --success
+    'text-yellow-400': '#F59E0B',  // --warning
+    'text-gray-400': '#9CA3AF',   // --text-secondary
+    'text-blue-400': '#3B82F6',   // --brand-primary
+    'text-purple-400': '#A855F7',  // --accent-purple
+    'text-orange-400': '#F97316',  // --accent-orange
+    'text-pink-400': '#EC4899',   // pink accent
+    'text-teal-400': '#06B6D4',   // --info
   };
 
   const visibleAreas = focusAreas
@@ -226,14 +227,14 @@ export default function PersonalizableFocusCards({ onCardClick }: Personalizable
         {editMode && (
           <button
             onClick={resetToDefault}
-            className="text-xs text-[#A0A0A0] hover:text-white transition-colors"
+            className="text-xs text-[var(--text-secondary)] hover:text-white transition-colors"
           >
             Reset to Default
           </button>
         )}
         <button
           onClick={() => setEditMode(!editMode)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2E2E2E] hover:bg-[#3E3E3E] transition-colors text-xs text-white"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] transition-colors text-xs text-white"
         >
           <Settings className="w-3.5 h-3.5" />
           {editMode ? 'Done' : 'Customize'}
@@ -260,7 +261,7 @@ export default function PersonalizableFocusCards({ onCardClick }: Personalizable
               {/* Drag Handle (Edit Mode) */}
               {editMode && (
                 <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10">
-                  <GripVertical className="w-4 h-4 text-[#A0A0A0]" />
+                  <GripVertical className="w-4 h-4 text-[var(--text-secondary)]" />
                 </div>
               )}
 
@@ -275,17 +276,17 @@ export default function PersonalizableFocusCards({ onCardClick }: Personalizable
                 }}
                 className={`relative overflow-hidden rounded-xl p-4 transition-all duration-200 ${
                   editMode
-                    ? 'bg-[#1E1E1E] border-2 border-dashed border-[#383838] hover:border-[#5E5CE6]'
-                    : 'bg-gradient-to-br from-[#2E2D72]/10 via-[#1E1E1E] to-[#1E1E1E] border border-[#383838] hover:border-[#5E5CE6] hover:shadow-lg hover:shadow-[#5E5CE6]/10'
+                    ? 'bg-[var(--background-primary)] border-2 border-dashed border-[var(--border-primary)] hover:border-[var(--brand-primary)]'
+                    : 'bg-gradient-to-br from-[var(--brand-primary)]/10 via-[var(--background-primary)] to-[var(--background-primary)] border border-[var(--border-primary)] hover:border-[var(--brand-primary)] hover:shadow-lg hover:shadow-[var(--brand-primary)]/10'
                 }`}
               >
                 {/* Visibility Toggle (Edit Mode) */}
                 {editMode && (
                   <div className="absolute top-2 right-2 z-10">
                     {area.visible ? (
-                      <Eye className="w-4 h-4 text-green-400" />
+                      <Eye className="w-4 h-4 text-[var(--success)]" />
                     ) : (
-                      <EyeOff className="w-4 h-4 text-[#A0A0A0]" />
+                      <EyeOff className="w-4 h-4 text-[var(--text-secondary)]" />
                     )}
                   </div>
                 )}
@@ -319,13 +320,13 @@ export default function PersonalizableFocusCards({ onCardClick }: Personalizable
         {/* Add Custom Card (Edit Mode) */}
         {editMode && (
           <button
-            className="rounded-xl p-4 border-2 border-dashed border-[#383838] hover:border-[#5E5CE6] transition-all flex flex-col items-center justify-center text-center space-y-2 group"
+            className="rounded-xl p-4 border-2 border-dashed border-[var(--border-primary)] hover:border-[var(--brand-primary)] transition-all flex flex-col items-center justify-center text-center space-y-2 group"
             title="Add custom focus area (coming soon)"
           >
-            <div className="p-2.5 rounded-lg bg-[#5E5CE6]/10 group-hover:bg-[#5E5CE6]/20 transition-colors">
-              <Plus className="w-6 h-6 text-[#5E5CE6]" />
+            <div className="p-2.5 rounded-lg bg-[var(--brand-primary)]/10 group-hover:bg-[var(--brand-primary)]/20 transition-colors">
+              <Plus className="w-6 h-6 text-[var(--brand-primary)]" />
             </div>
-            <span className="text-xs font-medium text-[#A0A0A0] group-hover:text-white transition-colors">
+            <span className="text-xs font-medium text-[var(--text-secondary)] group-hover:text-white transition-colors">
               Add Custom
             </span>
           </button>
@@ -334,7 +335,7 @@ export default function PersonalizableFocusCards({ onCardClick }: Personalizable
 
       {/* Edit Mode Instructions */}
       {editMode && (
-        <div className="text-xs text-[#A0A0A0] bg-[#1E1E1E] border border-[#383838] rounded-lg p-3">
+        <div className="text-xs text-[var(--text-secondary)] bg-[var(--background-primary)] border border-[var(--border-primary)] rounded-lg p-3">
           <p className="font-medium text-white mb-1">Customize your quick actions:</p>
           <ul className="space-y-1 list-disc list-inside">
             <li>Drag cards to reorder them</li>

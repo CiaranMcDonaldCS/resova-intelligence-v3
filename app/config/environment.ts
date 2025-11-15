@@ -30,6 +30,17 @@ export const config = {
     resova: {
       baseUrl: process.env.NEXT_PUBLIC_RESOVA_API_URL || 'https://api.resova.io/v1',
       timeout: parseNumber(process.env.NEXT_PUBLIC_RESOVA_API_TIMEOUT, 30000),
+      // Available environments
+      environments: {
+        production: {
+          us: 'https://api.resova.us/v1',
+          eu: 'https://api.resova.eu/v1',
+          io: 'https://api.resova.io/v1',
+        },
+        staging: {
+          staging1: 'https://api.staging1.resova.io/v1',
+        },
+      },
     },
     claude: {
       baseUrl: process.env.NEXT_PUBLIC_CLAUDE_API_URL || 'https://api.anthropic.com/v1',
