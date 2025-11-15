@@ -142,12 +142,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
     if (!currentService) {
-      logger.error('Analytics service not initialized');
-      setState(prev => ({
-        ...prev,
-        analyticsLoading: false,
-        analyticsError: 'Analytics service not initialized',
-      }));
+      logger.warn('Analytics service not initialized - skipping fetch');
       return;
     }
 

@@ -41,6 +41,7 @@ export default function AuthGate({ children }: AuthGateProps) {
 
       if (!isAuthenticated || !isOnboarded) {
         // Not authenticated or not onboarded → go to onboarding
+        setIsChecking(false);
         router.push('/onboarding');
       } else {
         // Authenticated and onboarded → allow access
