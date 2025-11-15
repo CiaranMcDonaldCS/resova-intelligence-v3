@@ -5,16 +5,58 @@
  */
 
 /**
- * Activity types supported by the system
+ * Activity types supported by Resova
+ * Organized by category for better UX
  */
 export type ActivityType =
+  // Core Racing & Competition
+  | 'karting-adult'
+  | 'karting-junior'
+  | 'paintball'
+  | 'laser-tag'
+  | 'axe-throwing'
+
+  // Immersive Experiences
   | 'escape-room'
-  | 'tour'
-  | 'class'
-  | 'event'
-  | 'rental'
-  | 'attraction'
-  | 'workshop'
+  | 'vr-room'
+  | 'break-room'
+
+  // Active & Adventure
+  | 'rope-course'
+  | 'obstacle-course'
+  | 'zip-line'
+  | 'climbing-wall'
+  | 'trampoline-park'
+
+  // Indoor Play & Family
+  | 'indoor-play'
+  | 'arcade'
+  | 'bowling'
+  | 'mini-golf'
+  | 'golf-simulator'
+  | 'batting-cage'
+  | 'battle-cage'
+
+  // Skating & Ice
+  | 'ice-skating'
+  | 'roller-skating'
+
+  // Large Attractions
+  | 'water-park'
+  | 'amusement-park'
+  | 'zoo-aquarium'
+  | 'museum'
+
+  // Tours & Educational
+  | 'guided-tour'
+  | 'unguided-tour'
+  | 'attraction-tour'
+
+  // General Admission
+  | 'fec-general-admission'
+  | 'time-play'
+
+  // Generic/Flexible
   | 'custom';
 
 /**
