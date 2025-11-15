@@ -1,18 +1,21 @@
 /**
  * App Context
  * Global state management using React Context
+ *
+ * Updated to use storage layer for credentials (Phase 1 integration)
  */
 
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { Credentials, AnalyticsData, Message } from '@/app/types/analytics';
 import { createAnalyticsService, AnalyticsService } from '../lib/services/analytics-service';
+import { AuthStorage } from '../lib/storage/auth-storage';
+import { ConfigStorage } from '../lib/storage/config-storage';
 import { logger } from '../lib/utils/logger';
 
 interface AppState {
-  // Auth & Credentials
-  credentials: Credentials | null;
+  // Auth status (credentials now in storage, not state)
   isAuthenticated: boolean;
 
   // Analytics Data
@@ -31,7 +34,7 @@ interface AppState {
 
 interface AppContextType extends AppState {
   // Auth actions
-  login: (credentials: Credentials) => Promise<void>;
+  initializeAuth: () => Promise<boolean>;
   logout: () => void;
 
   // Analytics actions
@@ -47,7 +50,6 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>({
-    credentials: null,
     isAuthenticated: false,
     analyticsData: null,
     analyticsLoading: false,
@@ -58,39 +60,67 @@ export function AppProvider({ children }: { children: ReactNode }) {
     analyticsService: null,
   });
 
-  // Login and initialize services
-  const login = useCallback(async (credentials: Credentials) => {
-    logger.info('User logging in (production mode)');
-
-    // Validate credentials by making a test API call
-    logger.info('Validating production credentials...');
+  // Initialize authentication from storage on mount
+  const initializeAuth = useCallback(async (): Promise<boolean> => {
+    logger.info('Initializing authentication from storage...');
 
     try {
-      const testService = createAnalyticsService(credentials);
-      // Try to fetch analytics to validate credentials
-      await testService.getAnalytics();
-      logger.info('Credentials validated successfully');
+      // Check if user is authenticated via storage
+      if (!AuthStorage.isAuthenticated()) {
+        logger.info('No stored credentials found');
+        setState(prev => ({ ...prev, isAuthenticated: false }));
+        return false;
+      }
+
+      // Load credentials from storage
+      const authData = AuthStorage.load();
+      if (!authData) {
+        logger.warn('Auth check passed but failed to load credentials');
+        setState(prev => ({ ...prev, isAuthenticated: false }));
+        return false;
+      }
+
+      // Create credentials object for service
+      const credentials: Credentials = {
+        resovaApiKey: authData.resovaApiKey,
+        resovaApiUrl: authData.resovaApiUrl,
+        claudeApiKey: authData.claudeApiKey,
+      };
+
+      // Initialize analytics service
+      const analyticsService = createAnalyticsService(credentials);
+
+      logger.info('Authentication initialized successfully');
+
+      setState(prev => ({
+        ...prev,
+        isAuthenticated: true,
+        analyticsService,
+      }));
+
+      return true;
     } catch (error: any) {
-      logger.error('Invalid credentials', error);
-      throw new Error('Invalid API credentials. Please check your Resova API Key and URL.');
+      logger.error('Failed to initialize auth', error);
+      setState(prev => ({ ...prev, isAuthenticated: false }));
+      return false;
     }
-
-    const analyticsService = createAnalyticsService(credentials);
-
-    setState(prev => ({
-      ...prev,
-      credentials,
-      isAuthenticated: true,
-      analyticsService,
-    }));
   }, []);
 
-  // Logout and clear state
+  // Initialize on mount
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  // Logout and clear storage
   const logout = useCallback(() => {
     logger.info('User logging out');
 
+    // Clear storage
+    AuthStorage.clear();
+    ConfigStorage.clear();
+
+    // Clear state
     setState({
-      credentials: null,
       isAuthenticated: false,
       analyticsData: null,
       analyticsLoading: false,
@@ -142,10 +172,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Send chat message via API route
   const sendMessage = useCallback(async (message: string): Promise<string | undefined> => {
-    if (!state.credentials) {
+    // Load credentials from storage
+    const authData = AuthStorage.load();
+    if (!authData) {
       logger.error('Credentials not available');
       return;
     }
+
+    const credentials: Credentials = {
+      resovaApiKey: authData.resovaApiKey,
+      resovaApiUrl: authData.resovaApiUrl,
+      claudeApiKey: authData.claudeApiKey,
+    };
 
     setState(prev => ({
       ...prev,
@@ -168,7 +206,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           message,
           analyticsData: state.analyticsData,
           conversationHistory: state.conversationHistory,
-          credentials: state.credentials
+          credentials
         }),
       });
 
@@ -217,7 +255,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       return undefined;
     }
-  }, [state.credentials, state.analyticsData, state.conversationHistory]);
+  }, [state.analyticsData, state.conversationHistory]);
 
   // Clear conversation history
   const clearConversation = useCallback(() => {
@@ -230,7 +268,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppContextType = {
     ...state,
-    login,
+    initializeAuth,
     logout,
     fetchAnalytics,
     refreshAnalytics,
