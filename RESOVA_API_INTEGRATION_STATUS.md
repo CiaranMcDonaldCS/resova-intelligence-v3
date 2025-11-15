@@ -5,9 +5,9 @@ Complete reference of all Resova API endpoints and their integration status in R
 ## Quick Stats
 
 - **Total API Endpoints**: 65
-- **Integrated**: 15 (23.1%)
-- **Not Integrated**: 50 (76.9%)
-- **Integration Focus**: Analytics, Reporting & Read-Only Context APIs
+- **Integrated**: 18 (27.7%)
+- **Not Integrated**: 47 (72.3%)
+- **Integration Focus**: Analytics, Reporting, Availability & Read-Only Context APIs
 
 ---
 
@@ -35,11 +35,13 @@ Check availability and pricing for bookable items and instances.
 
 | Source | Endpoint | Method | Purpose | Details | Integrated |
 |--------|----------|--------|---------|---------|------------|
-| Main API | `/availability/daily` | GET | Daily availability calendar | Returns available dates and instances for items. Use to populate calendar views. | ❌ No |
-| Main API | `/availability/instance/{instance_id}` | GET | Specific instance details | Get details for a specific time slot including capacity, availability, time. Required before booking. | ❌ No |
-| Main API | `/availability/instance/{instance_id}/pricing` | POST | Calculate pricing | Calculate pricing for an instance based on quantities. Returns price breakdown before checkout. | ❌ No |
+| Main API | `/availability/daily` | GET | Daily availability calendar | Returns available dates and instances for items. Use to populate calendar views. | ✅ Yes |
+| Main API | `/availability/instance/{instance_id}` | GET | Specific instance details | Get details for a specific time slot including capacity, availability, time. Required before booking. | ✅ Yes |
+| Main API | `/availability/instance/{instance_id}/pricing` | POST | Calculate pricing | Calculate pricing for an instance based on quantities. Returns price breakdown before checkout. | ✅ Yes |
 
 **Use Case**: Display availability calendars, check capacity, calculate prices before booking.
+
+**Integration Location**: `/app/api/resova/availability/`
 
 ---
 
@@ -280,7 +282,7 @@ app/api/
 | Category | Total Endpoints | Integrated | Not Integrated | Integration % |
 |----------|----------------|------------|----------------|---------------|
 | Reporting APIs | 7 | 7 | 0 | 100% |
-| Availability APIs | 3 | 0 | 3 | 0% |
+| Availability APIs | 3 | 3 | 0 | 100% |
 | Basket APIs | 19 | 0 | 19 | 0% |
 | Transaction APIs | 18 | 0 | 18 | 0% |
 | Customer APIs | 3 | 1 | 2 | 33.3% |
@@ -288,20 +290,20 @@ app/api/
 | Gift Voucher APIs | 2 | 2 | 0 | 100% |
 | Block APIs | 4 | 0 | 4 | 0% |
 | Webhook APIs | 4 | 0 | 4 | 0% |
-| **TOTAL** | **65** | **15** | **50** | **23.1%** |
+| **TOTAL** | **65** | **18** | **47** | **27.7%** |
 
 ---
 
 ## Next Steps
 
-1. ✅ **Implement Read-Only APIs** - Items (5), Customers GET (1), Gift Vouchers (2) - COMPLETE
+1. ✅ **Implement Read-Only APIs** - Items (5), Customers GET (1), Gift Vouchers (2), Availability (3) - COMPLETE
 2. **Test Integration** - Verify API responses and data quality
 3. **Update AI Prompts** - Enhance AI assistant with new data sources
 4. **Monitor Usage** - Track API calls and rate limits
-5. **Consider Additional APIs** - Evaluate if Availability or Transaction GET endpoints would be useful
+5. **Consider Transaction GET APIs** - Evaluate if Transaction lookup endpoints would be useful
 
 ---
 
 *Last Updated: 2025-11-15*
 *Version: V3*
-*Status: Phase 1 Complete - Reporting (7/7) + Read-Only Context APIs (8/8) = 15/65 total*
+*Status: Phase 1 Complete - Reporting (7) + Availability (3) + Read-Only Context (8) = 18/65 total (27.7%)*
