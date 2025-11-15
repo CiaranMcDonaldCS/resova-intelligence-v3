@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useApp, useAnalytics } from '../context/AppContext';
 import DarkAiAssistant from './DarkAiAssistant';
+import LoadingScreen from './LoadingScreen';
 import { Settings, LogOut, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -43,14 +44,7 @@ export default function Dashboard() {
 
   // Loading state
   if (analyticsLoading && !analyticsData) {
-    return (
-      <div className="min-h-screen bg-[var(--background-primary)] flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-12 h-12 text-[var(--brand-primary)] animate-spin mx-auto mb-4" />
-          <p className="text-[var(--text-secondary)]">Loading analytics...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading analytics..." />;
   }
 
   // Error state
