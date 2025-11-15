@@ -85,9 +85,9 @@ export default function Dashboard() {
 
   // Main render - Single screen with AI Assistant
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-[#121212]">
       {/* Simple Header - Fixed at top */}
-      <header className="fixed top-0 left-0 right-0 bg-slate-800/95 backdrop-blur-md border-b border-slate-700 z-50">
+      <header className="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-sm border-b border-[#383838] z-50">
         <div className="px-6 py-3">
           <div className="flex items-center justify-between">
             {/* Logo */}

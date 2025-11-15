@@ -13,12 +13,13 @@ html {
 }
 
 body {
-  background: var(--background-primary);
+  background: var(--background-dark);
   color: var(--text-primary);
   font-family: var(--font-primary);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   overflow-x: hidden;
+  min-height: 100dvh;
 }
 
 /* ============================================
