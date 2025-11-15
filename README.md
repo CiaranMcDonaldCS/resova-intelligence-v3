@@ -103,32 +103,39 @@ The production build:
 ## Project Structure
 
 ```
-resova-ai-analytics/
+resova-intelligence-v3/
 ├── app/
 │   ├── api/
 │   │   ├── analytics/route.ts       # Analytics data endpoint
-│   │   └── chat/route.ts            # AI chat endpoint
+│   │   ├── chat/route.ts            # AI chat endpoint
+│   │   └── reporting/               # Individual reporting endpoints
+│   │       ├── extras/route.ts
+│   │       ├── gift-vouchers/route.ts
+│   │       └── guests/route.ts
 │   ├── components/
 │   │   ├── Dashboard.tsx            # Main dashboard with tabs
 │   │   ├── LoginScreen.tsx          # Authentication UI
 │   │   └── Landing.tsx              # Marketing landing page
 │   ├── config/
-│   │   ├── environment.ts           # Environment configuration
-│   │   └── demo-data.ts             # Demo/mock data
+│   │   └── environment.ts           # Environment configuration
 │   ├── context/
 │   │   └── AppContext.tsx           # Global state management
 │   ├── lib/
 │   │   ├── services/
-│   │   │   ├── resova-reporting-service.ts  # Resova API client
-│   │   │   ├── resova-service.ts            # Analytics orchestration
-│   │   │   ├── demo-service.ts              # Demo mode service
-│   │   │   └── analytics-service.ts         # Service factory
+│   │   │   ├── resova-service.ts            # Unified Resova API client (ALL APIs)
+│   │   │   ├── claude-service.ts            # Claude AI integration
+│   │   │   └── analytics-service.ts         # Service orchestration
 │   │   ├── transformers/
-│   │   │   └── resova-data-transformer.ts   # Data transformation
+│   │   │   ├── resova-data-transformer.ts   # Data transformation
+│   │   │   └── customer-intelligence-transformer.ts
+│   │   ├── storage/
+│   │   │   └── config-storage.ts            # Local storage management
 │   │   └── utils/
-│   │       └── logger.ts                     # Logging utility
+│   │       ├── logger.ts                    # Logging utility
+│   │       └── retry.ts                     # Retry logic
 │   ├── types/
-│   │   └── analytics.ts             # TypeScript definitions
+│   │   ├── analytics.ts             # Analytics type definitions
+│   │   └── resova-core.ts           # Resova Core API types
 │   ├── layout.tsx
 │   ├── page.tsx
 │   └── globals.css
@@ -146,35 +153,41 @@ resova-ai-analytics/
 ```
 1. User Authentication
    └─> AppContext.login() validates credentials
-       └─> Creates AnalyticsService (Demo or Production)
+       └─> Creates AnalyticsService (Production)
 
 2. Data Fetching
    └─> AnalyticsService.getAnalytics()
-       └─> ResovaReportingService fetches from APIs
-           ├─> Transactions API
+       └─> ResovaService fetches from ALL APIs in parallel
+           ├─> Transactions API (current + previous period)
            ├─> Itemized Revenue API
-           ├─> All Bookings API
-           ├─> All Payments API
-           ├─> Items API (optional)
-           └─> Gift Vouchers API (optional)
+           ├─> All Bookings API (current + previous + today + future)
+           ├─> All Payments API (current + previous period)
+           ├─> Inventory Items API
+           ├─> Availability Calendar API
+           ├─> Customers API (Core - paginated)
+           ├─> Gift Vouchers API (Core - paginated)
+           └─> Abandoned Carts API (Core - paginated)
        └─> ResovaDataTransformer.transform()
-           └─> Returns AnalyticsData
+           └─> Returns AnalyticsData with businessInsights
 
 3. AI Chat
    └─> User sends message
        └─> sendMessage() in AppContext
-           └─> POST /api/chat with analytics context
-               └─> Claude API generates response
+           └─> POST /api/chat with full analytics context
+               └─> Claude API generates contextual response
 ```
 
 ### Key Components
 
 #### Services Layer
 
-- **ResovaReportingService**: HTTP client for all Resova API endpoints
-- **ResovaDataTransformer**: Transforms API responses to internal format
-- **AnalyticsService**: Factory pattern for Demo/Production services
-- **DemoService**: Returns mock data for testing
+- **ResovaService**: Unified HTTP client for ALL Resova APIs (19+ methods)
+  - Reporting APIs: Transactions, Revenue, Bookings, Payments, Items, Extras, Guests, Gift Vouchers, Availability
+  - Core APIs: Items, Customers, Gift Vouchers (single + paginated), Baskets, Abandoned Carts
+- **ClaudeService**: AI chat integration with conversation history
+- **AnalyticsService**: Service orchestration and credential management
+- **ResovaDataTransformer**: Transforms API responses to analytics format
+- **CustomerIntelligenceTransformer**: Generates customer insights and predictions
 
 #### Context Layer
 
@@ -191,33 +204,100 @@ resova-ai-analytics/
 
 ### Resova APIs Used
 
-#### Reporting APIs (September 2025 Release)
+All APIs are consolidated in the `ResovaService` class for unified access.
+
+#### Reporting APIs (19 Total Methods)
 
 1. **Transactions API**
    - Endpoint: `GET /v1/reporting/transactions`
+   - Method: `getTransactions(params?)`
    - Returns: Transaction history with bookings, customers, payments
 
 2. **Itemized Revenue API**
-   - Endpoint: `POST /v1/reporting/transactions/sales/itemizedRevenues`
+   - Endpoint: `GET /v1/reporting/transactions/sales/itemizedRevenues`
+   - Method: `getItemizedRevenue(payload)`
    - Returns: Detailed revenue breakdown by item
 
 3. **All Bookings API**
-   - Endpoint: `POST /v1/reporting/transactions/bookings/allBookings`
+   - Endpoint: `GET /v1/reporting/transactions/bookings/allBookings`
+   - Method: `getAllBookings(payload)`
    - Returns: Comprehensive booking data
 
 4. **All Payments API**
-   - Endpoint: `POST /v1/reporting/transactions/payments/allPayments`
+   - Endpoint: `GET /v1/reporting/transactions/payments/allPayments`
+   - Method: `getAllPayments(payload)`
    - Returns: Payment processing details
 
-#### Core APIs
+5. **Inventory Items API**
+   - Endpoint: `POST /v1/reporting/inventory/items`
+   - Method: `getInventoryItems(payload)`
+   - Returns: Items with sales/booking data
 
-5. **Items API**
-   - Endpoint: `GET /v1/items`
-   - Returns: Services/products offered
+6. **Extras API**
+   - Endpoint: `POST /v1/reporting/inventory/extras`
+   - Method: `getExtras(payload)`
+   - Returns: Add-ons/extras with sales data
 
-6. **Gift Vouchers API**
-   - Endpoint: `GET /v1/gift-vouchers`
-   - Returns: Active and redeemed vouchers
+7. **Guests API**
+   - Endpoint: `POST /v1/reporting/guests`
+   - Method: `getGuests(payload)`
+   - Returns: Guest details with booking/transaction data
+
+8. **Gift Vouchers API (Reporting)**
+   - Endpoint: `POST /v1/reporting/inventory/giftVouchers`
+   - Method: `getReportingGiftVouchers(payload)`
+   - Returns: Gift vouchers with redemption/usage data
+
+9. **Availability Calendar API**
+   - Endpoint: `GET /v1/availability/calendar`
+   - Method: `getAvailabilityCalendar(params)`
+   - Returns: Calendar availability instances
+
+10. **Daily Availability API**
+    - Endpoint: `GET /v1/availability/daily`
+    - Method: `getDailyAvailability(itemId, date)`
+    - Returns: Daily availability for specific item
+
+#### Core APIs (Single Records)
+
+11. **Item Details API**
+    - Endpoint: `GET /v1/items/{id}`
+    - Method: `getItem(id)`
+    - Returns: Detailed item information
+
+12. **Customer Details API**
+    - Endpoint: `GET /v1/customers/{id}`
+    - Method: `getCustomer(id)`
+    - Returns: Customer details with booking history
+
+13. **Gift Voucher Details API**
+    - Endpoint: `GET /v1/vouchers/{id}`
+    - Method: `getGiftVoucher(id)`
+    - Returns: Single gift voucher details
+
+#### Core APIs (Paginated)
+
+14. **Customers API**
+    - Endpoint: `GET /v1/customers`
+    - Methods: `getCustomers(page, perPage)`, `getAllCustomers(maxPages)`
+    - Returns: Customer list with pagination
+
+15. **Gift Vouchers API**
+    - Endpoint: `GET /v1/vouchers`
+    - Methods: `getGiftVouchers(page, perPage)`, `getAllGiftVouchers(maxPages)`
+    - Returns: Gift voucher list with pagination
+
+16. **Baskets API**
+    - Endpoint: `GET /v1/baskets`
+    - Methods: `getBaskets(page, perPage, status?)`, `getAbandonedCarts(maxPages)`
+    - Returns: Shopping baskets including abandoned carts
+
+#### Main Orchestration
+
+17. **Analytics API (Main Method)**
+    - Method: `getAnalytics(dateRange?, includeBusinessInsights?)`
+    - Fetches: 11+ parallel API calls for complete analytics
+    - Returns: Comprehensive AnalyticsData with business insights
 
 ### Authentication
 
@@ -343,19 +423,21 @@ Context-aware AI powered by Claude:
 ### Adding New Features
 
 1. **New API Endpoint**:
-   - Add method to `ResovaReportingService`
-   - Add response type definitions
-   - Add transformation in `ResovaDataTransformer`
+   - Add method to `ResovaService` class
+   - Add TypeScript interface for request/response
+   - Add transformation in `ResovaDataTransformer` if needed
+   - Update `getAnalytics()` to include new API call
 
 2. **New Analytics Metric**:
    - Add type to `app/types/analytics.ts`
-   - Add transformation logic
+   - Add transformation logic in `ResovaDataTransformer`
    - Add UI component in Dashboard
+   - Update AI context in `app/api/chat/route.ts`
 
 3. **New AI Capability**:
    - Update system prompt in `app/api/chat/route.ts`
    - Add suggested questions in Dashboard
-   - Update demo responses if needed
+   - Ensure analytics context includes necessary data
 
 ### Code Style
 
@@ -541,24 +623,32 @@ Check logs in browser console for API calls, transformations, and errors.
 
 ## Version History
 
-### v1.0.1 (Current - Production Ready)
+### v3.0.0 (Current - Unified Architecture)
+- **Consolidated Service Architecture**: Single `ResovaService` with all 19+ API methods
+  - Eliminated nested service layers (ResovaReportingService, ResovaCoreService)
+  - Simplified maintenance and debugging
+  - All APIs in one place for unified access
+- **Complete API Coverage**: All Resova Reporting and Core APIs integrated
+  - 7 Reporting APIs (Transactions, Revenue, Bookings, Payments, Items, Extras, Guests, Gift Vouchers)
+  - 10 Core/Availability APIs (Items, Customers, Vouchers, Baskets, Calendar, Daily)
+  - Paginated endpoints for large datasets
+- **Enhanced Data Analysis**: 12-month historical + 90-day forward booking analysis
+- **Customer Intelligence**: Advanced customer insights and predictions
 - **Production Optimizations**: Security headers, standalone builds, health checks
-- **Environment Configuration**: Comprehensive `.env.example` with validation
-- **Removed Demo Mode**: Production-only authentication flow
-- **Security Enhancements**: HSTS, CSP-ready headers, CORS configuration
-- **Monitoring Ready**: Health check endpoint, Sentry preparation
-- **Build Optimizations**: Console removal, image optimization, compression
-- Bug fixes for Period Summary calculations
-- Enhanced chat UI with suggested questions
+- **Type Safety**: Comprehensive TypeScript interfaces for all APIs
 
-### v1.0.0
+### v2.0.0
 - Resova Reporting APIs integration (Transactions, Revenue, Bookings, Payments)
 - Resova Core APIs integration (Items, Gift Vouchers)
 - Dual-tab dashboard (Operations + Venue Performance)
 - AI assistant with full business context
 - Comprehensive business insights
 - Secure credential validation
-- Full-width AI assistant in Venue Performance
+
+### v1.0.0
+- Initial release with basic analytics
+- Demo mode support
+- Landing page and authentication
 
 ## Roadmap
 

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { ResovaReportingService, ExtrasPayload } from '@/app/lib/services/resova-reporting-service';
+import { ResovaService, ExtrasPayload } from '@/app/lib/services/resova-service';
 import { Credentials, ApiError, NetworkError } from '@/app/types/analytics';
 import { logger } from '@/app/lib/utils/logger';
 
@@ -32,14 +32,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create reporting service
-    const reportingService = new ResovaReportingService({
-      apiKey: credentials.apiKey,
-      baseUrl: credentials.storeUrl,
+    // Create Resova service
+    const resovaService = new ResovaService({
+      apiKey: credentials.resovaApiKey,
+      baseUrl: credentials.resovaApiUrl,
     });
 
     // Fetch extras data
-    const extras = await reportingService.getExtras(payload);
+    const extras = await resovaService.getExtras(payload);
 
     return NextResponse.json({
       success: true,

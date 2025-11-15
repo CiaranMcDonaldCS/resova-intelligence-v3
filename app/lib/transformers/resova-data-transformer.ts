@@ -41,10 +41,10 @@ import {
   ResovaAllBooking,
   ResovaAllPayment,
   ResovaItem,
-  ResovaGiftVoucher,
   ResovaInventoryItem,
   ResovaAvailabilityInstance
-} from '../services/resova-reporting-service';
+} from '../services/resova-service';
+import { ResovaGiftVoucher } from '@/app/types/resova-core';
 import { logger } from '../utils/logger';
 
 export class ResovaDataTransformer {
