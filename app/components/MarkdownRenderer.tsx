@@ -39,8 +39,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         targetElements.push(
           <ul key={`list-${listKey++}`} className="space-y-1.5 text-sm list-none pl-1 mt-1.5">
             {currentList.map((item, idx) => {
-              // Icon colors rotation
-              const iconColors = ['text-sky-400', 'text-purple-400', 'text-red-400', 'text-green-400', 'text-yellow-400'];
+              // V3 icon colors rotation
+              const iconColors = ['text-[var(--info)]', 'text-[var(--accent-purple)]', 'text-[var(--danger)]', 'text-[var(--success)]', 'text-[var(--warning)]'];
               const icons = ['pie_chart', 'repeat', 'trending_down', 'trending_up', 'analytics'];
               const iconColor = iconColors[idx % iconColors.length];
               const icon = icons[idx % icons.length];
@@ -48,7 +48,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
               return (
                 <li key={idx} className="flex items-start">
                   <span className={`material-symbols-outlined ${iconColor} text-sm mr-2 mt-0.5`}>{icon}</span>
-                  <span className="text-[#A0A0A0] leading-relaxed text-sm">{processInlineMarkdown(item)}</span>
+                  <span className="text-[var(--text-secondary)] leading-relaxed text-sm">{processInlineMarkdown(item)}</span>
                 </li>
               );
             })}
@@ -59,8 +59,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         targetElements.push(
           <ul key={`list-${listKey++}`} className="space-y-2 my-3 ml-1">
             {currentList.map((item, idx) => (
-              <li key={idx} className="text-sm text-[#E5E5E5] leading-relaxed flex items-start">
-                <span className="text-blue-400 mr-2.5 mt-0.5 flex-shrink-0">•</span>
+              <li key={idx} className="text-sm text-[var(--text-primary)] leading-relaxed flex items-start">
+                <span className="text-[var(--brand-primary)] mr-2.5 mt-0.5 flex-shrink-0">•</span>
                 <span className="flex-1">{processInlineMarkdown(item)}</span>
               </li>
             ))}
@@ -87,9 +87,9 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
               const description = parts.slice(1).join(':').trim();
 
               return (
-                <li key={idx} className="bg-[#1E1E1E] border border-[#383838] rounded-lg p-2">
+                <li key={idx} className="bg-[var(--background-primary)] border border-[var(--border-primary)] rounded-lg p-2">
                   {title && <p className="font-medium text-white mb-0.5 text-sm">{title}.</p>}
-                  {description && <p className="text-xs text-[#A0A0A0] leading-relaxed">{description}</p>}
+                  {description && <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{description}</p>}
                 </li>
               );
             })}
@@ -100,8 +100,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         targetElements.push(
           <ol key={`ordered-list-${listKey++}`} className="space-y-2 my-3 ml-1 list-none">
             {currentOrderedList.map((item, idx) => (
-              <li key={idx} className="text-sm text-[#E5E5E5] leading-relaxed flex items-start">
-                <span className="text-blue-400 font-semibold mr-2.5 mt-0.5 flex-shrink-0">{idx + 1}.</span>
+              <li key={idx} className="text-sm text-[var(--text-primary)] leading-relaxed flex items-start">
+                <span className="text-[var(--brand-primary)] font-semibold mr-2.5 mt-0.5 flex-shrink-0">{idx + 1}.</span>
                 <span className="flex-1">{processInlineMarkdown(item)}</span>
               </li>
             ))}
@@ -125,7 +125,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       }
       if ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) {
         return (
-          <em key={idx} className="italic text-[#E5E5E5]">
+          <em key={idx} className="italic text-[var(--text-primary)]">
             {part.slice(1, -1)}
           </em>
         );
@@ -174,7 +174,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       currentSection = 'normal';
 
       elements.push(
-        <h2 key={lineIdx} className="text-base font-bold text-[#E5E5E5] mt-4 mb-2 first:mt-0 tracking-tight">
+        <h2 key={lineIdx} className="text-base font-bold text-[var(--text-primary)] mt-4 mb-2 first:mt-0 tracking-tight">
           {trimmed.slice(3)}
         </h2>
       );
@@ -204,7 +204,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
         const headerElement = (
           <div key={lineIdx} className="flex items-center mb-2">
-            <span className="material-symbols-outlined text-amber-400 mr-2" style={{ fontSize: '16px' }}>
+            <span className="material-symbols-outlined text-[var(--warning)] mr-2" style={{ fontSize: '16px' }}>
               lightbulb
             </span>
             <h3 className="text-sm font-semibold text-white">
@@ -217,7 +217,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           insightsElements.push(headerElement);
         } else {
           elements.push(
-            <div key={lineIdx} className="bg-[#1E1E1E] border border-[#383838] rounded-xl p-2 md:p-3 mt-2">
+            <div key={lineIdx} className="bg-[var(--background-primary)] border border-[var(--border-primary)] rounded-xl p-2 md:p-3 mt-2">
               {headerElement}
             </div>
           );
@@ -231,7 +231,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
         const headerElement = (
           <div key={lineIdx} className="flex items-center mb-2">
-            <span className="material-symbols-outlined text-yellow-300 mr-2" style={{ fontSize: '16px' }}>
+            <span className="material-symbols-outlined text-[var(--warning)] mr-2" style={{ fontSize: '16px' }}>
               task_alt
             </span>
             <h3 className="text-sm font-semibold text-white">
@@ -244,7 +244,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           actionsElements.push(headerElement);
         } else {
           elements.push(
-            <div key={lineIdx} className="bg-transparent border-2 border-dashed border-[#3333A3] rounded-xl p-2 md:p-3 mt-2">
+            <div key={lineIdx} className="bg-transparent border-2 border-dashed border-[var(--brand-primary)]/40 rounded-xl p-2 md:p-3 mt-2">
               {headerElement}
             </div>
           );
@@ -257,9 +257,9 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         isCollectingActions = false;
 
         elements.push(
-          <div key={lineIdx} className="mt-6 pt-5 border-t border-[#383838]">
+          <div key={lineIdx} className="mt-6 pt-5 border-t border-[var(--border-primary)]">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center">
-              <span className="text-blue-400 mr-2">💡</span>
+              <span className="text-[var(--brand-primary)] mr-2">💡</span>
               {headerText}
             </h3>
           </div>
@@ -270,7 +270,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         isCollectingActions = false;
 
         elements.push(
-          <h3 key={lineIdx} className="text-sm font-semibold text-[#E5E5E5] mt-3 mb-2 tracking-tight">
+          <h3 key={lineIdx} className="text-sm font-semibold text-[var(--text-primary)] mt-3 mb-2 tracking-tight">
             {headerText}
           </h3>
         );
@@ -318,7 +318,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     }
 
     targetElements.push(
-      <p key={lineIdx} className="text-sm text-[#E5E5E5] leading-relaxed my-2">
+      <p key={lineIdx} className="text-sm text-[var(--text-primary)] leading-relaxed my-2">
         {processInlineMarkdown(trimmed)}
       </p>
     );
@@ -343,14 +343,14 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <div key="two-column-insights-actions" className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 my-3">
         {/* Key Insights Column */}
         {insightsElements.length > 0 && (
-          <div className="bg-[#1E1E1E] border border-[#383838] rounded-xl p-2 md:p-3">
+          <div className="bg-[var(--background-primary)] border border-[var(--border-primary)] rounded-xl p-2 md:p-3">
             {insightsElements}
           </div>
         )}
 
         {/* Recommended Actions Column */}
         {actionsElements.length > 0 && (
-          <div className="bg-transparent border-2 border-dashed border-[#3333A3] rounded-xl p-2 md:p-3">
+          <div className="bg-transparent border-2 border-dashed border-[var(--brand-primary)]/40 rounded-xl p-2 md:p-3">
             {actionsElements}
           </div>
         )}
