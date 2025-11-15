@@ -80,6 +80,34 @@ export interface VoucherTransaction {
   created_at: string;
 }
 
+// ===== REVIEW TYPES =====
+
+export interface ResovaItemReview {
+  id: string;
+  item_id: string;
+  item_name?: string;
+  customer_id?: string;
+  customer_name?: string;
+  rating: number;           // 1-5 stars
+  review_text?: string;     // Review comment/feedback
+  review_title?: string;    // Review title/headline
+  created_at: string;
+  updated_at?: string;
+  status?: 'approved' | 'pending' | 'rejected';
+  helpful_count?: number;
+}
+
+export interface ItemReviewsResponse {
+  data: ResovaItemReview[];
+  meta?: {
+    total: number;
+    count: number;
+    per_page?: number;
+    current_page?: number;
+    total_pages?: number;
+  };
+}
+
 // ===== BASKET TYPES =====
 
 export interface ResovaBasketItem {
