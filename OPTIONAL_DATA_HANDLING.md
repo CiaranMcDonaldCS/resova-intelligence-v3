@@ -107,7 +107,6 @@ Behavioral signals suggest guests are happy with their experience."
 **Key Points:**
 - ✅ Never invents data
 - ✅ Offers behavioral proxies when available
-- ✅ Suggests how to get the data
 - ✅ Maintains professional, helpful tone
 
 ---
@@ -373,4 +372,4 @@ async getAllOptionalFeatures(itemIds: string[]): Promise<FeatureType[]> {
 
 Our current implementation with reviews, vouchers, and abandoned carts already follows this pattern perfectly. Future optional APIs should use the same approach.
 
-**Remember:** An operator without reviews can still get tremendous value from revenue analytics, customer intelligence, and capacity insights. Missing data is not a failure - it's an opportunity to suggest features they could enable.
+**Remember:** An operator without reviews can still get tremendous value from revenue analytics, customer intelligence, and capacity insights.
