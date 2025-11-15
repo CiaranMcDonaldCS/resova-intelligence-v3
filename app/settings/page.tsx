@@ -35,6 +35,7 @@ const RESOVA_DATACENTER_OPTIONS = [
   { value: 'https://api.resova.us/v1', label: 'United States (api.resova.us)' },
   { value: 'https://api.resova.eu/v1', label: 'Europe (api.resova.eu)' },
   { value: 'https://api.resova.io/v1', label: 'International (api.resova.io)' },
+  { value: 'https://api.staging1.resova.io/v1', label: 'Staging (api.staging1.resova.io)' },
 ];
 
 const TIMEZONE_OPTIONS = [
