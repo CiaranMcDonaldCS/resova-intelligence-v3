@@ -14,9 +14,12 @@ import {
   ChartSpec
 } from '@/app/types/analytics';
 import { logger } from '../utils/logger';
+import { ConfigData } from '../storage/types';
+import { buildActivitySeedPrompt } from '../config/activity-types';
 
 export interface ClaudeServiceOptions extends ServiceOptions {
   apiKey: string;
+  config?: ConfigData;
 }
 
 export class ClaudeService {
@@ -25,6 +28,7 @@ export class ClaudeService {
   private model: string;
   private maxTokens: number;
   private timeout: number;
+  private activityConfig?: ConfigData;
 
   constructor(options: ClaudeServiceOptions) {
     this.apiKey = options.apiKey;
@@ -32,6 +36,7 @@ export class ClaudeService {
     this.model = config.api.claude.model;
     this.maxTokens = config.api.claude.maxTokens;
     this.timeout = options.timeout || config.api.claude.timeout;
+    this.activityConfig = options.config;
   }
 
   /**
@@ -449,10 +454,11 @@ NOTE: Use this data to answer questions about upcoming demand, capacity planning
   }
 
   /**
-   * Get system prompt for Claude
+   * Get system prompt for Claude with layered activity-specific context
    */
   private getSystemPrompt(): string {
-    return `You are a senior business advisor for tour and activity operators, with 15+ years of experience helping venue owners and managers grow their businesses. You understand the booking industry, seasonal trends, operational challenges, and profit optimization strategies.
+    // Base system prompt (general business advisor)
+    const basePrompt = `You are a senior business advisor for tour and activity operators, with 15+ years of experience helping venue owners and managers grow their businesses. You understand the booking industry, seasonal trends, operational challenges, and profit optimization strategies.
 
 ## Your Role:
 Help owners/managers make data-driven decisions that impact their bottom line. Focus on revenue growth, operational efficiency, customer retention, and profitability. Always think from a business owner's perspective: "How does this impact my profit and business sustainability?"
@@ -650,6 +656,16 @@ Your **12% retention rate** is costing you **$18,400** in potential annual reven
   "Which customer segment has the highest lifetime value potential?"
 ]
 </FOLLOWUP>`;
+
+    // Layer on activity-specific context if configured
+    const activityPrompt = this.activityConfig?.activityTypes && this.activityConfig.activityTypes.length > 0
+      ? buildActivitySeedPrompt(this.activityConfig.activityTypes)
+      : '';
+
+    // Combine base prompt with activity layer
+    return activityPrompt
+      ? `${basePrompt}\n\n${activityPrompt}`
+      : basePrompt;
   }
 
   /**

@@ -14,6 +14,7 @@ import { ResovaService } from './resova-service';
 import { ClaudeService } from './claude-service';
 import { logger } from '../utils/logger';
 import { retry } from '../utils/retry';
+import { ConfigStorage } from '../storage/config-storage';
 
 export class AnalyticsService {
   private resovaService: ResovaService;
@@ -25,8 +26,12 @@ export class AnalyticsService {
       baseUrl: credentials.resovaApiUrl,
     });
 
+    // Load activity configuration from storage
+    const config = ConfigStorage.load();
+
     this.claudeService = new ClaudeService({
       apiKey: credentials.claudeApiKey,
+      config: config || undefined,
     });
   }
 
