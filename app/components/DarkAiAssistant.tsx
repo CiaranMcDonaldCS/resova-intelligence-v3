@@ -22,6 +22,7 @@ import ProactiveInsights from './ProactiveInsights';
 import WhatIfScenario from './WhatIfScenario';
 import DeepDiveModal from './DeepDiveModal';
 import OwnersBox from './OwnersBox';
+import AttentionRequired from './AttentionRequired';
 import { Calculator, Lightbulb, Zap, ChevronRight } from 'lucide-react';
 
 // Focus areas matching the design
@@ -185,6 +186,26 @@ export default function DarkAiAssistant() {
         <div className="space-y-4">
           {/* Owner's Box - Executive Summary */}
           <OwnersBox analyticsData={analyticsData} />
+
+          {/* Attention Required - Critical Action Items */}
+          <AttentionRequired
+            analyticsData={analyticsData}
+            onItemClick={(item) => {
+              setDeepDiveContent({
+                type: 'attention',
+                title: item.title,
+                description: item.description,
+                category: item.category,
+                priority: item.priority,
+                relatedQuestions: [
+                  `How can I ${item.action?.toLowerCase()}?`,
+                  `What caused ${item.title.toLowerCase()}?`,
+                  `Show me more details about ${item.category}`
+                ]
+              });
+              setShowDeepDive(true);
+            }}
+          />
 
           {/* Critical Alerts - Only shown when there are high-priority insights */}
           <ProactiveInsights
