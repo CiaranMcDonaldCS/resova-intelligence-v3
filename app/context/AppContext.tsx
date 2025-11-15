@@ -134,19 +134,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Fetch analytics data
   const fetchAnalytics = useCallback(async (dateRange?: string) => {
-    setState(prev => {
-      if (!prev.analyticsService) {
-        logger.error('Analytics service not initialized');
-        return prev;
-      }
-
-      return {
-        ...prev,
-        analyticsLoading: true,
-        analyticsError: null,
-      };
-    });
-
     // Get current service from state
     let currentService: AnalyticsService | null = null;
     setState(prev => {
@@ -155,8 +142,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
     if (!currentService) {
+      logger.error('Analytics service not initialized');
+      setState(prev => ({
+        ...prev,
+        analyticsLoading: false,
+        analyticsError: 'Analytics service not initialized',
+      }));
       return;
     }
+
+    setState(prev => ({
+      ...prev,
+      analyticsLoading: true,
+      analyticsError: null,
+    }));
 
     try {
       const data = await currentService.getAnalytics(dateRange);
