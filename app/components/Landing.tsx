@@ -1,0 +1,545 @@
+'use client';
+
+import { useState } from 'react';
+import { 
+  BarChart3, 
+  TrendingUp, 
+  Zap, 
+  Shield, 
+  Clock,
+  CheckCircle,
+  ArrowRight,
+  Star,
+  MessageSquare,
+  Download,
+  Sparkles
+} from 'lucide-react';
+
+interface LandingProps {
+  onGetStarted: () => void;
+}
+
+export default function Landing({ onGetStarted }: LandingProps) {
+  const [email, setEmail] = useState('');
+
+  const features = [
+    {
+      icon: TrendingUp,
+      title: 'Revenue Intelligence',
+      description: 'Identify booking patterns, optimize pricing strategies, and forecast demand to maximize revenue per available slot.'
+    },
+    {
+      icon: Sparkles,
+      title: 'AI Business Advisor',
+      description: 'Ask questions in plain English and get instant insights about your operations, backed by Claude AI technology.'
+    },
+    {
+      icon: BarChart3,
+      title: 'Operational Analytics',
+      description: 'Track capacity utilization, staff efficiency, and resource allocation across all your activities and time slots.'
+    },
+    {
+      icon: Clock,
+      title: 'Automated Reporting',
+      description: 'Save 10+ hours per week with automated daily, weekly, and monthly reports delivered to your inbox.'
+    },
+    {
+      icon: MessageSquare,
+      title: 'Guest Insights',
+      description: 'Understand customer behavior, identify your best customers, and discover opportunities for upsells and repeat bookings.'
+    },
+    {
+      icon: Shield,
+      title: 'Enterprise Security',
+      description: 'SOC 2 compliant infrastructure with end-to-end encryption. Your business data remains private and secure.'
+    }
+  ];
+
+  // Resova pricing tiers with Intelligence add-on pricing
+  const resovaPricing = [
+    {
+      tier: 'Lite',
+      resovaPrice: '$49',
+      intelligencePrice: '+$29',
+      totalPrice: '$78',
+      period: '/month',
+      features: [
+        'Real-time analytics dashboard',
+        'AI-powered insights & recommendations',
+        'Revenue & booking analytics',
+        'Guest behavior analysis',
+        'Email support',
+        'Perfect for new businesses'
+      ],
+      cta: 'Add to Lite Plan',
+      popular: false,
+      resovaUrl: 'https://get.resova.com/pricing/'
+    },
+    {
+      tier: 'Pro',
+      resovaPrice: '$99',
+      intelligencePrice: '+$49',
+      totalPrice: '$148',
+      period: '/month',
+      features: [
+        'Everything in Lite',
+        'Advanced forecasting & trends',
+        'Custom reports & exports',
+        'Performance comparisons',
+        'Priority AI support',
+        'API access',
+        'Most popular choice'
+      ],
+      cta: 'Add to Pro Plan',
+      popular: true,
+      resovaUrl: 'https://get.resova.com/pricing/'
+    },
+    {
+      tier: 'Premium',
+      resovaPrice: '$199',
+      intelligencePrice: '+$79',
+      totalPrice: '$278',
+      period: '/month',
+      features: [
+        'Everything in Pro',
+        'Dedicated analytics consultant',
+        'Custom AI model training',
+        'White-label reporting',
+        'SLA guarantee',
+        'Unlimited data retention',
+        'For scaling businesses'
+      ],
+      cta: 'Add to Premium Plan',
+      popular: false,
+      resovaUrl: 'https://get.resova.com/pricing/'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img
+                src="/logo.png"
+                alt="Resova"
+                className="h-8"
+              />
+            </div>
+            <div className="flex items-center space-x-6">
+              <a href="#features" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Features</a>
+              <a href="#pricing" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Pricing</a>
+              <a href="https://get.resova.com" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Resova.com</a>
+              <button
+                onClick={onGetStarted}
+                className="px-6 py-2.5 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all font-semibold shadow-sm hover:shadow-md"
+              >
+                Start Free Trial
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="mb-8">
+              <img
+                src="/logo.png"
+                alt="Resova"
+                className="h-32 md:h-40 mx-auto"
+              />
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              Turn Your Activity Data Into
+              <span className="block text-[#2685CF] mt-2">Actionable Business Intelligence</span>
+            </h1>
+            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              Enterprise-grade analytics and AI insights designed for tour operators, activity providers,
+              and entertainment venues using Resova.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <button
+                onClick={onGetStarted}
+                className="flex items-center space-x-2 px-8 py-4 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all shadow-lg hover:shadow-xl text-lg font-semibold"
+              >
+                <span>Start Free Trial</span>
+                <ArrowRight className="w-5 h-5" />
+              </button>
+              <button
+                className="flex items-center space-x-2 px-8 py-4 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-all text-lg font-semibold"
+              >
+                <span>Watch Demo</span>
+              </button>
+            </div>
+            <p className="mt-8 text-sm text-gray-400">
+              <span className="text-green-400">✓</span> 5-minute setup  •
+              <span className="text-green-400 ml-2">✓</span> No credit card required  •
+              <span className="text-green-400 ml-2">✓</span> Cancel anytime
+            </p>
+          </div>
+
+          {/* Screenshot/Demo */}
+          <div className="mt-16 relative">
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#2685CF] to-cyan-500 blur-3xl opacity-30 rounded-3xl"></div>
+            <div className="relative bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl border border-slate-700 p-6">
+              {/* Dashboard Header */}
+              <div className="bg-gradient-to-r from-[#2685CF] to-blue-600 rounded-t-lg px-6 py-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg">Resova Intelligence</h3>
+                      <p className="text-blue-100 text-xs">Real-time Analytics Dashboard</p>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center space-x-2 text-xs text-blue-100">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span>Live</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dashboard Content */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                {/* Metric Cards */}
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Today's Revenue</span>
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">$3,247</div>
+                  <div className="text-green-400 text-xs mt-1">+12.5% vs yesterday</div>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Bookings</span>
+                    <BarChart3 className="w-4 h-4 text-[#2685CF]" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">127</div>
+                  <div className="text-[#2685CF] text-xs mt-1">18 this hour</div>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Capacity</span>
+                    <Clock className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">84%</div>
+                  <div className="text-amber-400 text-xs mt-1">Prime time slots</div>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Avg. Value</span>
+                    <Star className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">$42</div>
+                  <div className="text-purple-400 text-xs mt-1">Per booking</div>
+                </div>
+              </div>
+
+              {/* Chart Preview */}
+              <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-white font-semibold text-sm">Revenue Trend (7 Days)</h4>
+                  <Sparkles className="w-4 h-4 text-[#2685CF]" />
+                </div>
+                <div className="h-32 flex items-end justify-between space-x-2">
+                  {[45, 52, 48, 65, 72, 68, 85].map((height, i) => (
+                    <div key={i} className="flex-1 bg-gradient-to-t from-[#2685CF] to-cyan-400 rounded-t opacity-80 hover:opacity-100 transition-opacity" style={{ height: `${height}%` }}></div>
+                  ))}
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-gray-500">
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                  <span>Sun</span>
+                </div>
+              </div>
+
+              {/* AI Insight Banner */}
+              <div className="mt-4 bg-gradient-to-r from-[#2685CF]/20 to-purple-500/20 border border-[#2685CF]/30 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-[#2685CF]/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-4 h-4 text-[#2685CF]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-sm font-medium mb-1">AI Recommendation</p>
+                    <p className="text-gray-300 text-xs leading-relaxed">
+                      Your Saturday afternoon slots are selling 23% faster this week. Consider adding capacity or increasing prices for peak times.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-bold text-white mb-1">1,500+</div>
+              <div className="text-sm text-gray-400">Resova Customers</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-white mb-1">50K+</div>
+              <div className="text-sm text-gray-400">Daily Bookings Analyzed</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-white mb-1">99.9%</div>
+              <div className="text-sm text-gray-400">Uptime SLA</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-white mb-1">24/7</div>
+              <div className="text-sm text-gray-400">Support Available</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Built for Activity Operators Who Demand More
+            </h2>
+            <p className="text-xl text-gray-600">
+              Purpose-built intelligence for tour operators, escape rooms, museums, and entertainment venues
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="p-6 bg-white border border-gray-200 rounded-xl hover:shadow-lg hover:border-[#2685CF]/30 transition-all"
+              >
+                <div className="w-12 h-12 bg-[#2685CF]/10 rounded-lg flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-[#2685CF]" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 bg-gradient-to-br from-slate-50 to-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Enterprise Analytics in Minutes, Not Months
+            </h2>
+            <p className="text-lg text-gray-600">No complex setup. No data migration. Just instant intelligence.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#2685CF] to-blue-600 text-white rounded-xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
+                1
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Connect Your System</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Securely link your Resova account with API credentials. Your data syncs automatically—no manual imports required.
+              </p>
+            </div>
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#2685CF] to-blue-600 text-white rounded-xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
+                2
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Analyze Performance</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Access real-time dashboards showing revenue trends, booking patterns, capacity utilization, and guest behavior.
+              </p>
+            </div>
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#2685CF] to-blue-600 text-white rounded-xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
+                3
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Drive Growth</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Leverage AI recommendations to optimize pricing, improve operations, and increase revenue per booking.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Add <span className="text-[#2685CF]">Connect to Resova</span> to Your Resova Plan
+            </h2>
+            <p className="text-xl text-gray-600">
+              Choose your Resova tier and add AI-powered analytics
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {resovaPricing.map((plan, index) => (
+              <div
+                key={index}
+                className={`p-8 bg-white rounded-xl border-2 ${
+                  plan.popular ? 'border-[#2685CF] shadow-xl' : 'border-gray-200'
+                } relative`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-[#2685CF] text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Resova {plan.tier}</h3>
+                  <div className="mb-3">
+                    <div className="text-gray-600 text-sm">
+                      {plan.resovaPrice}{plan.period} + {plan.intelligencePrice}{plan.period}
+                    </div>
+                    <div className="flex items-baseline justify-center mt-2">
+                      <span className="text-4xl font-bold text-gray-900">{plan.totalPrice}</span>
+                      <span className="text-gray-600 ml-2">{plan.period}</span>
+                    </div>
+                  </div>
+                  <a
+                    href={plan.resovaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-[#2685CF] hover:underline"
+                  >
+                    View Resova {plan.tier} details →
+                  </a>
+                </div>
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start space-x-3">
+                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-900">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={onGetStarted}
+                  className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                    plan.popular
+                      ? 'bg-[#2685CF] text-white hover:bg-[#1E6FB0] shadow-lg hover:shadow-xl'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center mt-8 text-gray-600">
+            <strong>Resova Add-On Module</strong> - Seamlessly integrates with your existing Resova subscription
+          </p>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[#2685CF]/10"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#2685CF]/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+            Join 1,500+ Activity Operators
+            <span className="block text-[#2685CF] mt-2">Growing with Data-Driven Insights</span>
+          </h2>
+          <p className="text-xl text-gray-300 mb-10 leading-relaxed">
+            Start your free trial today. No credit card required. Cancel anytime.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <button
+              onClick={onGetStarted}
+              className="px-10 py-4 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all shadow-xl hover:shadow-2xl text-lg font-semibold"
+            >
+              Start Free Trial
+            </button>
+            <button
+              className="px-10 py-4 bg-white/10 text-white border-2 border-white/30 rounded-lg hover:bg-white/20 transition-all text-lg font-semibold backdrop-blur-sm"
+            >
+              Schedule Demo
+            </button>
+          </div>
+          <p className="mt-8 text-sm text-gray-400">
+            <span className="text-green-400">✓</span> 14-day free trial  •
+            <span className="text-green-400 ml-2">✓</span> Setup in 5 minutes  •
+            <span className="text-green-400 ml-2">✓</span> No credit card needed
+          </p>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-16 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div className="md:col-span-2">
+              <div className="flex items-center mb-4">
+                <img
+                  src="/logo.png"
+                  alt="Resova"
+                  className="h-7"
+                />
+              </div>
+              <p className="text-gray-400 text-base leading-relaxed max-w-md">
+                Enterprise-grade analytics and AI insights for activity operators, tour providers, and entertainment venues using Resova.
+              </p>
+              <div className="mt-6 flex items-center space-x-4">
+                <span className="text-sm text-gray-500">Powered by</span>
+                <span className="text-sm font-semibold text-gray-300">Claude AI</span>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4 text-white">Product</h4>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><a href="#features" className="hover:text-[#2685CF] transition-colors">Features</a></li>
+                <li><a href="#pricing" className="hover:text-[#2685CF] transition-colors">Pricing</a></li>
+                <li><a href="https://get.resova.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Resova Platform</a></li>
+                <li><a href="#" className="hover:text-[#2685CF] transition-colors">API Documentation</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4 text-white">Company</h4>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><a href="https://get.resova.com/about" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">About Resova</a></li>
+                <li><a href="https://get.resova.com/contact" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Contact Sales</a></li>
+                <li><a href="#" className="hover:text-[#2685CF] transition-colors">Support Center</a></li>
+                <li><a href="#" className="hover:text-[#2685CF] transition-colors">System Status</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-slate-800 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+              <p className="text-sm text-gray-500">
+                © 2025 Resova Intelligence. All rights reserved.
+              </p>
+              <div className="flex items-center space-x-6 text-sm text-gray-500">
+                <a href="#" className="hover:text-[#2685CF] transition-colors">Privacy Policy</a>
+                <a href="#" className="hover:text-[#2685CF] transition-colors">Terms of Service</a>
+                <a href="#" className="hover:text-[#2685CF] transition-colors">Security</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
