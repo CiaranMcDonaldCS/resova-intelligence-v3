@@ -45,17 +45,21 @@ export class ResovaService {
 
   /**
    * Fetch analytics data from Resova Reporting APIs
+   * Default: 12 months historical + 90 days forward for comprehensive analysis
    */
   async getAnalytics(dateRange?: string, includeBusinessInsights: boolean = true): Promise<AnalyticsData> {
     try {
-      logger.info(`Fetching analytics from Resova Reporting APIs (${dateRange || 'Last 30 days'})`);
+      logger.info(`Fetching analytics from Resova Reporting APIs (${dateRange || 'Last 12 months + 90 days forward'})`);
 
       // Parse date range for API calls
-      const resovaDateRange = ResovaReportingService.parseDateRange(dateRange);
+      // Default to 365 days (12 months) for comprehensive trend analysis
+      const resovaDateRange = dateRange ?
+        ResovaReportingService.parseDateRange(dateRange) :
+        { range: '365' as const };
 
-      // Calculate previous period for comparison
+      // Calculate previous period for comparison (year-over-year for 12 months)
       const previousPeriodRange = ResovaReportingService.calculatePreviousPeriod(resovaDateRange);
-      logger.info(`Previous period range calculated: ${JSON.stringify(previousPeriodRange)}`);
+      logger.info(`Date ranges - Current: ${JSON.stringify(resovaDateRange)}, Previous: ${JSON.stringify(previousPeriodRange)}`);
 
       // Calculate explicit start/end dates for availability calendar
       let availabilityStartDate: string;
@@ -69,7 +73,7 @@ export class ResovaService {
       const today = `${year}-${month}-${day}`;
       const todayDateRange = { start_date: today, end_date: today };
 
-      // Get future date range (today + 90 days) for upcoming bookings
+      // Get future date range (today + 90 days) for forecasting and forward-looking insights
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 90);
       const futureYear = futureDate.getFullYear();
@@ -77,6 +81,8 @@ export class ResovaService {
       const futureDay = String(futureDate.getDate()).padStart(2, '0');
       const future90Days = `${futureYear}-${futureMonth}-${futureDay}`;
       const futureBookingsRange = { start_date: today, end_date: future90Days };
+
+      logger.info(`Historical period: 12 months back | Forward-looking period: 90 days ahead (${today} - ${future90Days})`);
 
       // Calculate explicit dates for availability calendar
       if (resovaDateRange.start_date && resovaDateRange.end_date) {
@@ -110,9 +116,9 @@ export class ResovaService {
         previousAllBookings,
         previousAllPayments
       ] = await Promise.all([
-        // CURRENT PERIOD DATA
+        // CURRENT PERIOD DATA (12 months historical)
         this.reportingService.getTransactions({
-          limit: 100,
+          limit: 500, // Increased limit for 12 months of data
           date_field: 'created_at',
           range: resovaDateRange.range,
           start_date: resovaDateRange.start_date,
@@ -153,9 +159,9 @@ export class ResovaService {
           start_date: availabilityStartDate,
           end_date: availabilityEndDate
         }),
-        // PREVIOUS PERIOD DATA (for accurate trend comparisons)
+        // PREVIOUS PERIOD DATA (for accurate year-over-year comparisons)
         this.reportingService.getTransactions({
-          limit: 100,
+          limit: 500, // Increased limit for 12 months of previous data
           date_field: 'created_at',
           range: previousPeriodRange.range,
           start_date: previousPeriodRange.start_date,
@@ -174,8 +180,11 @@ export class ResovaService {
       const todaysBookings = todaysBookingsRaw;
       const futureBookings = futureBookingsRaw;
 
-      logger.info(`Fetched CURRENT PERIOD: ${transactionsResponse.data.length} transactions, ${itemizedRevenue.length} revenue items, ${allBookings.length} bookings, ${todaysBookings.length} today's bookings, ${futureBookings.length} future bookings, ${allPayments.length} payments, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances`);
-      logger.info(`Fetched PREVIOUS PERIOD: ${previousTransactionsResponse.data.length} transactions, ${previousAllBookings.length} bookings, ${previousAllPayments.length} payments`);
+      logger.info(`✅ CURRENT PERIOD (12 months): ${transactionsResponse.data.length} transactions, ${allBookings.length} bookings, ${allPayments.length} payments`);
+      logger.info(`✅ PREVIOUS PERIOD (year-over-year): ${previousTransactionsResponse.data.length} transactions, ${previousAllBookings.length} bookings, ${previousAllPayments.length} payments`);
+      logger.info(`✅ FORWARD-LOOKING (90 days): ${futureBookings.length} future bookings`);
+      logger.info(`✅ TODAY'S AGENDA: ${todaysBookings.length} bookings today`);
+      logger.info(`📊 Additional data: ${itemizedRevenue.length} revenue items, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances`);
 
       // Transform Resova data to our analytics format (with previous period for accurate comparisons)
       const analyticsData = ResovaDataTransformer.transform(

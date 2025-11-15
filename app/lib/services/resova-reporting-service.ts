@@ -18,7 +18,7 @@ export interface ResovaReportingServiceOptions extends ServiceOptions {
 export interface ResovaDateRange {
   range?: '1' | 'yesterday' | 'today' | 'current_week' | 'previous_week' | '7' |
          'current_month' | 'previous_month' | '30' | 'current_quarter' |
-         'previous_quarter' | '90';
+         'previous_quarter' | '90' | '365';
   start_date?: string; // Y-m-d format
   end_date?: string;   // Y-m-d format
 }
@@ -1044,7 +1044,7 @@ export class ResovaReportingService {
    */
   static parseDateRange(dateRange?: string): ResovaDateRange {
     if (!dateRange) {
-      return { range: '30' }; // Default to last 30 days
+      return { range: '365' }; // Default to last 12 months for comprehensive analysis
     }
 
     // Map common date range strings to Resova format
@@ -1054,6 +1054,7 @@ export class ResovaReportingService {
       'Last 7 days': '7',
       'Last 30 days': '30',
       'Last 90 days': '90',
+      'Last 12 months': '365',
       'This week': 'current_week',
       'Last week': 'previous_week',
       'This month': 'current_month',
@@ -1066,8 +1067,8 @@ export class ResovaReportingService {
       return { range: rangeMap[dateRange] };
     }
 
-    // Default to last 30 days
-    return { range: '30' };
+    // Default to last 12 months
+    return { range: '365' };
   }
 
   /**
