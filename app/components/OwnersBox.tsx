@@ -25,19 +25,20 @@ interface OwnersBoxProps {
 export default function OwnersBox({ analyticsData }: OwnersBoxProps) {
   if (!analyticsData) return null;
 
-  const { periodSummary, todaysAgenda } = analyticsData;
+  const { periodSummary, todaysAgenda, capacityAnalysis } = analyticsData;
 
   // Calculate key metrics
   const revenue = periodSummary.gross || 0;
   const revenueChange = periodSummary.grossChange || 0;
   const bookings = todaysAgenda.bookings || 0;
   const guests = todaysAgenda.guests || 0;
+  const capacityPercent = capacityAnalysis?.overall?.utilizationPercent || 0;
 
   // Determine trend direction and color
   const getTrendColor = (value: number) => {
-    if (value > 0) return 'text-[var(--success)]';
-    if (value < 0) return 'text-[var(--danger)]';
-    return 'text-[var(--text-secondary)]';
+    if (value > 0) return 'text-green-500';
+    if (value < 0) return 'text-red-500';
+    return 'text-slate-400';
   };
 
   const getTrendIcon = (value: number) => {
@@ -66,25 +67,25 @@ export default function OwnersBox({ analyticsData }: OwnersBoxProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[var(--warning)]" />
+          <Sparkles className="w-5 h-5 text-yellow-500" />
           <h2 className="text-lg font-bold text-white tracking-tight">
             Owner's Box
           </h2>
         </div>
-        <div className="text-xs text-[var(--text-secondary)]">
-          Last 7 days
+        <div className="text-xs text-slate-400">
+          Last 30 days
         </div>
       </div>
 
       {/* Primary Metric - Revenue */}
-      <div className="bg-gradient-to-br from-[var(--brand-primary)]/10 via-[var(--background-primary)] to-[var(--background-primary)] border border-[var(--border-primary)] rounded-xl p-6 hover:border-[var(--brand-primary)]/50 transition-all duration-200">
+      <div className="bg-gradient-to-br from-blue-500/10 via-slate-800 to-slate-800 border border-slate-700 rounded-xl p-6 hover:border-blue-500/50 transition-all duration-200">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-[var(--brand-primary)]/10">
-              <DollarSign className="w-5 h-5 text-[var(--brand-primary)]" />
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <DollarSign className="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-xs text-[var(--text-secondary)] font-medium">
+              <p className="text-xs text-slate-400 font-medium">
                 Total Revenue
               </p>
             </div>
@@ -101,7 +102,7 @@ export default function OwnersBox({ analyticsData }: OwnersBoxProps) {
             {formatCurrency(revenue)}
           </h3>
         </div>
-        <p className="text-xs text-[var(--text-secondary)] mt-2">
+        <p className="text-xs text-slate-400 mt-2">
           {revenueChange > 0 ? 'Strong growth' : revenueChange < 0 ? 'Needs attention' : 'Stable'} compared to previous period
         </p>
       </div>
@@ -114,7 +115,8 @@ export default function OwnersBox({ analyticsData }: OwnersBoxProps) {
           label="Today's Bookings"
           value={bookings.toString()}
           trend={null}
-          color="var(--info)"
+          iconColor="text-blue-400"
+          bgColor="bg-blue-500/10"
         />
 
         {/* Guests */}
@@ -123,23 +125,25 @@ export default function OwnersBox({ analyticsData }: OwnersBoxProps) {
           label="Expected Guests"
           value={guests.toString()}
           trend={null}
-          color="var(--accent-purple)"
+          iconColor="text-purple-400"
+          bgColor="bg-purple-500/10"
         />
 
         {/* Capacity */}
         <MetricCard
           icon={<Activity className="w-4 h-4" />}
           label="Capacity"
-          value={analyticsData.capacityAnalysis?.overall.utilizationPercent.toFixed(0) + '%' || 'N/A'}
+          value={capacityPercent > 0 ? `${capacityPercent.toFixed(0)}%` : 'N/A'}
           trend={null}
-          color="var(--success)"
+          iconColor="text-green-400"
+          bgColor="bg-green-500/10"
         />
       </div>
 
       {/* Quick Insights */}
-      <div className="bg-[var(--background-secondary)] border border-[var(--border-primary)] rounded-xl p-4">
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-[var(--brand-primary)]" />
+          <TrendingUp className="w-4 h-4 text-blue-500" />
           Quick Insights
         </h3>
         <div className="space-y-2">
@@ -151,10 +155,10 @@ export default function OwnersBox({ analyticsData }: OwnersBoxProps) {
             text={`${bookings} bookings scheduled for today`}
             positive={bookings > 0}
           />
-          {analyticsData.capacityAnalysis && (
+          {capacityPercent > 0 && (
             <InsightItem
-              text={`Capacity at ${analyticsData.capacityAnalysis.overall.utilizationPercent.toFixed(0)}%`}
-              positive={analyticsData.capacityAnalysis.overall.utilizationPercent > 50}
+              text={`Capacity at ${capacityPercent.toFixed(0)}%`}
+              positive={capacityPercent > 50}
             />
           )}
         </div>
@@ -171,17 +175,18 @@ interface MetricCardProps {
   label: string;
   value: string;
   trend: number | null;
-  color: string;
+  iconColor: string;
+  bgColor: string;
 }
 
-function MetricCard({ icon, label, value, trend, color }: MetricCardProps) {
+function MetricCard({ icon, label, value, trend, iconColor, bgColor }: MetricCardProps) {
   return (
-    <div className="bg-[var(--background-secondary)] border border-[var(--border-primary)] rounded-xl p-4 hover:border-[var(--brand-primary)]/30 transition-all duration-200">
+    <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
       <div className="flex items-center gap-2 mb-3">
-        <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${color}15` }}>
-          <div style={{ color }}>{icon}</div>
+        <div className={`p-1.5 rounded-lg ${bgColor}`}>
+          <div className={iconColor}>{icon}</div>
         </div>
-        <p className="text-xs text-[var(--text-secondary)] font-medium">
+        <p className="text-xs text-slate-400 font-medium">
           {label}
         </p>
       </div>
@@ -190,7 +195,7 @@ function MetricCard({ icon, label, value, trend, color }: MetricCardProps) {
           {value}
         </h4>
         {trend !== null && (
-          <span className={`text-sm font-medium ${trend > 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+          <span className={`text-sm font-medium ${trend > 0 ? 'text-green-500' : 'text-red-500'}`}>
             {trend > 0 ? '+' : ''}{trend}%
           </span>
         )}
@@ -210,8 +215,8 @@ interface InsightItemProps {
 function InsightItem({ text, positive }: InsightItemProps) {
   return (
     <div className="flex items-start gap-2">
-      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${positive ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'}`} />
-      <p className="text-sm text-[var(--text-primary)] leading-relaxed">
+      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${positive ? 'bg-green-500' : 'bg-yellow-500'}`} />
+      <p className="text-sm text-slate-200 leading-relaxed">
         {text}
       </p>
     </div>
