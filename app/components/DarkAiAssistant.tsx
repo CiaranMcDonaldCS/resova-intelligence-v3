@@ -21,6 +21,7 @@ import PersonalizableFocusCards from './PersonalizableFocusCards';
 import ProactiveInsights from './ProactiveInsights';
 import WhatIfScenario from './WhatIfScenario';
 import DeepDiveModal from './DeepDiveModal';
+import OwnersBox from './OwnersBox';
 import { Calculator, Lightbulb, Zap, ChevronRight } from 'lucide-react';
 
 // Focus areas matching the design
@@ -182,6 +183,9 @@ export default function DarkAiAssistant() {
       <main className="flex-grow p-4 sm:p-6 md:p-8 space-y-6 pb-28 overflow-y-auto">
         {/* Dashboard Overview Section */}
         <div className="space-y-4">
+          {/* Owner's Box - Executive Summary */}
+          <OwnersBox analyticsData={analyticsData} />
+
           {/* Critical Alerts - Only shown when there are high-priority insights */}
           <ProactiveInsights
             analyticsData={analyticsData}
