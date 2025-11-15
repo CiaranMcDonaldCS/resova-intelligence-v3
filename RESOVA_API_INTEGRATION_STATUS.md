@@ -9,6 +9,10 @@ Complete reference of all Resova API endpoints and their integration status in R
 - **Not Integrated**: 47 (72.3%)
 - **Integration Focus**: Analytics, Reporting, Availability & Read-Only Context APIs
 
+**Latest Update (PR #8 - 2025-11-15):**
+- ✅ Items Reviews API now integrated with full review text, ratings, and sentiment analysis
+- ✅ Guest review data added to AI context for comprehensive Guest Experience insights
+
 ---
 
 ## Reporting APIs (7 endpoints)
@@ -124,12 +128,22 @@ Retrieve information about bookable items/services (read-only).
 | Main API | `/items` | GET | List all items | Get all available bookable items/services. Sorted by creation date, newest first. | ✅ Yes |
 | Main API | `/items/{item_id}` | GET | Get item details | Detailed information about specific item including pricing, description, settings. | ✅ Yes |
 | Main API | `/items/{item_id}/booking-questions` | GET | Get booking questions | Get custom questions for item. Display these during booking flow for customer input. | ✅ Yes |
-| Main API | `/items/{item_id}/reviews` | GET | Get item reviews | Customer reviews with ratings and comments for item. | ✅ Yes |
+| Main API | `/items/{item_id}/reviews` | GET | Get item reviews | Customer reviews with ratings and comments for item. **PR #8**: Now fetches full review text, ratings (1-5 stars), customer names, review titles for sentiment analysis. | ✅ Yes |
 | Main API | `/items/{item_id}/extras` | GET | Get item extras | Available add-ons/extras for item with pricing. | ✅ Yes |
 
 **Use Case**: Display services/products, show pricing, collect custom booking information, display reviews, offer add-ons.
 
-**Integration Location**: `/app/api/resova/items/`
+**Integration Location**:
+- Item data: `/app/lib/services/resova-service.ts` (methods: `getItem()`, `getItemReviews()`, `getAllItemReviews()`)
+- Review types: `/app/types/resova-core.ts` (`ResovaItemReview`, `ItemReviewsResponse`)
+- AI context: `/app/lib/services/claude-service.ts` (lines 392-462: Guest Reviews & Sentiment section)
+
+**Recent Enhancement (PR #8):**
+- Added `getItemReviews(itemId)` method - fetches reviews for single item with graceful 404 handling
+- Added `getAllItemReviews(itemIds[])` method - batch fetches reviews across all items
+- TypeScript interfaces: `ResovaItemReview` with full review data (text, rating, title, customer name, dates)
+- AI context builder now includes review summary, rating distribution, and sample review text (last 30 days)
+- Graceful degradation: Returns empty array for operators without reviews (no errors)
 
 ---
 
@@ -180,6 +194,71 @@ Configure webhooks for real-time event notifications.
 
 ---
 
+## Core APIs (Paginated - Customer Intelligence)
+
+Beyond the standard reporting APIs, we integrate Core APIs for deep customer intelligence.
+
+### Customers API (Paginated)
+
+**Endpoints Integrated:**
+- `GET /v1/customers?page={page}&per_page={per_page}` - Paginated customer list
+- `GET /v1/customers/{customer_id}` - Single customer details
+
+**Methods in ResovaService:**
+- `getCustomers(page, perPage)` - Fetch one page of customers
+- `getAllCustomers(maxPages)` - Fetch multiple pages (default: 5 pages, 500 customers)
+- `getCustomer(id)` - Get individual customer record
+
+**Use Case:**
+- Customer Lifetime Value (CLV) calculation
+- Customer segmentation (VIP, Regular, At-Risk, New)
+- Repeat customer rate analysis
+- Churn prediction (customers inactive 90+ days)
+
+**Integration Status:** ✅ Complete - Used for Customer Intelligence insights
+
+---
+
+### Gift Vouchers API (Paginated)
+
+**Endpoints Integrated:**
+- `GET /v1/vouchers?page={page}&per_page={per_page}` - Paginated voucher list
+- `GET /v1/vouchers/{voucher_id}` - Single voucher details
+
+**Methods in ResovaService:**
+- `getGiftVouchers(page, perPage)` - Fetch one page of vouchers
+- `getAllGiftVouchers(maxPages)` - Fetch multiple pages (default: 5 pages)
+- `getGiftVoucher(id)` - Get individual voucher
+
+**Use Case:**
+- Voucher sales and redemption tracking
+- Outstanding balance analysis
+- Breakage rate calculation (unredeemed vouchers)
+- Expiring voucher alerts
+
+**Integration Status:** ✅ Complete - Used for Gift Voucher analytics
+
+---
+
+### Baskets API (Abandoned Carts)
+
+**Endpoints Integrated:**
+- `GET /v1/baskets?status=abandoned&page={page}&per_page={per_page}` - Abandoned carts
+
+**Methods in ResovaService:**
+- `getBaskets(page, perPage, status)` - Fetch baskets by status
+- `getAbandonedCarts(maxPages)` - Specifically fetch abandoned carts (default: 3 pages)
+
+**Use Case:**
+- Cart abandonment rate calculation
+- Lost revenue analysis
+- Recovery opportunities (carts with customer emails)
+- Top abandoned items identification
+
+**Integration Status:** ✅ Complete - Used for Conversion Intelligence insights
+
+---
+
 ## Integration Recommendations
 
 ### For AI Assistant Enhancement
@@ -194,21 +273,29 @@ Based on the goal of enhancing the AI assistant, here are recommended integratio
 #### Medium Priority (Read-Only Context)
 These enhance the AI's knowledge without transactional risk:
 
-1. **Items APIs** (5 endpoints) - ⚠️ Recommended
+1. **Items APIs** (5 endpoints) - ✅ COMPLETE
    - Show available services/products
    - Display pricing and descriptions
    - Enable AI to answer "what can I book?" questions
-   - Read-only, safe to integrate
+   - **NOW INCLUDES**: Full review text sentiment analysis (PR #8)
 
-2. **Customer APIs** (GET only - 1 endpoint) - ⚠️ Recommended
+2. **Customer APIs** (Paginated) - ✅ COMPLETE
    - Retrieve customer profiles
-   - Enable personalized insights
-   - READ operation only (skip POST/PUT for now)
+   - Customer Lifetime Value (CLV) tracking
+   - Customer segmentation and churn analysis
+   - READ operations only (safe for AI)
 
-3. **Gift Voucher APIs** (2 endpoints) - ⚠️ Recommended
+3. **Gift Voucher APIs** (Paginated) - ✅ COMPLETE
    - Check voucher status and balances
    - Identify expiring vouchers for alerts
+   - Track redemption rates and breakage
    - Read-only operations
+
+4. **Abandoned Carts API** - ✅ COMPLETE
+   - Cart abandonment tracking
+   - Lost revenue calculation
+   - Recovery opportunity identification
+   - Read-only, safe for AI insights
 
 #### Low Priority (Transactional - Risky for AI)
 ⚠️ **Not Recommended for AI Assistant** - These create/modify data:
@@ -297,13 +384,19 @@ app/api/
 ## Next Steps
 
 1. ✅ **Implement Read-Only APIs** - Items (5), Customers GET (1), Gift Vouchers (2), Availability (3) - COMPLETE
-2. **Test Integration** - Verify API responses and data quality
-3. **Update AI Prompts** - Enhance AI assistant with new data sources
+2. ✅ **Integrate Items Reviews API** - Full review text with sentiment analysis - COMPLETE (PR #8)
+3. ✅ **Update AI Prompts** - Seed prompt formalized with review capabilities - COMPLETE (PR #8)
 4. **Monitor Usage** - Track API calls and rate limits
-5. **Consider Transaction GET APIs** - Evaluate if Transaction lookup endpoints would be useful
+5. **Consider Extras/Guests APIs** - Evaluate if additional optional data would enhance insights
+
+**Potential Future Integrations:**
+- ⚠️ **Extras API** - Add-on sales analysis (optional data, graceful handling)
+- ⚠️ **Guests API** - Detailed guest information (optional data, graceful handling)
+- ⚠️ **Promotions API** - Discount code effectiveness (optional data, not all operators use)
 
 ---
 
-*Last Updated: 2025-11-15*
-*Version: V3*
+*Last Updated: 2025-11-15 (PR #9)*
+*Version: V3.0.0*
 *Status: Phase 1 Complete - Reporting (7) + Availability (3) + Read-Only Context (8) = 18/65 total (27.7%)*
+*Recent: Items Reviews API integrated for full guest sentiment analysis*
