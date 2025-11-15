@@ -50,13 +50,13 @@ export default function Dashboard() {
   // Error state
   if (analyticsError) {
     return (
-      <div className="min-h-screen bg-[var(--background-primary)] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="bg-[var(--background-secondary)] border border-[var(--danger)]/30 rounded-lg p-6 max-w-md">
-            <p className="text-[var(--danger)] mb-4">{analyticsError}</p>
+          <div className="bg-slate-800 border border-red-500/30 rounded-lg p-6 max-w-md">
+            <p className="text-red-400 mb-4">{analyticsError}</p>
             <button
               onClick={() => fetchAnalytics()}
-              className="px-4 py-2 bg-[var(--danger)] text-white rounded-lg hover:bg-[var(--danger)]/90 transition-colors"
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               Try Again
             </button>
@@ -69,12 +69,12 @@ export default function Dashboard() {
   // No data state
   if (!analyticsData) {
     return (
-      <div className="min-h-screen bg-[var(--background-primary)] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[var(--text-secondary)]">No analytics data available</p>
+          <p className="text-slate-400">No analytics data available</p>
           <button
             onClick={() => fetchAnalytics()}
-            className="mt-4 px-4 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-[var(--brand-primary-hover)] transition-colors"
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Load Data
           </button>
@@ -85,9 +85,9 @@ export default function Dashboard() {
 
   // Main render - Single screen with AI Assistant
   return (
-    <div className="min-h-screen bg-[var(--background-primary)]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Simple Header - Fixed at top */}
-      <header className="fixed top-0 left-0 right-0 bg-[var(--background-secondary)]/95 backdrop-blur-md border-b border-[var(--border-color)] z-50">
+      <header className="fixed top-0 left-0 right-0 bg-slate-800/95 backdrop-blur-md border-b border-slate-700 z-50">
         <div className="px-6 py-3">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -97,7 +97,7 @@ export default function Dashboard() {
                 alt="Resova Intelligence"
                 className="h-8"
               />
-              <span className="text-[var(--text-primary)] font-semibold text-lg">
+              <span className="text-white font-semibold text-lg">
                 Intelligence
               </span>
             </div>
@@ -108,7 +108,7 @@ export default function Dashboard() {
               <button
                 onClick={handleRefresh}
                 disabled={analyticsLoading}
-                className="p-2 text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-[var(--background-primary)] rounded-lg transition-all disabled:opacity-50"
+                className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-700 rounded-lg transition-all disabled:opacity-50"
                 title="Refresh data"
               >
                 <RefreshCw
@@ -119,7 +119,7 @@ export default function Dashboard() {
               {/* Settings Button */}
               <button
                 onClick={handleSettings}
-                className="p-2 text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-[var(--background-primary)] rounded-lg transition-all"
+                className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-700 rounded-lg transition-all"
                 title="Settings"
               >
                 <Settings className="w-5 h-5" />
@@ -128,7 +128,7 @@ export default function Dashboard() {
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--danger)] hover:bg-[var(--background-primary)] rounded-lg transition-all"
+                className="flex items-center space-x-2 px-3 py-2 text-slate-300 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-all"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4" />

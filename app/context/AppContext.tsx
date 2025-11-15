@@ -134,19 +134,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Fetch analytics data
   const fetchAnalytics = useCallback(async (dateRange?: string) => {
-    if (!state.analyticsService) {
-      logger.error('Analytics service not initialized');
+    setState(prev => {
+      if (!prev.analyticsService) {
+        logger.error('Analytics service not initialized');
+        return prev;
+      }
+
+      return {
+        ...prev,
+        analyticsLoading: true,
+        analyticsError: null,
+      };
+    });
+
+    // Get current service from state
+    let currentService: AnalyticsService | null = null;
+    setState(prev => {
+      currentService = prev.analyticsService;
+      return prev;
+    });
+
+    if (!currentService) {
       return;
     }
 
-    setState(prev => ({
-      ...prev,
-      analyticsLoading: true,
-      analyticsError: null,
-    }));
-
     try {
-      const data = await state.analyticsService.getAnalytics(dateRange);
+      const data = await currentService.getAnalytics(dateRange);
       logger.service('analytics', 'Data fetched successfully');
 
       setState(prev => ({
@@ -163,7 +176,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         analyticsError: error.message || 'Failed to fetch analytics',
       }));
     }
-  }, [state.analyticsService]);
+  }, []);
 
   // Refresh analytics (refetch current date range)
   const refreshAnalytics = useCallback(async () => {
