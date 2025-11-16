@@ -245,31 +245,35 @@ export class ClaudeService {
       salesSummary,
       guestSummary,
       paymentCollection,
-      businessInsights
+      businessInsights,
+      dateRangeLabel
     } = analyticsData;
 
     let context = `
 CURRENT ANALYTICS DATA:
 
-TODAY'S OPERATIONS:
+**DATA PERIOD: ${dateRangeLabel || 'Last 365 days (12 months)'}**
+All metrics below reflect data from this time period ONLY, unless otherwise specified.
+
+TODAY'S OPERATIONS (Today):
 - Bookings Today: ${todaysAgenda.bookings}
 - Guests Today: ${todaysAgenda.guests}
 - First Booking: ${todaysAgenda.firstBooking}
 - Waivers Required: ${todaysAgenda.waiversRequired}
 
-PERIOD PERFORMANCE:
+PERIOD PERFORMANCE (${dateRangeLabel || 'Last 365 days'}):
 - Gross Revenue: $${periodSummary.gross.toLocaleString()} (${periodSummary.grossChange >= 0 ? '+' : ''}${periodSummary.grossChange}%)
 - Net Revenue: $${periodSummary.net.toLocaleString()} (${periodSummary.netChange >= 0 ? '+' : ''}${periodSummary.netChange}%)
 - Total Sales: $${periodSummary.totalSales.toLocaleString()}
 - Total Payments: $${paymentCollection.totalPayments.toLocaleString()}
 - Payment Split: ${paymentCollection.paidPercent}% paid, ${paymentCollection.unpaidPercent}% unpaid
 
-BEST PERFORMERS:
+BEST PERFORMERS (${dateRangeLabel || 'Last 365 days'}):
 - Best Day: ${performance.bestDay} ($${performance.bestDayRevenue.toLocaleString()}, ${performance.bestDayChange >= 0 ? '+' : ''}${performance.bestDayChange}%)
 - Top Item: ${performance.topItem} (${performance.topItemBookings} bookings, ${performance.topItemChange >= 0 ? '+' : ''}${performance.topItemChange}%)
 - Peak Time: ${performance.peakTime} (${performance.peakTimeBookings} bookings)
 
-SALES METRICS:
+SALES METRICS (${dateRangeLabel || 'Last 365 days'}):
 - Total Bookings: ${salesSummary.bookings} (${salesSummary.bookingsChange >= 0 ? '+' : ''}${salesSummary.bookingsChange}%)
 - Avg Revenue per Booking: $${salesSummary.avgRevPerBooking} (${salesSummary.avgRevChange >= 0 ? '+' : ''}${salesSummary.avgRevChange}%)
 - Online vs Operator: ${salesSummary.onlineVsOperator}% online
@@ -277,14 +281,14 @@ SALES METRICS:
 - Extra Sales: $${salesSummary.extraSales.toLocaleString()}
 - Gift Voucher Sales: $${salesSummary.giftVoucherSales.toLocaleString()}
 
-GUEST METRICS:
+GUEST METRICS (${dateRangeLabel || 'Last 365 days'}):
 - Total Guests: ${guestSummary.totalGuests} (${guestSummary.totalChange >= 0 ? '+' : ''}${guestSummary.totalChange}%)
 - Avg Revenue per Guest: $${guestSummary.avgRevenuePerGuest}
 - Avg Group Size: ${guestSummary.avgGroupSize}
 - Repeat Customers: ${guestSummary.repeatCustomers}%
 - No-Shows: ${guestSummary.noShows}
 
-PAYMENT COLLECTION:
+PAYMENT COLLECTION (${dateRangeLabel || 'Last 365 days'}):
 - Card Payments: ${paymentCollection.cardPercent}%
 - Cash Payments: ${paymentCollection.cashPercent}%`;
 
@@ -292,7 +296,7 @@ PAYMENT COLLECTION:
     if (businessInsights?.activityProfitability && businessInsights.activityProfitability.length > 0) {
       context += `
 
-ACTIVITY PROFITABILITY (Ranked by Total Sales):`;
+ACTIVITY PROFITABILITY (${dateRangeLabel || 'Last 365 days'}) - Ranked by Revenue:`;
       businessInsights.activityProfitability.forEach((activity, index) => {
         context += `
 ${index + 1}. ${activity.name}
@@ -303,12 +307,48 @@ ${index + 1}. ${activity.name}
       });
     }
 
+    // Add raw inventory items data for detailed product analysis
+    if (analyticsData.rawData?.inventoryItems && analyticsData.rawData.inventoryItems.length > 0) {
+      const inventoryItems = analyticsData.rawData.inventoryItems;
+      context += `
+
+DETAILED PRODUCT/ACTIVITY DATA (for product performance questions):
+NOTE: Use this data when users ask about "product performance", "which products are selling best", "activity metrics", etc.
+
+Total Activities: ${inventoryItems.length}
+
+Complete Activity Breakdown:`;
+
+      inventoryItems
+        .sort((a: any, b: any) => parseFloat(b.total_sales || '0') - parseFloat(a.total_sales || '0'))
+        .forEach((item: any, index: number) => {
+          const totalSales = parseFloat(item.total_sales || '0');
+          const totalBookings = item.total_bookings || 0;
+          const avgReview = parseFloat(item.avg_review || '0');
+          const totalReviews = item.total_reviews || 0;
+          const revenuePerBooking = totalBookings > 0 ? totalSales / totalBookings : 0;
+
+          context += `
+${index + 1}. ${item.name}
+   - Revenue: $${totalSales.toLocaleString()}
+   - Bookings: ${totalBookings}
+   - Revenue per Booking: $${revenuePerBooking.toFixed(2)}
+   - Reviews: ${avgReview.toFixed(1)}/5 stars (${totalReviews} reviews)
+   - Status: ${item.status_label || 'Active'}`;
+        });
+
+      context += `
+
+IMPORTANT: When answering questions about product/activity performance, use this detailed data above.
+Each activity has VERIFIED booking counts, revenue, and review data. Do NOT make up or estimate these numbers.`;
+    }
+
     // Add capacity utilization data if available
     if (businessInsights?.capacityUtilization) {
       const capacity = businessInsights.capacityUtilization;
       context += `
 
-CAPACITY UTILIZATION:
+CAPACITY UTILIZATION (${dateRangeLabel || 'Last 365 days'}):
 - Overall Utilization: ${capacity.overallUtilization.toFixed(1)}%
 - Total Capacity: ${capacity.totalCapacity.toLocaleString()} spots
 - Total Booked: ${capacity.totalBooked.toLocaleString()} spots
@@ -348,7 +388,7 @@ LOW UTILIZATION TIMES (<50% utilization): ${capacity.lowUtilizationTimes.slice(0
       const customer = businessInsights.customerIntelligence;
       context += `
 
-CUSTOMER INTELLIGENCE:
+CUSTOMER INTELLIGENCE (${dateRangeLabel || 'Last 365 days'}):
 - Total Customers: ${customer.totalCustomers}
 - New Customers (Last 30 Days): ${customer.newCustomers}
 - Repeat Customer Rate: ${customer.repeatRate.toFixed(1)}%
@@ -386,7 +426,7 @@ ${index + 1}. ${c.name}: $${c.clv.toFixed(0)} CLV (${c.daysSinceLastBooking} day
       const voucher = businessInsights.voucherIntelligence;
       context += `
 
-GIFT VOUCHER ANALYTICS:
+GIFT VOUCHER ANALYTICS (${dateRangeLabel || 'Last 365 days'}):
 - Total Sold: ${voucher.overview.total_sold} vouchers ($${voucher.overview.total_sold_value.toFixed(0)})
 - Total Redeemed: ${voucher.overview.total_redeemed} (${voucher.overview.redemption_rate.toFixed(1)}%)
 - Outstanding Balance: $${voucher.overview.outstanding_balance.toFixed(0)}
@@ -399,7 +439,7 @@ GIFT VOUCHER ANALYTICS:
       const conversion = businessInsights.conversionIntelligence;
       context += `
 
-CART ABANDONMENT & CONVERSION:
+CART ABANDONMENT & CONVERSION (${dateRangeLabel || 'Last 365 days'}):
 - Total Carts: ${conversion.cart_abandonment.total_carts}
 - Abandoned Carts: ${conversion.cart_abandonment.abandoned_carts} ($${conversion.cart_abandonment.abandoned_value.toFixed(0)} lost)
 - Conversion Rate: ${conversion.cart_abandonment.conversion_rate.toFixed(1)}%
@@ -493,6 +533,110 @@ NOTE: Use this review text to answer questions about guest sentiment, feedback t
       }
     }
 
+    // RAW DATA SAMPLES - Show Claude what's available
+    if (analyticsData.rawData) {
+      const rawData = analyticsData.rawData;
+      context += `
+
+## RAW API DATA AVAILABLE
+
+You have access to detailed raw data from all Resova APIs. Below are samples showing the data structure:`;
+
+      // Transactions sample
+      if (rawData.transactions && rawData.transactions.length > 0) {
+        const sampleTransaction = rawData.transactions[0];
+        context += `
+
+**Transactions** (${rawData.transactions.length} total):
+Sample transaction structure:
+- ID: ${sampleTransaction.id}, Reference: ${sampleTransaction.reference}
+- Total: $${sampleTransaction.total}, Paid: $${sampleTransaction.paid}, Due: $${sampleTransaction.due}
+- Status: ${sampleTransaction.status ? 'Active' : 'Cancelled'}
+- Date: ${sampleTransaction.created_dt}
+- Bookings: ${sampleTransaction.bookings?.length || 0} items
+- Customer: ${sampleTransaction.customer?.first_name || 'N/A'} ${sampleTransaction.customer?.last_name || ''}`;
+      }
+
+      // All Bookings sample
+      if (rawData.allBookings && rawData.allBookings.length > 0) {
+        const sampleBooking = rawData.allBookings[0];
+        context += `
+
+**All Bookings** (${rawData.allBookings.length} total):
+Sample booking structure:
+- Item: ${sampleBooking.item_name}
+- Date: ${sampleBooking.date_short}, Time: ${sampleBooking.time}
+- Quantity: ${sampleBooking.total_quantity}, Price: $${sampleBooking.price}
+- Total: $${sampleBooking.booking_total}
+- Status: ${sampleBooking.status}
+- Customer: ${sampleBooking.customer_first_name} ${sampleBooking.customer_last_name}`;
+      }
+
+      // Itemized Revenue sample
+      if (rawData.itemizedRevenue && rawData.itemizedRevenue.length > 0) {
+        const sampleRevenue = rawData.itemizedRevenue[0];
+        context += `
+
+**Itemized Revenue** (${rawData.itemizedRevenue.length} total):
+Sample revenue record:
+- Item: ${sampleRevenue.item_name}
+- Date: ${sampleRevenue.date_short}, Quantity: ${sampleRevenue.total_quantity}
+- Price: $${sampleRevenue.price}, Net: $${sampleRevenue.total_net}
+- Total: $${sampleRevenue.booking_total}
+- Transaction Status: ${sampleRevenue.transaction_status}`;
+      }
+
+      // Customers sample
+      if (rawData.customers && rawData.customers.length > 0) {
+        const sampleCustomer = rawData.customers[0];
+        context += `
+
+**Customers** (${rawData.customers.length} total):
+Sample customer record:
+- Name: ${sampleCustomer.first_name} ${sampleCustomer.last_name}
+- Email: ${sampleCustomer.email}
+- Total Bookings: ${sampleCustomer.total_bookings || 0}
+- Total Spend: $${sampleCustomer.total_spent || 0}`;
+      }
+
+      // Extras sample
+      if (rawData.extras && rawData.extras.length > 0) {
+        const sampleExtra = rawData.extras[0];
+        context += `
+
+**Extras/Add-ons** (${rawData.extras.length} total):
+Sample extra:
+- Name: ${sampleExtra.name}
+- Total Bookings: ${sampleExtra.total_bookings || 0}
+- Total Sales: $${sampleExtra.total_sales || 0}
+- Single Price: $${sampleExtra.single_price || 0}
+- Stock: ${sampleExtra.stock || 0} (Used: ${sampleExtra.used_stock || 0})`;
+      }
+
+      // Vouchers sample
+      if (rawData.reportingVouchers && rawData.reportingVouchers.length > 0) {
+        const sampleVoucher = rawData.reportingVouchers[0];
+        context += `
+
+**Gift Vouchers** (${rawData.reportingVouchers.length} total):
+Sample voucher:
+- Code: ${sampleVoucher.code}
+- Total Amount: $${sampleVoucher.total_amount}
+- Redeemed: $${sampleVoucher.total_redeemed}
+- Remaining: $${sampleVoucher.total_remaining}
+- Status: ${sampleVoucher.status}`;
+      }
+
+      context += `
+
+**How to Use Raw Data:**
+- Use rawData for deep analysis when summary metrics don't answer the question
+- Cross-reference datasets to find patterns (e.g., link transactions to bookings to customers)
+- Analyze trends over time using date fields
+- Verify insights by examining individual records
+- Calculate custom metrics from the raw data when needed`;
+    }
+
     // Future Bookings Analysis (Forward-Looking Data)
     if (analyticsData.rawData?.futureBookings && analyticsData.rawData.futureBookings.length > 0) {
       const futureBookings = analyticsData.rawData.futureBookings;
@@ -554,6 +698,77 @@ TOP BOOKED ACTIVITIES (Upcoming):`;
 NOTE: Use this data to answer questions about upcoming demand, capacity planning, staffing needs, and revenue forecasting.`;
     }
 
+    // Add daily breakdown for chart visualization and trend analysis
+    if (analyticsData.dailyBreakdown && analyticsData.dailyBreakdown.length > 0) {
+      context += `
+
+DAY-BY-DAY BREAKDOWN (${dateRangeLabel || 'Last 365 days'}):
+NOTE: Use this data to answer questions about:
+- Daily revenue trends and patterns
+- "Which day had the highest revenue?"
+- "Show me bookings per day as a bar chart"
+- "What were the top selling items on [specific date]?"
+- Daily performance comparisons
+
+Total Days with Data: ${analyticsData.dailyBreakdown.length}
+
+Recent Days (Last 7 days):`;
+
+      // Show most recent 7 days
+      const recentDays = analyticsData.dailyBreakdown.slice(-7);
+      recentDays.forEach(day => {
+        context += `
+- ${day.date} (${day.dayName}):
+  Bookings: ${day.bookings}, Revenue: $${day.revenue.toFixed(2)}, Guests: ${day.guests}
+  Top Item: ${day.topItem} (${day.topItemBookings} bookings, $${day.topItemRevenue.toFixed(2)})`;
+      });
+
+      // Find highest revenue day
+      const highestRevenueDay = analyticsData.dailyBreakdown.reduce((max, day) =>
+        day.revenue > max.revenue ? day : max
+      );
+
+      context += `
+
+Highest Revenue Day: ${highestRevenueDay.date} (${highestRevenueDay.dayName}) - $${highestRevenueDay.revenue.toFixed(2)} from ${highestRevenueDay.bookings} bookings`;
+    }
+
+    // Add day-of-week summary for weekend vs weekday comparisons
+    if (analyticsData.dayOfWeekSummary && analyticsData.dayOfWeekSummary.length > 0) {
+      context += `
+
+DAY OF WEEK ANALYSIS (${dateRangeLabel || 'Last 365 days'}):
+NOTE: Use this data to answer questions about:
+- "How is this weekend's revenue trending against last weekend?"
+- "Which day of the week is busiest?"
+- "Weekend vs weekday performance"
+- "What's the average revenue for Saturdays?"
+
+By Day of Week:`;
+
+      analyticsData.dayOfWeekSummary.forEach(day => {
+        context += `
+- ${day.dayName}:
+  Total: ${day.totalBookings} bookings, $${day.totalRevenue.toFixed(2)} revenue, ${day.totalGuests} guests
+  Average per ${day.dayName}: ${day.avgBookingsPerOccurrence.toFixed(1)} bookings, $${day.avgRevenuePerOccurrence.toFixed(2)} revenue
+  Occurred ${day.occurrences} times in period`;
+      });
+
+      // Calculate weekend vs weekday averages
+      const weekendDays = analyticsData.dayOfWeekSummary.filter(d => d.dayOfWeek === 0 || d.dayOfWeek === 6);
+      const weekdayDays = analyticsData.dayOfWeekSummary.filter(d => d.dayOfWeek > 0 && d.dayOfWeek < 6);
+
+      const weekendAvgRevenue = weekendDays.reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / weekendDays.length;
+      const weekdayAvgRevenue = weekdayDays.reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / weekdayDays.length;
+
+      context += `
+
+Weekend vs Weekday Comparison:
+- Weekend Average (Sat-Sun): $${weekendAvgRevenue.toFixed(2)} per day
+- Weekday Average (Mon-Fri): $${weekdayAvgRevenue.toFixed(2)} per day
+- Difference: ${weekendAvgRevenue > weekdayAvgRevenue ? 'Weekends outperform by' : 'Weekdays outperform by'} $${Math.abs(weekendAvgRevenue - weekdayAvgRevenue).toFixed(2)} (${((Math.abs(weekendAvgRevenue - weekdayAvgRevenue) / Math.min(weekendAvgRevenue, weekdayAvgRevenue)) * 100).toFixed(1)}%)`;
+    }
+
     return context.trim();
   }
 
@@ -576,6 +791,46 @@ NOTE: Use this data to answer questions about upcoming demand, capacity planning
 **YOUR PRIMARY RESPONSIBILITY:**
 Every number you provide will influence real business decisions. Wrong revenue figures cost money. Wrong customer counts lead to bad marketing. Wrong capacity data causes staffing issues. You must be 100% accurate, 100% of the time.
 
+## CRITICAL: Use Pre-Calculated Metrics ONLY (With Exceptions for Product Analysis)
+
+**NEVER calculate revenue, customer counts, or other metrics from raw data yourself.** The system provides pre-calculated, verified metrics that you MUST use:
+
+**Revenue Metrics - ALWAYS use these pre-calculated values:**
+- **Gross Revenue**: Use the "Gross Revenue" value from PERIOD PERFORMANCE section
+- **Net Revenue**: Use the "Net Revenue" value from PERIOD PERFORMANCE section
+- **Total Sales**: Use the "Total Sales" value from PERIOD PERFORMANCE section
+- **DO NOT** sum up transaction.paid, transaction.total, or any raw transaction fields yourself
+- **DO NOT** try to calculate revenue from raw bookings or payments data
+
+**Customer Metrics - ALWAYS use these pre-calculated values:**
+- Use "Total Customers", "Repeat Customers", "Repeat Rate" from the provided CUSTOMER INSIGHTS section
+- **DO NOT** count customers yourself from raw booking or transaction data
+
+**Booking Metrics - ALWAYS use these pre-calculated values:**
+- Use booking counts from the PERFORMANCE section
+- **DO NOT** count bookings yourself from raw data
+
+**EXCEPTION - Product Performance Analysis:**
+When analyzing individual product/activity performance (revenue per product, bookings per product, reviews per product), you MUST use rawData because topPurchased only contains product names and total revenue:
+
+**For Product/Activity Analysis, use rawData.inventoryItems:**
+- Each inventoryItem contains: 'name', 'total_bookings', 'total_sales', 'total_reviews', 'avg_review'
+- This gives you accurate per-product metrics without manual calculation
+- Example: "USA Ticket had 156 bookings generating $12,480 revenue with 4.5/5 avg rating (23 reviews)"
+
+**For Detailed Product Analysis, correlate rawData sources:**
+- 'rawData.allBookings' - Individual booking records with 'item_name' and 'total_quantity'
+- 'rawData.itemizedRevenue' - Individual revenue records with 'item_name' and 'booking_total'
+- 'rawData.reviews' - Product reviews with 'item_name', 'rating', 'review_text'
+
+**Why this matters:**
+- Raw data may be incomplete, in different units (cents vs dollars), or require complex deduplication
+- Pre-calculated metrics are verified, tested, and guaranteed accurate
+- Calculating from raw data leads to errors like showing $485,226 instead of $799
+- EXCEPTION: Product analysis requires rawData.inventoryItems because topPurchased lacks booking counts and reviews
+
+**If you see conflicting numbers:** ALWAYS trust the pre-calculated summary metrics over any raw data analysis.
+
 ## Mission & Core Pillars:
 
 Your purpose is to enable activity centers to succeed through:
@@ -596,19 +851,38 @@ You are a trusted business partner for venue owners and managers. Every conversa
 Think from a business owner's perspective: "How does this impact my profit, operations, and guest satisfaction?"
 
 ## Data Available:
-You have access to both historical and forward-looking data:
+You have access to comprehensive raw data from all Resova APIs, plus pre-calculated summaries:
+
+**Pre-Calculated Summaries (Use These First):**
+- Period Performance, Sales Summary, Guest Summary metrics (in context)
+- Activity Profitability with booking counts and revenue per activity (in context)
+- Customer Intelligence with segmentation and CLV (in context)
+- Capacity Utilization across all activities (in context)
+
+**Full Raw Datasets (Available for Deep Analysis):**
 
 **Historical Data (12 months):**
-- Transactions, bookings, payments, and itemized revenue
-- Activity profitability and capacity utilization
-- Peak times and low-demand slots
-- Customer records and purchase history
+- 'rawData.transactions' - All transaction records with customer, payment, and booking details
+- 'rawData.allBookings' - Individual booking records with item names, quantities, dates, status
+- 'rawData.itemizedRevenue' - Revenue breakdown per booking with pricing details
+- 'rawData.allPayments' - Payment records with types, amounts, refunds
+- 'rawData.inventoryItems' - Complete activity list with total_bookings, total_sales, reviews (IN CONTEXT)
+- 'rawData.customers' - Customer records with booking history and spend
+- 'rawData.extras' - Add-on/extras sales and inventory data
+- 'rawData.reportingVouchers' - Gift voucher sales and redemption tracking
+- 'rawData.reviews' - Product reviews with ratings and text (IN CONTEXT)
+- 'rawData.availabilityInstances' - Capacity and booking data by time slot
 
 **Forward-Looking Data (Next 90 days):**
-- Future bookings with dates, activities, and guest counts
-- Upcoming revenue projections
+- 'rawData.futureBookings' - Upcoming bookings with dates, activities, guest counts (IN CONTEXT)
 - Short-term demand outlook (7-day and 30-day windows)
-- Capacity planning and staffing needs forecasting
+- Revenue projections and capacity planning needs
+
+**When to Use Raw Data:**
+- When pre-calculated summaries don't answer the specific question
+- When you need to analyze patterns, trends, or correlations across datasets
+- When the user asks detailed questions about individual transactions, bookings, or customers
+- When you need to verify or cross-reference data for accuracy
 
 **Extras/Add-ons Analytics:**
 - Extras/add-ons sales performance (total bookings, total revenue)
@@ -816,25 +1090,83 @@ If you make ANY claim without complete verification:
 
 **THIS IS ABSOLUTELY NON-NEGOTIABLE. VERIFY EVERY NUMBER. CHECK EVERY DATASET. STATE WHAT YOU VERIFIED.**
 
+## CRITICAL: NO INVENTED BENCHMARKS OR INDUSTRY STANDARDS
+
+**NEVER cite industry benchmarks, averages, or "typical" numbers unless you have a verifiable source.**
+
+**PROHIBITED:**
+- ❌ "Industry average repeat rate is 20-25%"
+- ❌ "Typical venues see 60% capacity utilization"
+- ❌ "Most activity centers have 15% no-show rates"
+- ❌ "Best-in-class operators achieve X%"
+- ❌ Any comparison to unverified external data
+
+**ALLOWED - Internal Comparisons (Your Own Data):**
+- ✅ "Your repeat rate is 35%, up from 28% last quarter"
+- ✅ "Zipline has 45% repeat rate vs 25% for Kayaking"
+- ✅ "Weekends generate $145/guest vs $98/guest on weekdays"
+- ✅ "This is your 3rd best revenue week in the past 6 months"
+
+**ALLOWED - Simple Explanations (No Fake Benchmarks):**
+- ✅ "35% repeat rate means about 1 in 3 customers come back"
+- ✅ "65% capacity utilization = you're filling about 2/3 of available spots"
+- ✅ "Fixed costs (staff, insurance) are mostly the same whether you're at 50% or 80% capacity, so higher utilization = higher profit margins"
+
+**ALLOWED - Threshold-Based Guidance (Conservative, Common-Sense):**
+- ✅ "Below 50% capacity = significant growth opportunity"
+- ✅ "75-90% capacity = strong performance"
+- ✅ "Over 90% capacity = consider adding sessions or raising prices"
+
+**Making Metrics Accessible:**
+When discussing metrics with operators who may not be analytics experts:
+- Define terms in plain English on first use: "CLV (Customer Lifetime Value - total revenue from one customer over all visits)"
+- Use analogies: "Think of fixed costs like rent - you pay them whether you're busy or empty"
+- Quantify opportunities from THEIR data only: "If you offered add-ons on ALL bookings instead of 60%, that's potentially $3,000 more monthly revenue based on your current $4,200/month from add-ons"
+- Compare internally: "Your best activity vs your average activity"
+
+**Why This Matters:**
+Inventing benchmarks destroys trust and can lead to bad business decisions. If an operator thinks "20% repeat rate is industry average" but you made that up, they might underinvest in retention when they should actually be concerned.
+
+**If Asked About Benchmarks:**
+"I don't have access to verified industry benchmark data. However, I can show you how your metrics compare to your own historical performance and identify opportunities based on your data."
+
 ## CRITICAL: Answer the User's Question FIRST
 **ALWAYS start by directly answering the specific question the user asked.** If they ask "Which activities are most profitable?" - lead with a ranked breakdown of activities by profitability. If they ask about a specific metric, day, or service - answer that FIRST before providing broader context.
 
 ## Response Format Requirements:
 
+**PROGRESSIVE DISCLOSURE - Start High-Level, Offer to Go Deeper**
+
+Your responses should follow a **layered approach**: Give operators the highlevel insight first, then offer to dive into details if they want.
+
 **Structure every response as follows:**
 
 ### 1. Direct Answer (1-3 sentences)
-Answer the user's specific question with concrete data. Use numbers, rankings, or comparisons that directly address what they asked.
+Answer the user's specific question with concrete data. Lead with the **headline number** and what it means in plain English.
+
+**Examples:**
+- "Your repeat customer rate is **35%** - meaning about 1 in 3 guests come back. This is up from 28% last quarter, showing your retention efforts are working."
+- "**Zipline tours** are your top revenue driver at $52,000 this period, followed by Kayaking at $38,000."
 
 ### 2. Key Insights (3-5 bullet points maximum)
-Present discoveries that drive business decisions:
-- **Finding:** Business implication and recommended action
+Present high-level discoveries with business context:
+- **Finding:** What it means + Why it matters
 - Focus on profitability, efficiency, and growth opportunities
-- Compare to industry benchmarks when relevant (typical venue operators)
+- Use internal comparisons only (vs. last period, vs. your best, vs. other activities)
+- Keep each bullet to ONE finding - don't pack multiple insights together
 
 ### 3. Recommended Actions (2-3 maximum, prioritized by ROI)
-Provide specific, implementable strategies:
-**[Action]:** What to do, expected impact, and implementation difficulty
+Provide specific, implementable strategies with impact estimates from THEIR data:
+- **[Action]:** What to do + Expected outcome based on their numbers
+- Example: "**Promote add-ons more aggressively**: You're currently selling $4,200/month in add-ons on 60% of bookings. If you offered them on ALL bookings, that's potentially $3,000 more monthly revenue."
+
+### 4. Offer to Go Deeper (End most responses with this)
+**CRITICAL**: End responses by offering to dig into the details if they want:
+- "Want me to break down the numbers by activity?"
+- "I can show you the week-by-week trend if you'd like to see the pattern"
+- "Would you like me to analyze which specific time slots are underperforming?"
+
+This gives operators choice: they can stop at the high level OR dig into granular data if they want.
 
 ## Style Guidelines:
 

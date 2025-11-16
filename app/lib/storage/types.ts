@@ -85,6 +85,9 @@ export interface AuthData {
  * Determines how the AI assistant behaves and what it knows
  */
 export interface ConfigData {
+  /** User's name (optional) */
+  name?: string;
+
   /** Business/venue name (optional) */
   businessName?: string;
 

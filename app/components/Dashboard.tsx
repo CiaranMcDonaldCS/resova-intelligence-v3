@@ -3,10 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useApp, useAnalytics, useChat } from '../context/AppContext';
 import { useRouter } from 'next/navigation';
+import { ConfigStorage } from '@/app/lib/storage/config-storage';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { logout } = useApp();
+  const { logout, isAuthenticated } = useApp();
   const {
     analyticsData,
     analyticsLoading,
@@ -15,9 +16,30 @@ export default function Dashboard() {
   } = useAnalytics();
   const { conversationHistory, chatLoading, sendMessage } = useChat();
   const [input, setInput] = useState('');
+  const [expandedPillar, setExpandedPillar] = useState<string | null>(null);
+  const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const chatChartsRef = useRef<Map<string, any>>(new Map());
+
+  // Track if component has mounted
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Redirect to onboarding if not authenticated (but only after mount to avoid race conditions)
+  useEffect(() => {
+    if (hasMounted && !isAuthenticated) {
+      router.push('/onboarding');
+    }
+  }, [isAuthenticated, router, hasMounted]);
+
+  // Handle logout with redirect
+  const handleLogout = () => {
+    logout();
+    router.push('/onboarding');
+  };
 
   // Auto-scroll chat
   useEffect(() => {
@@ -197,6 +219,33 @@ export default function Dashboard() {
   const convertCentsToDollars = (value: number): number => {
     // If value is suspiciously large (> 1000), it's probably in cents
     return value > 1000 ? value / 100 : value;
+  };
+
+  // Copy message content to clipboard (including the original question)
+  const handleCopyMessage = async (content: string, messageIndex: number) => {
+    try {
+      // Find the corresponding user message (assistant messages come after user messages)
+      let userQuestion = '';
+
+      // Look backwards to find the most recent user message before this assistant message
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (conversationHistory[i].role === 'user') {
+          userQuestion = conversationHistory[i].content;
+          break;
+        }
+      }
+
+      // Format the text with both question and answer
+      const formattedText = userQuestion
+        ? `Question: ${userQuestion}\n\nAnswer:\n${content}`
+        : content;
+
+      await navigator.clipboard.writeText(formattedText);
+      setCopiedMessageIndex(messageIndex);
+      setTimeout(() => setCopiedMessageIndex(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
   };
 
   // Helper function to get chart data from dataSource
@@ -572,7 +621,9 @@ export default function Dashboard() {
   }
 
   // Extract real data
-  const businessName = 'Business'; // TODO: Get from config storage
+  const config = ConfigStorage.load();
+  const userName = config?.name || 'there';
+  const firstName = userName.split(' ')[0]; // Get first name only
   const todayRevenue = analyticsData.periodSummary?.gross || 0;
   const revenueChange = analyticsData.periodSummary?.grossChange || 0;
   const upcomingBookings = analyticsData.todaysAgenda?.bookings || 0;
@@ -588,16 +639,16 @@ export default function Dashboard() {
       {/* Header */}
       <header className="bg-transparent pt-4 px-4 sm:px-6 md:px-8 pb-2 flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm bg-black/30">
         <div className="flex items-center space-x-3">
-          <img alt="Logo" className="h-8 md:h-9" src="/logo.png" />
+          <img alt="Logo" className="h-11 md:h-14" src="/logo.png" />
         </div>
-        <div className="flex items-center space-x-2">
-          <button className="text-[#A0A0A0] hover:text-white p-2 relative">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-[#3D8DDA] border-2 border-black/30"></span>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 px-4 py-2 bg-[#3D8DDA] hover:bg-[#2c79c1] text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            <span className="material-symbols-outlined text-lg">logout</span>
+            <span>Logout</span>
           </button>
-          <div className="w-8 h-8 rounded-full bg-[#3D8DDA] flex items-center justify-center text-sm font-semibold">
-            {businessName.charAt(0).toUpperCase()}
-          </div>
         </div>
       </header>
 
@@ -605,51 +656,50 @@ export default function Dashboard() {
       <main className="flex-grow p-4 sm:p-6 md:p-8 space-y-10 pb-28">
         {/* Greeting */}
         <div className="bg-gradient-to-r from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl p-6 sm:p-7 text-center shadow-xl">
-          <h2 className="text-xl text-white md:text-2xl font-bold mb-2 tracking-tight">Welcome back, {businessName}</h2>
+          <h2 className="text-xl text-white md:text-2xl font-bold mb-2 tracking-tight">Welcome, {firstName}</h2>
           <p className="text-sm text-[#B0B0B0] md:text-base max-w-2xl mx-auto">
             Your business intelligence dashboard is ready
           </p>
         </div>
 
         <div className="space-y-10">
-          {/* Attention Required */}
-          <div className="space-y-6">
-            <h3 className="font-bold text-xl md:text-2xl px-1 tracking-tight">Attention Required</h3>
-            <div className="space-y-4">
-              {analyticsData.businessInsights?.capacityUtilization &&
-               analyticsData.businessInsights.capacityUtilization.overallUtilization > 90 && (
-                <div className="w-full bg-[#1D212B] border border-[#383838] rounded-xl p-4 flex items-start space-x-4 cursor-pointer hover:bg-white/5 transition-colors">
-                  <span className="material-symbols-outlined text-yellow-400 mt-1">priority_high</span>
-                  <div>
-                    <p className="font-medium text-white text-base">High Capacity Alert</p>
-                    <p className="text-sm text-[#A0A0A0]">
-                      Capacity is at {capacityPercent.toFixed(0)}%. Consider adding new slots.
-                    </p>
-                  </div>
-                  <span className="material-symbols-outlined text-[#6B6B6B] ml-auto text-lg self-center">chevron_right</span>
-                </div>
-              )}
-              {revenueChange < 0 && (
-                <div className="w-full bg-[#1D212B] border border-[#383838] rounded-xl p-4 flex items-start space-x-4 cursor-pointer hover:bg-white/5 transition-colors">
-                  <span className="material-symbols-outlined text-red-400 mt-1">trending_down</span>
-                  <div>
-                    <p className="font-medium text-white text-base">Revenue Decline</p>
-                    <p className="text-sm text-[#A0A0A0]">
-                      Revenue is down {Math.abs(revenueChange).toFixed(1)}% compared to previous period.
-                    </p>
-                  </div>
-                  <span className="material-symbols-outlined text-[#6B6B6B] ml-auto text-lg self-center">chevron_right</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Owner's Box - Three Pillars */}
+          {/* Owner's Box - Unified Command Center */}
           <div className="bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl p-5 sm:p-6 shadow-xl">
             <div className="flex items-center mb-6">
               <span className="material-symbols-outlined text-[#3D8DDA] mr-3 text-2xl">business_center</span>
               <h3 className="font-bold text-xl md:text-2xl text-white tracking-tight">Owner's Box</h3>
             </div>
+
+            {/* Attention Required */}
+            {((analyticsData.businessInsights?.capacityUtilization &&
+               analyticsData.businessInsights.capacityUtilization.overallUtilization > 90) ||
+              revenueChange < 0) && (
+              <div className="space-y-3 mb-6">
+                {analyticsData.businessInsights?.capacityUtilization &&
+                 analyticsData.businessInsights.capacityUtilization.overallUtilization > 90 && (
+                  <div className="w-full bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start space-x-4">
+                    <span className="material-symbols-outlined text-yellow-400 mt-0.5 text-xl">priority_high</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white text-sm mb-1">High Capacity Alert</p>
+                      <p className="text-xs text-[#E0E0E0]">
+                        Capacity is at {capacityPercent.toFixed(0)}%. Consider adding new slots.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {revenueChange < 0 && (
+                  <div className="w-full bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start space-x-4">
+                    <span className="material-symbols-outlined text-red-400 mt-0.5 text-xl">trending_down</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white text-sm mb-1">Revenue Decline</p>
+                      <p className="text-xs text-[#E0E0E0]">
+                        Revenue is down {Math.abs(revenueChange).toFixed(1)}% compared to previous period.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Three Pillars Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
@@ -684,7 +734,7 @@ export default function Dashboard() {
               <div className="bg-gradient-to-br from-[#10B981]/10 to-transparent border border-[#10B981]/30 rounded-xl p-5 shadow-lg hover:shadow-xl hover:border-[#10B981]/50 transition-all">
                 <div className="flex items-center mb-4">
                   <span className="material-symbols-outlined text-[#10B981] text-xl mr-2">settings_suggest</span>
-                  <h4 className="text-sm font-bold text-[#10B981] uppercase tracking-wide">Efficiency</h4>
+                  <h4 className="text-sm font-bold text-[#10B981] uppercase tracking-wide">Operational Efficiency</h4>
                 </div>
                 <div className="space-y-3">
                   <div>
@@ -729,52 +779,156 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Summary Row */}
-            <div className="bg-black/30 p-4 rounded-xl text-center border border-white/5">
-              <p className="text-xs text-[#A0A0A0] mb-2 uppercase tracking-wide font-medium">Quick Summary</p>
-              <p className="text-sm md:text-base text-white">
-                <span className="font-bold text-[#3D8DDA]">${todayRevenue.toLocaleString()}</span> revenue •
-                <span className="font-bold text-[#10B981] ml-1">{capacityPercent.toFixed(0)}%</span> capacity •
-                <span className="font-bold text-[#F59E0B] ml-1">{totalGuests.toLocaleString()}</span> guests
-              </p>
-            </div>
-          </div>
+            {/* Explore Buttons Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <button
+                onClick={() => setExpandedPillar(expandedPillar === 'revenue' ? null : 'revenue')}
+                disabled={chatLoading}
+                className="flex items-center justify-between p-4 bg-gradient-to-br from-[#3D8DDA]/10 to-transparent border border-[#3D8DDA]/30 rounded-xl hover:border-[#3D8DDA]/50 hover:bg-[#3D8DDA]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center space-x-3">
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-lg">trending_up</span>
+                  <span className="text-sm font-semibold text-white">Explore Revenue</span>
+                </div>
+                <span className={`material-symbols-outlined text-[#3D8DDA] text-base transition-transform ${expandedPillar === 'revenue' ? 'rotate-180' : ''}`}>expand_more</span>
+              </button>
 
-          {/* Quick Insights */}
-          <div className="space-y-6">
-            <h3 className="font-bold text-xl md:text-2xl px-1 tracking-tight">Quick Insights</h3>
-            <div className="grid grid-cols-3 gap-4">
               <button
-                onClick={() => handleSend("Provide a comprehensive analysis of all Drive Revenue insights including: revenue trends and patterns, product/activity performance, upsell opportunities from extras and add-ons, promotion and discount effectiveness, pricing optimization recommendations, and revenue forecasting.")}
+                onClick={() => setExpandedPillar(expandedPillar === 'operations' ? null : 'operations')}
                 disabled={chatLoading}
-                className="group flex flex-col items-center justify-center space-y-4 p-5 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-xl hover:shadow-[#3D8DDA]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-between p-4 bg-gradient-to-br from-[#10B981]/10 to-transparent border border-[#10B981]/30 rounded-xl hover:border-[#10B981]/50 hover:bg-[#10B981]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="p-3.5 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
-                  <span className="material-symbols-outlined text-[#3D8DDA] text-3xl">trending_up</span>
+                <div className="flex items-center space-x-3">
+                  <span className="material-symbols-outlined text-[#10B981] text-lg">settings_suggest</span>
+                  <span className="text-sm font-semibold text-white">Explore Operations</span>
                 </div>
-                <span className="text-sm font-bold text-white tracking-tight text-center">Drive Revenue</span>
+                <span className={`material-symbols-outlined text-[#10B981] text-base transition-transform ${expandedPillar === 'operations' ? 'rotate-180' : ''}`}>expand_more</span>
               </button>
+
               <button
-                onClick={() => handleSend("Provide a comprehensive analysis of all Operational Efficiency insights including: capacity utilization and optimization, booking source performance, channel effectiveness, time slot utilization, resource allocation, staff scheduling opportunities, and operational bottlenecks.")}
+                onClick={() => setExpandedPillar(expandedPillar === 'guests' ? null : 'guests')}
                 disabled={chatLoading}
-                className="group flex flex-col items-center justify-center space-y-4 p-5 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-xl hover:shadow-[#3D8DDA]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-between p-4 bg-gradient-to-br from-[#F59E0B]/10 to-transparent border border-[#F59E0B]/30 rounded-xl hover:border-[#F59E0B]/50 hover:bg-[#F59E0B]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="p-3.5 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
-                  <span className="material-symbols-outlined text-[#3D8DDA] text-3xl">settings_suggest</span>
+                <div className="flex items-center space-x-3">
+                  <span className="material-symbols-outlined text-[#F59E0B] text-lg">groups</span>
+                  <span className="text-sm font-semibold text-white">Explore Guests</span>
                 </div>
-                <span className="text-sm font-bold text-white tracking-tight text-center">Operational Efficiency</span>
-              </button>
-              <button
-                onClick={() => handleSend("Provide a comprehensive analysis of all Guest Experience insights including: customer satisfaction metrics, repeat customer analysis, guest feedback themes, no-show patterns, group size trends, average revenue per guest, customer lifetime value, and guest retention strategies.")}
-                disabled={chatLoading}
-                className="group flex flex-col items-center justify-center space-y-4 p-5 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-xl hover:shadow-[#3D8DDA]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="p-3.5 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
-                  <span className="material-symbols-outlined text-[#3D8DDA] text-3xl">groups</span>
-                </div>
-                <span className="text-sm font-bold text-white tracking-tight text-center">Guest Experience</span>
+                <span className={`material-symbols-outlined text-[#F59E0B] text-base transition-transform ${expandedPillar === 'guests' ? 'rotate-180' : ''}`}>expand_more</span>
               </button>
             </div>
+
+            {/* Expandable Question Menus */}
+            {expandedPillar === 'revenue' && (
+              <div className="border border-[#3D8DDA]/30 rounded-xl p-4 space-y-2 bg-gradient-to-br from-[#3D8DDA]/5 to-transparent mt-3">
+                <button
+                  onClick={() => { handleSend("What products are performing best this month?"); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-base">trending_up</span>
+                  <span>What products are performing best this month?</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("How is this weekend's revenue trending against last weekend?"); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-base">weekend</span>
+                  <span>How is this weekend's revenue trending against last weekend?</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("How are bookings tracking this weekend compared to last?"); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-base">calendar_today</span>
+                  <span>How are bookings tracking this weekend compared to last?</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("Provide a comprehensive analysis of all Drive Revenue insights including: revenue trends and patterns, product/activity performance, upsell opportunities from extras and add-ons, promotion and discount effectiveness, pricing optimization recommendations, and revenue forecasting."); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-white font-semibold bg-[#3D8DDA]/10 hover:bg-[#3D8DDA]/20 rounded-lg transition-colors flex items-center space-x-3 mt-3"
+                >
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-base">list</span>
+                  <span>Full Revenue Analysis</span>
+                </button>
+              </div>
+            )}
+
+            {expandedPillar === 'operations' && (
+              <div className="border border-[#10B981]/30 rounded-xl p-4 space-y-2 bg-gradient-to-br from-[#10B981]/5 to-transparent mt-3">
+                <button
+                  onClick={() => { handleSend("What activities had the highest utilization this weekend?"); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#10B981] text-base">event_available</span>
+                  <span>What activities had the highest utilization this weekend?</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("How did activity performance change compared to last week?"); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#10B981] text-base">compare_arrows</span>
+                  <span>How did activity performance change compared to last week?</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("Show me operational tools that can help me save time."); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#10B981] text-base">handyman</span>
+                  <span>Show me operational tools that can help me save time.</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("Provide a comprehensive analysis of all Operational Efficiency insights including: capacity utilization and optimization, booking source performance, channel effectiveness, time slot utilization, resource allocation, staff scheduling opportunities, and operational bottlenecks."); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-white font-semibold bg-[#10B981]/10 hover:bg-[#10B981]/20 rounded-lg transition-colors flex items-center space-x-3 mt-3"
+                >
+                  <span className="material-symbols-outlined text-[#10B981] text-base">list</span>
+                  <span>Full Operations Analysis</span>
+                </button>
+              </div>
+            )}
+
+            {expandedPillar === 'guests' && (
+              <div className="border border-[#F59E0B]/30 rounded-xl p-4 space-y-2 bg-gradient-to-br from-[#F59E0B]/5 to-transparent mt-3">
+                <button
+                  onClick={() => { handleSend("Show me guest booking patterns for the past month."); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#F59E0B] text-base">calendar_month</span>
+                  <span>Show me guest booking patterns for the past month.</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("What are my busiest days and times?"); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#F59E0B] text-base">schedule</span>
+                  <span>What are my busiest days and times?</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("How many repeat customers do I have?"); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-[#E0E0E0] hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <span className="material-symbols-outlined text-[#F59E0B] text-base">repeat</span>
+                  <span>How many repeat customers do I have?</span>
+                </button>
+                <button
+                  onClick={() => { handleSend("Provide a comprehensive analysis of all Guest Experience insights including: customer satisfaction metrics, repeat customer analysis, guest feedback themes, no-show patterns, group size trends, average revenue per guest, customer lifetime value, and guest retention strategies."); setExpandedPillar(null); }}
+                  disabled={chatLoading}
+                  className="w-full text-left px-4 py-3 text-sm text-white font-semibold bg-[#F59E0B]/10 hover:bg-[#F59E0B]/20 rounded-lg transition-colors flex items-center space-x-3 mt-3"
+                >
+                  <span className="material-symbols-outlined text-[#F59E0B] text-base">list</span>
+                  <span>Full Guest Analysis</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* AI Chat */}
@@ -782,7 +936,7 @@ export default function Dashboard() {
             {conversationHistory.map((msg: any, idx: number) => (
               <div key={idx}>
                 {msg.role === 'user' && (
-                  <div className="flex justify-end pt-6">
+                  <div className="flex justify-end pt-6 items-start space-x-2">
                     <div className="bg-gradient-to-br from-[#3D8DDA] to-[#2c79c1] text-white rounded-t-2xl rounded-bl-2xl px-6 py-4 max-w-[85%] md:max-w-[70%] shadow-xl shadow-[#3D8DDA]/30">
                       <p className="text-sm md:text-base leading-relaxed font-medium">{msg.content}</p>
                     </div>
@@ -790,11 +944,12 @@ export default function Dashboard() {
                 )}
 
                 {msg.role === 'assistant' && (
-                  <div className="flex items-start space-x-4 md:space-x-5 mb-8">
+                  <div className="flex items-start space-x-4 md:space-x-5 mb-8 group/message">
                     <div className="bg-gradient-to-br from-[#3D8DDA] to-[#2c79c1] rounded-full p-2.5 md:p-3 mt-1 flex-shrink-0 shadow-xl shadow-[#3D8DDA]/40">
                       <img src="/logo.png" alt="Resova" className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
-                    <div className="w-full space-y-6 flex-1 min-w-0 bg-gradient-to-br from-[#1D212B]/40 to-transparent border border-[#383838]/40 rounded-2xl p-5 md:p-7 shadow-lg">
+                    <div className="w-full flex-1 min-w-0 relative">
+                      <div className="w-full space-y-6 bg-gradient-to-br from-[#1D212B]/40 to-transparent border border-[#383838]/40 rounded-2xl p-5 md:p-7 shadow-lg selectable-text" style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' } as React.CSSProperties}>
                       {(() => {
                         // Parse the content to extract Key Insights and Recommended Actions
                         const lines = msg.content.split('\n');
@@ -815,6 +970,7 @@ export default function Dashboard() {
                             console.log('✅ Found Recommended Actions header:', line);
                             return;
                           }
+
                           if (line.trim()) {
                             sections[currentSection].push(line);
                           }
@@ -839,13 +995,16 @@ export default function Dashboard() {
                             <div className="prose prose-invert prose-sm md:prose-base max-w-none">
                               {sections.main.map((line: string, lineIdx: number) => {
                                 if (line.startsWith('### ')) {
-                                  return <h3 key={lineIdx} className="text-base md:text-lg font-bold text-white mt-8 mb-4 tracking-tight border-b border-[#383838]/50 pb-2">{line.replace('### ', '')}</h3>;
+                                  const cleanedText = line.replace('### ', '').replace(/\*\*/g, '');
+                                  return <h3 key={lineIdx} className="text-base md:text-lg font-bold text-white mt-8 mb-4 tracking-tight border-b border-[#383838]/50 pb-2">{cleanedText}</h3>;
                                 }
                                 if (line.startsWith('## ')) {
-                                  return <h2 key={lineIdx} className="text-lg md:text-xl font-bold text-white mt-10 mb-5 tracking-tight border-b border-[#383838] pb-3">{line.replace('## ', '')}</h2>;
+                                  const cleanedText = line.replace('## ', '').replace(/\*\*/g, '');
+                                  return <h2 key={lineIdx} className="text-lg md:text-xl font-bold text-white mt-10 mb-5 tracking-tight border-b border-[#383838] pb-3">{cleanedText}</h2>;
                                 }
                                 if (line.startsWith('# ')) {
-                                  return <h1 key={lineIdx} className="text-xl md:text-2xl font-bold text-white mt-12 mb-6 tracking-tight border-b-2 border-[#3D8DDA] pb-3">{line.replace('# ', '')}</h1>;
+                                  const cleanedText = line.replace('# ', '').replace(/\*\*/g, '');
+                                  return <h1 key={lineIdx} className="text-xl md:text-2xl font-bold text-white mt-12 mb-6 tracking-tight border-b-2 border-[#3D8DDA] pb-3">{cleanedText}</h1>;
                                 }
                                 if (line.trim().startsWith('- ')) {
                                   const content = line.replace(/^-\s*/, '');
@@ -884,13 +1043,22 @@ export default function Dashboard() {
                                       {sections.insights.map((line: string, i: number) => {
                                         const trimmedLine = line.trim();
 
-                                        // Match bullet or numbered items
+                                        // Skip empty lines
+                                        if (!trimmedLine) return null;
+
+                                        // Check for nested bullets (lines starting with spaces/indentation)
+                                        const isNested = line.match(/^\s{2,}/);
+
+                                        // Match bullet or numbered items and strip the marker
                                         if (trimmedLine.startsWith('-') || trimmedLine.startsWith('*') || trimmedLine.match(/^\d+\./)) {
-                                          const content = trimmedLine.replace(/^[-*\d]+[\.\)]\s*/, '');
+                                          // Remove bullet markers: -, *, or numbers followed by . or )
+                                          let content = trimmedLine.replace(/^[-*]\s*/, '').replace(/^\d+[\.\)]\s*/, '');
                                           if (content) {
                                             return (
-                                              <li key={i} className="flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 -ml-2.5">
-                                                <span className="material-symbols-outlined text-[#3D8DDA] text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200">trending_up</span>
+                                              <li key={i} className={`flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 ${isNested ? 'ml-6 -ml-0.5' : '-ml-2.5'}`}>
+                                                <span className={`material-symbols-outlined text-[#3D8DDA] mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200 ${isNested ? 'text-sm' : 'text-base'}`}>
+                                                  {isNested ? 'subdirectory_arrow_right' : 'trending_up'}
+                                                </span>
                                                 <span className="text-[#E0E0E0] leading-relaxed text-sm md:text-base" dangerouslySetInnerHTML={{
                                                   __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
                                                 }} />
@@ -898,6 +1066,9 @@ export default function Dashboard() {
                                             );
                                           }
                                         }
+
+                                        // If it's not a bullet point, don't render it in the insights card
+                                        // This prevents random text from appearing
                                         return null;
                                       })}
                                     </ul>
@@ -916,12 +1087,20 @@ export default function Dashboard() {
                                       {sections.actions.map((line: string, i: number) => {
                                         const trimmedLine = line.trim();
 
+                                        // Skip empty lines
+                                        if (!trimmedLine) return null;
+
+                                        // Check for nested bullets (lines starting with spaces/indentation)
+                                        const isNested = line.match(/^\s{2,}/);
+
                                         // Pattern 1: **Title**: Description (with or without leading bullet/number)
                                         let match = trimmedLine.match(/^[-*\d]*[\.\)]?\s*\*\*(.*?)\*\*:\s*(.*)/);
                                         if (match) {
                                           return (
-                                            <li key={i} className="flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 -ml-2.5">
-                                              <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200">check_circle</span>
+                                            <li key={i} className={`flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 ${isNested ? 'ml-6 -ml-0.5' : '-ml-2.5'}`}>
+                                              <span className={`material-symbols-outlined text-green-400 mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200 ${isNested ? 'text-sm' : 'text-base'}`}>
+                                                {isNested ? 'subdirectory_arrow_right' : 'check_circle'}
+                                              </span>
                                               <div className="flex-1">
                                                 <div className="text-[#E0E0E0] leading-relaxed text-sm md:text-base">
                                                   <strong className="font-semibold text-white">{match[1]}</strong>
@@ -934,11 +1113,14 @@ export default function Dashboard() {
 
                                         // Pattern 2: Plain bullet or numbered item
                                         if (trimmedLine.startsWith('-') || trimmedLine.startsWith('*') || trimmedLine.match(/^\d+\./)) {
-                                          const content = trimmedLine.replace(/^[-*\d]+[\.\)]\s*/, '');
+                                          // Remove bullet markers: -, *, or numbers followed by . or )
+                                          let content = trimmedLine.replace(/^[-*]\s*/, '').replace(/^\d+[\.\)]\s*/, '');
                                           if (content) {
                                             return (
-                                              <li key={i} className="flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 -ml-2.5">
-                                                <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200">check_circle</span>
+                                              <li key={i} className={`flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 ${isNested ? 'ml-6 -ml-0.5' : '-ml-2.5'}`}>
+                                                <span className={`material-symbols-outlined text-green-400 mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200 ${isNested ? 'text-sm' : 'text-base'}`}>
+                                                  {isNested ? 'subdirectory_arrow_right' : 'check_circle'}
+                                                </span>
                                                 <span className="text-[#E0E0E0] leading-relaxed text-sm md:text-base" dangerouslySetInnerHTML={{
                                                   __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
                                                 }} />
@@ -947,6 +1129,8 @@ export default function Dashboard() {
                                           }
                                         }
 
+                                        // If it's not a bullet point, don't render it in the actions card
+                                        // This prevents random text from appearing
                                         return null;
                                       })}
                                     </ul>
@@ -1017,8 +1201,29 @@ export default function Dashboard() {
                         </div>
                       )}
 
+                      {/* Copy Button - appears at bottom before suggested questions */}
+                      <div className="pt-4 mt-6 border-t border-[#383838]/30 flex justify-end">
+                        <button
+                          onClick={() => handleCopyMessage(msg.content, idx)}
+                          className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10 hover:border-[#3D8DDA]/50 text-sm group"
+                          title="Copy question & answer"
+                        >
+                          {copiedMessageIndex === idx ? (
+                            <>
+                              <span className="material-symbols-outlined text-[#10B981] text-sm">check</span>
+                              <span className="text-[#10B981]">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-[#A0A0A0] group-hover:text-white text-sm">content_copy</span>
+                              <span className="text-[#A0A0A0] group-hover:text-white">Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
                       {msg.suggestedQuestions && msg.suggestedQuestions.length > 0 && (
-                        <div className="pt-4 mt-6 border-t border-[#383838]/50">
+                        <div className="pt-4 mt-2">
                           <p className="text-sm text-[#A0A0A0] mb-4 flex items-center">
                             <span className="material-symbols-outlined text-base mr-2">tips_and_updates</span>
                             Suggested next steps:
@@ -1036,6 +1241,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                       )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1054,7 +1260,7 @@ export default function Dashboard() {
                       <div className="w-2 h-2 bg-[#3D8DDA] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       <div className="w-2 h-2 bg-[#3D8DDA] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                     </div>
-                    <span className="text-sm text-[#A0A0A0]">AI is thinking...</span>
+                    <span className="text-sm text-[#A0A0A0]">Analyzing your data...</span>
                   </div>
                 </div>
               </div>
@@ -1065,7 +1271,7 @@ export default function Dashboard() {
 
           {/* Input Area */}
           <div className="relative !mt-8">
-            <div className="relative">
+            <div className="relative flex items-center">
               <input
                 className="w-full bg-[#1D212B] text-white border border-[#383838] rounded-2xl pl-5 pr-14 py-4 text-base focus:outline-none focus:border-[#3D8DDA] focus:ring-1 focus:ring-[#3D8DDA] placeholder:text-[#6B6B6B] transition-all"
                 placeholder="Ask about your business performance..."
@@ -1081,7 +1287,7 @@ export default function Dashboard() {
                 disabled={chatLoading}
               />
               <button
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#3D8DDA] text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#2c79c1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute right-2 bg-[#3D8DDA] text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#2c79c1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => handleSend()}
                 disabled={!input.trim() || chatLoading}
               >

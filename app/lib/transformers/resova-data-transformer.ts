@@ -32,7 +32,9 @@ import {
   CapacityUtilization,
   CustomerIntelligence,
   CustomerProfile,
-  CustomerSegment
+  CustomerSegment,
+  DailyBreakdown,
+  DayOfWeekSummary
 } from '@/app/types/analytics';
 
 import {
@@ -81,12 +83,14 @@ export class ResovaDataTransformer {
       periodSummary: this.transformPeriodSummary(transactions, allPayments, allBookings, previousTransactions, previousAllBookings, previousAllPayments),
       revenueTrends,
       performance: this.transformPerformance(allBookings, previousAllBookings),
-      paymentCollection: this.transformPaymentCollection(transactions, allPayments, previousTransactions, previousAllPayments),
+      paymentCollection: this.transformPaymentCollection(transactions, allPayments),
       salesMetrics: this.transformSalesMetrics(allBookings),
-      salesSummary: this.transformSalesSummary(transactions, allBookings, itemizedRevenue, previousTransactions, previousAllBookings),
+      salesSummary: this.transformSalesSummary(transactions, allBookings, itemizedRevenue),
       topPurchased: this.transformTopPurchased(allBookings),
       guestMetrics: this.transformGuestMetrics(allBookings),
-      guestSummary: this.transformGuestSummary(allBookings, allPayments, transactions, previousAllBookings, previousAllPayments, previousTransactions)
+      guestSummary: this.transformGuestSummary(allBookings, allPayments, transactions, previousAllBookings, previousAllPayments, previousTransactions),
+      dailyBreakdown: this.transformDailyBreakdown(allBookings),
+      dayOfWeekSummary: this.transformDayOfWeekSummary(allBookings)
     };
   }
 
@@ -380,16 +384,16 @@ export class ResovaDataTransformer {
 
       logger.info(`REAL COMPARISON - Current gross: $${gross.toFixed(2)}, Previous gross: $${previousGross.toFixed(2)}`);
     } else {
-      // Fallback to simulated data if previous period not available
-      previousGross = gross * 0.9;
-      previousNet = net * 0.9;
-      previousTotalSales = totalSales * 0.92;
-      previousDiscounts = discounts * 1.1;
-      previousRefunded = refunded * 1.05;
-      previousTaxes = taxes * 0.98;
-      previousFees = fees * 0.99;
+      // No fallback - show zero when no previous period data exists
+      previousGross = 0;
+      previousNet = 0;
+      previousTotalSales = 0;
+      previousDiscounts = 0;
+      previousRefunded = 0;
+      previousTaxes = 0;
+      previousFees = 0;
 
-      logger.warn('No previous period data available, using simulated comparison (0.9 multiplier)');
+      logger.warn('No previous period data available - showing zero for comparison');
     }
 
     return {
@@ -474,10 +478,10 @@ export class ResovaDataTransformer {
         prevNet = Math.round(previousData.net * 100) / 100;
         prevSales = previousData.sales;
       } else {
-        // Fallback to simulated (0.9 multiplier)
-        prevGross = Math.round(grossRevenue * 0.9 * 100) / 100;
-        prevNet = Math.round(netRevenue * 0.9 * 100) / 100;
-        prevSales = Math.floor(sales * 0.9);
+        // No fallback - show zero when no previous period data exists
+        prevGross = 0;
+        prevNet = 0;
+        prevSales = 0;
       }
 
       return {
@@ -547,16 +551,77 @@ export class ResovaDataTransformer {
     const [peakTime, peakTimeBookings] = Object.entries(hourCounts)
       .sort(([, a], [, b]) => b - a)[0] || ['10:00', 0];
 
+    // PHASE 1 CRITICAL METRIC: Booking Status Breakdown
+    // Matches PHP: count(CASE WHEN status = 'completed' THEN 1 ELSE NULL END)
+    const bookingCompleted = allBookings.filter(b =>
+      b.status.toLowerCase() === 'completed'
+    ).length;
+
+    const bookingUpcoming = allBookings.filter(b =>
+      b.status.toLowerCase() === 'upcoming' || b.status.toLowerCase() === 'pending'
+    ).length;
+
+    const bookingNoShow = allBookings.filter(b =>
+      b.status.toLowerCase() === 'noshow' || b.status.toLowerCase() === 'no-show' || b.status.toLowerCase() === 'no show'
+    ).length;
+
+    const bookingCancelled = allBookings.filter(b =>
+      b.status.toLowerCase() === 'cancelled' || b.status.toLowerCase() === 'canceled'
+    ).length;
+
+    logger.info(`Booking Status Breakdown - Completed: ${bookingCompleted}, Upcoming: ${bookingUpcoming}, No-Show: ${bookingNoShow}, Cancelled: ${bookingCancelled}`);
+
+    // Calculate previous period data if available
+    let previousBestDayRevenue = 0;
+    let previousTopItemBookings = 0;
+    let previousPeakTimeBookings = 0;
+
+    if (previousAllBookings && previousAllBookings.length > 0) {
+      // Calculate previous best day revenue
+      const previousDayRevenue: Record<string, number> = {};
+      previousAllBookings.forEach(b => {
+        const date = new Date(b.date_short);
+        if (!isNaN(date.getTime())) {
+          const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+          const revenue = parseFloat(b.booking_total || '0');
+          previousDayRevenue[dayName] = (previousDayRevenue[dayName] || 0) + revenue;
+        }
+      });
+      const [, prevBestDayRev] = Object.entries(previousDayRevenue).sort(([, a], [, b]) => b - a)[0] || ['', 0];
+      previousBestDayRevenue = prevBestDayRev;
+
+      // Calculate previous top item bookings
+      const previousItemCounts: Record<string, number> = {};
+      previousAllBookings.forEach(b => {
+        previousItemCounts[b.item_name] = (previousItemCounts[b.item_name] || 0) + 1;
+      });
+      const [, prevTopItemCount] = Object.entries(previousItemCounts).sort(([, a], [, b]) => b - a)[0] || ['', 0];
+      previousTopItemBookings = prevTopItemCount;
+
+      // Calculate previous peak time bookings
+      const previousHourCounts: Record<string, number> = {};
+      previousAllBookings.forEach(b => {
+        const hour = b.time.split(':')[0] + ':00';
+        previousHourCounts[hour] = (previousHourCounts[hour] || 0) + 1;
+      });
+      const [, prevPeakTimeCount] = Object.entries(previousHourCounts).sort(([, a], [, b]) => b - a)[0] || ['', 0];
+      previousPeakTimeBookings = prevPeakTimeCount;
+    }
+
     return {
       bestDay,
       bestDayRevenue,
-      bestDayChange: this.calculatePercentChange(bestDayRevenue, bestDayRevenue * 0.9),
+      bestDayChange: this.calculatePercentChange(bestDayRevenue, previousBestDayRevenue),
       topItem,
       topItemBookings,
-      topItemChange: this.calculatePercentChange(topItemBookings, topItemBookings * 0.92),
+      topItemChange: this.calculatePercentChange(topItemBookings, previousTopItemBookings),
       peakTime,
       peakTimeBookings,
-      peakTimeChange: this.calculatePercentChange(peakTimeBookings, peakTimeBookings * 0.95)
+      peakTimeChange: this.calculatePercentChange(peakTimeBookings, previousPeakTimeBookings),
+      bookingCompleted,
+      bookingUpcoming,
+      bookingNoShow,
+      bookingCancelled
     };
   }
 
@@ -583,15 +648,15 @@ export class ResovaDataTransformer {
     const paidAmount = parseFloat(allPayments.reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0).toFixed(2));
 
     // Unpaid amount = total due from unique transactions
-    const unpaidTransactions = new Map<number, number>();
+    const unpaidTransactionsMap = new Map<number, number>();
     allPayments.forEach(p => {
       const txId = p.transaction_id;
       const txDue = parseFloat(p.transaction_due || '0');
-      if (!unpaidTransactions.has(txId) || unpaidTransactions.get(txId)! < txDue) {
-        unpaidTransactions.set(txId, txDue);
+      if (!unpaidTransactionsMap.has(txId) || unpaidTransactionsMap.get(txId)! < txDue) {
+        unpaidTransactionsMap.set(txId, txDue);
       }
     });
-    const unpaidAmount = parseFloat(Array.from(unpaidTransactions.values()).reduce((sum, val) => sum + val, 0).toFixed(2));
+    const unpaidAmount = parseFloat(Array.from(unpaidTransactionsMap.values()).reduce((sum, val) => sum + val, 0).toFixed(2));
 
     // Calculate card vs cash from payment labels
     const cardPayments = allPayments.filter(p => p.label.toLowerCase().includes('card'));
@@ -600,9 +665,42 @@ export class ResovaDataTransformer {
     const cardAmount = cardPayments.reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
     const cashAmount = cashPayments.reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
 
+    // PHASE 1 CRITICAL METRIC: Payment Status Breakdown
+    // Matches PHP: count(due = 0) AS paid_transactions
+    // Build unique transaction map with payment status
+    const transactionStatusMap = new Map<number, { paid: number; due: number }>();
+    allPayments.forEach(p => {
+      const txId = p.transaction_id;
+      const txPaid = parseFloat(p.transaction_paid || '0');
+      const txDue = parseFloat(p.transaction_due || '0');
+
+      if (!transactionStatusMap.has(txId)) {
+        transactionStatusMap.set(txId, { paid: txPaid, due: txDue });
+      }
+    });
+
+    let paidTransactionsCount = 0;
+    let partiallyPaidTransactionsCount = 0;
+    let unpaidTransactionsCount = 0;
+
+    transactionStatusMap.forEach(({ paid, due }) => {
+      if (due === 0) {
+        // Fully paid: due = 0
+        paidTransactionsCount++;
+      } else if (paid > 0 && due > 0) {
+        // Partially paid: due > 0 AND paid > 0
+        partiallyPaidTransactionsCount++;
+      } else if (paid === 0 && due > 0) {
+        // Unpaid: due > 0 AND paid = 0
+        unpaidTransactionsCount++;
+      }
+    });
+
+    logger.info(`Payment Status Breakdown - Paid: ${paidTransactionsCount}, Partial: ${partiallyPaidTransactionsCount}, Unpaid: ${unpaidTransactionsCount}`);
+
     return {
       totalPayments: paidAmount,
-      totalChange: this.calculatePercentChange(paidAmount, paidAmount * 0.91),
+      totalChange: 0, // No previous period data available
       paidAmount,
       paidPercent: totalTransactionAmount > 0 ? (paidAmount / totalTransactionAmount) * 100 : 100,
       unpaidAmount,
@@ -610,7 +708,10 @@ export class ResovaDataTransformer {
       cardAmount,
       cardPercent: paidAmount > 0 ? (cardAmount / paidAmount) * 100 : 0,
       cashAmount,
-      cashPercent: paidAmount > 0 ? (cashAmount / paidAmount) * 100 : 0
+      cashPercent: paidAmount > 0 ? (cashAmount / paidAmount) * 100 : 0,
+      paidTransactions: paidTransactionsCount,
+      partiallyPaidTransactions: partiallyPaidTransactionsCount,
+      unpaidTransactions: unpaidTransactionsCount
     };
   }
 
@@ -670,26 +771,62 @@ export class ResovaDataTransformer {
     console.log(`Avg Rev Per Guest: $${totalGuests > 0 ? (totalRevenue / totalGuests).toFixed(2) : 0}`);
     console.log('Sample transaction:', transactions[0]);
 
-    // Count online bookings - transactions don't have source field, so use a proxy
-    // Estimate based on payment type or use allBookings data as reference
-    const onlineBookings = allBookings.filter(b => b.source.toLowerCase().includes('online')).length;
+    // PHASE 2 METRIC - Drive Revenue: Transaction Channel Breakdown
+    // Matches PHP: total_visit_site, total_visit_manual, channel_facebook, channel_admin
+    const onlineBookings = allBookings.filter(b =>
+      b.source.toLowerCase().includes('online') ||
+      b.source.toLowerCase().includes('site') ||
+      b.source.toLowerCase().includes('web')
+    ).length;
+
+    const manualBookings = allBookings.filter(b =>
+      b.source.toLowerCase().includes('manual') ||
+      b.source.toLowerCase().includes('operator') ||
+      b.source.toLowerCase().includes('staff')
+    ).length;
+
+    const adminBookings = allBookings.filter(b =>
+      b.source.toLowerCase().includes('admin')
+    ).length;
+
+    const facebookBookings = allBookings.filter(b =>
+      b.source.toLowerCase().includes('facebook') ||
+      b.source.toLowerCase().includes('fb')
+    ).length;
+
+    // Calculate revenue by channel
+    const onlineRevenue = allBookings
+      .filter(b => b.source.toLowerCase().includes('online') || b.source.toLowerCase().includes('site') || b.source.toLowerCase().includes('web'))
+      .reduce((sum, b) => sum + parseFloat(b.booking_total || '0'), 0);
+
+    const manualRevenue = allBookings
+      .filter(b => b.source.toLowerCase().includes('manual') || b.source.toLowerCase().includes('operator') || b.source.toLowerCase().includes('staff'))
+      .reduce((sum, b) => sum + parseFloat(b.booking_total || '0'), 0);
+
+    logger.info(`Channel Breakdown - Online: ${onlineBookings} ($${onlineRevenue.toFixed(2)}), Manual: ${manualBookings} ($${manualRevenue.toFixed(2)}), Admin: ${adminBookings}, Facebook: ${facebookBookings}`);
 
     // Item sales = base price from transactions (without extras/fees/taxes)
     const itemSales = transactions.reduce((sum, t) => sum + parseFloat(t.price || '0'), 0);
 
     return {
       bookings: totalBookings,
-      bookingsChange: this.calculatePercentChange(totalBookings, Math.round(totalBookings * 0.92)),
+      bookingsChange: 0, // No previous period data available
       avgRevPerBooking: totalBookings > 0 ? totalRevenue / totalBookings : 0,
       avgRevChange: 0,
       onlineVsOperator: totalBookings > 0 ? (onlineBookings / totalBookings) * 100 : 0,
-      onlineChange: this.calculatePercentChange(onlineBookings, Math.round(onlineBookings * 0.98)),
+      onlineChange: 0, // No previous period data available
       itemSales: itemSales,
-      itemSalesChange: this.calculatePercentChange(itemSales, itemSales * 0.93),
+      itemSalesChange: 0, // No previous period data available
       extraSales: 0, // Would come from a separate Extras API
       extraSalesChange: 0,
       giftVoucherSales: 0, // Would come from Gift Vouchers API
-      giftVoucherChange: 0
+      giftVoucherChange: 0,
+      onlineBookings,
+      manualBookings,
+      adminBookings,
+      facebookBookings,
+      onlineRevenue,
+      manualRevenue
     };
   }
 
@@ -761,7 +898,10 @@ export class ResovaDataTransformer {
   private static transformGuestSummary(
     allBookings: ResovaAllBooking[],
     allPayments: ResovaAllPayment[],
-    transactions: ResovaTransaction[]
+    transactions: ResovaTransaction[],
+    previousAllBookings?: ResovaAllBooking[],
+    previousAllPayments?: ResovaAllPayment[],
+    previousTransactions?: ResovaTransaction[]
   ): GuestSummary {
     // Total Guests = Sum of participants across all bookings
     const totalGuests = allBookings.reduce((sum, b) => sum + b.total_quantity, 0);
@@ -777,6 +917,10 @@ export class ResovaDataTransformer {
     // Average Group Size = Total Guests / Total Bookings
     const avgGroupSize = allBookings.length > 0 ? totalGuests / allBookings.length : 0;
 
+    // PHASE 1 CRITICAL METRIC: Average Guests Per Booking
+    // Matches PHP: avg_guest_booking = total_guests / booking_all
+    const avgGuestsPerBooking = allBookings.length > 0 ? totalGuests / allBookings.length : 0;
+
     // No-Shows = Bookings with status indicating no-show
     // Note: This counts bookings, not individual participants
     // Ideally would use participants.status='no_show' from a Participants API
@@ -785,17 +929,35 @@ export class ResovaDataTransformer {
       b.status.toLowerCase().includes('no show')
     ).length;
 
+    // Calculate previous period data if available
+    let previousTotalGuests = 0;
+    let previousAvgRevenuePerGuest = 0;
+    let previousAvgGuestsPerBooking = 0;
+
+    if (previousAllBookings && previousAllBookings.length > 0 && previousAllPayments && previousTransactions) {
+      previousTotalGuests = previousAllBookings.reduce((sum, b) => sum + b.total_quantity, 0);
+      const previousGrossRevenue = previousAllPayments.reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
+      const previousRefunded = previousTransactions.reduce((sum, t) => sum + parseFloat(t.refunded || '0'), 0);
+      const previousNetRevenue = previousGrossRevenue - previousRefunded;
+      previousAvgRevenuePerGuest = previousTotalGuests > 0 ? previousNetRevenue / previousTotalGuests : 0;
+      previousAvgGuestsPerBooking = previousAllBookings.length > 0 ? previousTotalGuests / previousAllBookings.length : 0;
+    }
+
+    logger.info(`Average Guests Per Booking: ${avgGuestsPerBooking.toFixed(2)} (Total Guests: ${totalGuests}, Total Bookings: ${allBookings.length})`);
+
     return {
       totalGuests,
-      totalChange: this.calculatePercentChange(totalGuests, Math.round(totalGuests * 0.92)),
+      totalChange: this.calculatePercentChange(totalGuests, previousTotalGuests),
       avgRevenuePerGuest,
-      avgRevChange: this.calculatePercentChange(avgRevenuePerGuest, avgRevenuePerGuest * 0.94),
+      avgRevChange: this.calculatePercentChange(avgRevenuePerGuest, previousAvgRevenuePerGuest),
       avgGroupSize,
-      groupChange: this.calculatePercentChange(avgGroupSize, avgGroupSize * 0.97),
+      groupChange: 0, // No previous period data available
       repeatCustomers: 0, // Requires customer history tracking (first_participation_date)
       repeatChange: 0,
       noShows,
-      noShowChange: this.calculatePercentChange(noShows, Math.round(noShows * 1.1))
+      noShowChange: 0, // No previous period data available
+      avgGuestsPerBooking,
+      avgGuestsPerBookingChange: this.calculatePercentChange(avgGuestsPerBooking, previousAvgGuestsPerBooking)
     };
   }
 
@@ -875,7 +1037,7 @@ export class ResovaDataTransformer {
         } else {
           customerMap.set(email, {
             email,
-            name: t.customer?.name || 'Guest',
+            name: t.customer?.first_name + ' ' + t.customer?.last_name || 'Guest',
             bookings: t.bookings.length,
             spent,
             firstSeen: new Date(t.created_dt)
@@ -900,11 +1062,31 @@ export class ResovaDataTransformer {
         totalSpent: c.spent
       }));
 
+    // PHASE 2 METRIC - Drive Revenue: Top Customers by Revenue with Rankings
+    // Matches PHP: top_customers (top 5 by spend) with additional metrics
+    const topCustomersByRevenue = customers
+      .sort((a, b) => b.spent - a.spent)
+      .slice(0, 5)
+      .map((c, index) => ({
+        rank: index + 1,
+        name: c.name,
+        email: c.email,
+        totalBookings: c.bookings,
+        totalSpent: c.spent,
+        avgBookingValue: c.bookings > 0 ? c.spent / c.bookings : 0
+      }));
+
+    logger.info(`Top 5 Customers by Revenue:`);
+    topCustomersByRevenue.forEach(c => {
+      logger.info(`  ${c.rank}. ${c.name} - $${c.totalSpent.toFixed(2)} (${c.totalBookings} bookings, $${c.avgBookingValue.toFixed(2)} avg)`);
+    });
+
     return {
       totalCustomers: customers.length,
       newCustomers,
       repeatRate: customers.length > 0 ? (repeatCustomers / customers.length) * 100 : 0,
-      topCustomers
+      topCustomers,
+      topCustomersByRevenue
     };
   }
 
@@ -1051,12 +1233,57 @@ export class ResovaDataTransformer {
       return expiryDate <= thirtyDaysFromNow;
     }).length;
 
+    // PHASE 3 METRIC - Drive Revenue: Gift Voucher Detailed Tracking
+    // Matches PHP metrics: gift_sales, redeemed_total, redeemed_value, redemptions_total, redemptions_value
+    // Note: This uses basic voucher data. For detailed tracking, use reportingVouchers API data in transformVoucherInsightsDetailed()
+
+    // Calculate gift sales revenue (total amount paid for vouchers)
+    const giftSales = vouchers.reduce((sum, v) => sum + parseFloat(v.amount || '0'), 0);
+
+    // Count fully redeemed vouchers (where redeemed_at is not null)
+    const redeemedCount = redeemed.length;
+
+    // Calculate total value of redeemed vouchers
+    // Note: This is approximate - for precise tracking, use ResovaGiftVoucherReporting.total_redeemed
+    const redeemedValue = redeemed.reduce((sum, v) => sum + parseFloat(v.amount || '0'), 0);
+
+    // Count available vouchers (active and not fully redeemed)
+    const availableCount = active.length;
+
+    // Calculate total value still available to redeem
+    // Note: This is approximate - for precise tracking, use ResovaGiftVoucherReporting.total_remaining
+    const availableValue = active.reduce((sum, v) => sum + parseFloat(v.amount || '0'), 0);
+
+    // Calculate breakage rate (percentage of vouchers that expired unredeemed)
+    const expired = vouchers.filter(v => {
+      const expiryDate = new Date(v.expires_at);
+      return expiryDate < now && v.redeemed_at === null;
+    });
+    const breakageRate = vouchers.length > 0 ? (expired.length / vouchers.length) * 100 : 0;
+
+    // Calculate average voucher value
+    const averageVoucherValue = vouchers.length > 0 ? giftSales / vouchers.length : 0;
+
+    // Calculate average redemption value
+    const averageRedemptionValue = redeemedCount > 0 ? redeemedValue / redeemedCount : 0;
+
+    logger.info(`Gift Voucher Metrics - Sales: ${giftSales.toFixed(2)}, Redeemed: ${redeemedCount} (${redeemedValue.toFixed(2)}), Available: ${availableCount} (${availableValue.toFixed(2)}), Breakage: ${breakageRate.toFixed(1)}%`);
+
     return {
       totalActive: active.length,
       totalRedeemed: redeemed.length,
       totalValue,
       redemptionRate: vouchers.length > 0 ? (redeemed.length / vouchers.length) * 100 : 0,
-      expiringWithin30Days
+      expiringWithin30Days,
+      // Phase 3 detailed metrics
+      giftSales,
+      redeemedCount,
+      redeemedValue,
+      availableCount,
+      availableValue,
+      breakageRate,
+      averageVoucherValue,
+      averageRedemptionValue
     };
   }
 
@@ -1227,5 +1454,138 @@ export class ResovaDataTransformer {
       peakTimes,
       lowUtilizationTimes
     };
+  }
+
+  /**
+   * Transform daily breakdown for chart visualization and trend analysis
+   * Strategic Pillar: Drive Revenue 💰 + Operational Efficiency ⚙️
+   *
+   * Enables:
+   * - Bar charts showing bookings per day
+   * - Top items booked per day
+   * - Daily revenue trends
+   */
+  private static transformDailyBreakdown(allBookings: ResovaAllBooking[]): DailyBreakdown[] {
+    // Group bookings by date
+    const dailyMap = new Map<string, {
+      bookings: ResovaAllBooking[];
+      revenue: number;
+      guests: number;
+    }>();
+
+    allBookings.forEach(b => {
+      const date = b.date_short; // Already in YYYY-MM-DD format
+      const existing = dailyMap.get(date) || { bookings: [], revenue: 0, guests: 0 };
+
+      existing.bookings.push(b);
+      existing.revenue += parseFloat(b.booking_total || '0');
+      existing.guests += b.total_quantity;
+
+      dailyMap.set(date, existing);
+    });
+
+    // Transform to array with top item per day
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    return Array.from(dailyMap.entries())
+      .map(([date, data]) => {
+        const dateObj = new Date(date);
+        const dayOfWeek = dateObj.getDay();
+
+        // Find top item for this day
+        const itemMap = new Map<string, { bookings: number; revenue: number }>();
+        data.bookings.forEach(b => {
+          const existing = itemMap.get(b.item_name) || { bookings: 0, revenue: 0 };
+          existing.bookings += 1;
+          existing.revenue += parseFloat(b.booking_total || '0');
+          itemMap.set(b.item_name, existing);
+        });
+
+        // Sort items by bookings to find top
+        const sortedItems = Array.from(itemMap.entries())
+          .sort((a, b) => b[1].bookings - a[1].bookings);
+
+        const topItem = sortedItems[0];
+
+        return {
+          date,
+          dayOfWeek,
+          dayName: dayNames[dayOfWeek],
+          bookings: data.bookings.length,
+          revenue: data.revenue,
+          guests: data.guests,
+          topItem: topItem ? topItem[0] : '',
+          topItemBookings: topItem ? topItem[1].bookings : 0,
+          topItemRevenue: topItem ? topItem[1].revenue : 0
+        };
+      })
+      .sort((a, b) => a.date.localeCompare(b.date)); // Sort chronologically
+  }
+
+  /**
+   * Transform day-of-week summary for weekend vs weekday comparisons
+   * Strategic Pillar: Drive Revenue 💰 + Operational Efficiency ⚙️
+   *
+   * Enables:
+   * - Weekend vs weekday revenue comparisons
+   * - Identify busiest days of the week
+   * - Average performance by day of week
+   */
+  private static transformDayOfWeekSummary(allBookings: ResovaAllBooking[]): DayOfWeekSummary[] {
+    // Group bookings by day of week
+    const dayOfWeekMap = new Map<number, {
+      dates: Set<string>;
+      bookings: number;
+      revenue: number;
+      guests: number;
+    }>();
+
+    allBookings.forEach(b => {
+      const dateObj = new Date(b.date_short);
+      const dayOfWeek = dateObj.getDay();
+      const existing = dayOfWeekMap.get(dayOfWeek) || {
+        dates: new Set<string>(),
+        bookings: 0,
+        revenue: 0,
+        guests: 0
+      };
+
+      existing.dates.add(b.date_short); // Track unique dates for occurrences
+      existing.bookings += 1;
+      existing.revenue += parseFloat(b.booking_total || '0');
+      existing.guests += b.total_quantity;
+
+      dayOfWeekMap.set(dayOfWeek, existing);
+    });
+
+    // Transform to array with averages
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    const result: DayOfWeekSummary[] = [];
+    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+      const data = dayOfWeekMap.get(dayOfWeek) || {
+        dates: new Set<string>(),
+        bookings: 0,
+        revenue: 0,
+        guests: 0
+      };
+
+      const occurrences = data.dates.size || 1; // Avoid division by zero
+
+      result.push({
+        dayOfWeek,
+        dayName: dayNames[dayOfWeek],
+        totalBookings: data.bookings,
+        totalRevenue: data.revenue,
+        totalGuests: data.guests,
+        avgBookingsPerOccurrence: data.bookings / occurrences,
+        avgRevenuePerOccurrence: data.revenue / occurrences,
+        occurrences
+      });
+    }
+
+    logger.info(`Day of Week Summary - Weekend avg: ${result.filter(d => d.dayOfWeek === 0 || d.dayOfWeek === 6).reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / 2}, Weekday avg: ${result.filter(d => d.dayOfWeek > 0 && d.dayOfWeek < 6).reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / 5}`);
+
+    return result;
   }
 }

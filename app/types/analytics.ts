@@ -115,6 +115,11 @@ export interface Performance {
   peakTime: string;
   peakTimeBookings: number;
   peakTimeChange: number;
+  // Booking status breakdown (Phase 1 - Critical)
+  bookingCompleted: number;
+  bookingUpcoming: number;
+  bookingNoShow: number;
+  bookingCancelled: number;
 }
 
 export interface PaymentCollection {
@@ -128,6 +133,10 @@ export interface PaymentCollection {
   cardPercent: number;
   cashAmount: number;
   cashPercent: number;
+  // Payment status breakdown (Phase 1 - Critical)
+  paidTransactions: number;
+  partiallyPaidTransactions: number;
+  unpaidTransactions: number;
 }
 
 export interface SalesMetric {
@@ -149,6 +158,13 @@ export interface SalesSummary {
   extraSalesChange: number;
   giftVoucherSales: number;
   giftVoucherChange: number;
+  // Phase 2 - Drive Revenue: Transaction Channel Breakdown
+  onlineBookings: number;
+  manualBookings: number;
+  adminBookings: number;
+  facebookBookings: number;
+  onlineRevenue: number;
+  manualRevenue: number;
 }
 
 export interface PurchasedItem {
@@ -179,6 +195,9 @@ export interface GuestSummary {
   repeatChange: number;
   noShows: number;
   noShowChange: number;
+  // Average guests per booking (Phase 1 - Critical)
+  avgGuestsPerBooking: number;
+  avgGuestsPerBookingChange: number;
 }
 
 export interface ItemDetails {
@@ -201,6 +220,15 @@ export interface CustomerInsight {
     email: string;
     totalBookings: number;
     totalSpent: number;
+  }>;
+  // Phase 2 - Drive Revenue: Top customers expanded with rankings
+  topCustomersByRevenue: Array<{
+    rank: number;
+    name: string;
+    email: string;
+    totalBookings: number;
+    totalSpent: number;
+    avgBookingValue: number;
   }>;
 }
 
@@ -247,6 +275,43 @@ export interface VoucherInsight {
   totalValue: number;
   redemptionRate: number;
   expiringWithin30Days: number;
+  // Phase 3 - Drive Revenue: Gift Voucher Detailed Tracking
+  // Matches PHP metrics: gift_sales, redeemed_total, redeemed_value, redemptions_total, redemptions_value
+  giftSales: number;              // Total gift voucher sales revenue (PHP: gift_sales)
+  redeemedCount: number;          // Count of fully redeemed vouchers (PHP: redeemed_total)
+  redeemedValue: number;          // Total value of redeemed vouchers (PHP: redeemed_value)
+  availableCount: number;         // Count of vouchers with remaining value (PHP: redemptions_total)
+  availableValue: number;         // Total value still available to redeem (PHP: redemptions_value)
+  breakageRate: number;           // Percentage of vouchers never redeemed (expired unredeemed)
+  averageVoucherValue: number;    // Average initial voucher purchase value
+  averageRedemptionValue: number; // Average amount redeemed per voucher
+}
+
+// ==================== DAILY ANALYTICS ====================
+// Strategic Pillar: Drive Revenue 💰 + Operational Efficiency ⚙️
+// Purpose: Enable day-by-day trend analysis, bar charts, and weekend comparisons
+
+export interface DailyBreakdown {
+  date: string;                   // YYYY-MM-DD format
+  dayOfWeek: number;              // 0-6 (Sunday = 0)
+  dayName: string;                // 'Sunday', 'Monday', etc.
+  bookings: number;               // Total bookings on this day
+  revenue: number;                // Total revenue on this day
+  guests: number;                 // Total guests on this day
+  topItem: string;                // Best selling item on this day
+  topItemBookings: number;        // Number of bookings for top item
+  topItemRevenue: number;         // Revenue from top item
+}
+
+export interface DayOfWeekSummary {
+  dayOfWeek: number;              // 0-6 (Sunday = 0)
+  dayName: string;                // 'Sunday', 'Monday', etc.
+  totalBookings: number;          // Total bookings for this day of week
+  totalRevenue: number;           // Total revenue for this day of week
+  totalGuests: number;            // Total guests for this day of week
+  avgBookingsPerOccurrence: number; // Average bookings per occurrence of this day
+  avgRevenuePerOccurrence: number;  // Average revenue per occurrence of this day
+  occurrences: number;            // How many times this day occurred in the period
 }
 
 export interface AvailabilityInsight {
@@ -541,7 +606,10 @@ export interface AnalyticsData {
   guestMetrics: GuestMetric[];
   guestSummary: GuestSummary;
   businessInsights?: BusinessInsights;
+  dailyBreakdown: DailyBreakdown[];      // Day-by-day breakdown for charts and trend analysis
+  dayOfWeekSummary: DayOfWeekSummary[];  // Aggregated by day of week for weekend comparisons
   rawData?: RawApiData; // Raw API responses for AI Assistant
+  dateRangeLabel?: string; // Human-readable description of the date range (e.g., "Last 30 days", "Last 12 months")
 }
 
 // ==================== API RESPONSES ====================

@@ -243,6 +243,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
 
     try {
+      // Log the data being sent to Claude for debugging
+      console.log('💬 [Chat] Sending to Claude:', {
+        message,
+        topPurchased: state.analyticsData?.topPurchased,
+        periodSummary: state.analyticsData?.periodSummary,
+        salesSummary: state.analyticsData?.salesSummary,
+        hasRawData: !!state.analyticsData?.rawData,
+        rawDataKeys: state.analyticsData?.rawData ? Object.keys(state.analyticsData.rawData) : [],
+        sampleBooking: state.analyticsData?.rawData?.allBookings?.[0],
+        sampleItemRevenue: state.analyticsData?.rawData?.itemizedRevenue?.[0],
+      });
+
       // Call the API route instead of direct service
       const response = await fetch('/api/chat', {
         method: 'POST',

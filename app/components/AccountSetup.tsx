@@ -11,6 +11,7 @@ type SetupStep = 'credentials' | 'activities' | 'business';
 
 interface FormData {
   // Step 1: Credentials
+  name: string;
   resovaApiKey: string;
   resovaApiUrl: string;
   claudeApiKey: string;
@@ -25,6 +26,7 @@ interface FormData {
 }
 
 interface FormErrors {
+  name?: string;
   resovaApiKey?: string;
   resovaApiUrl?: string;
   claudeApiKey?: string;
@@ -58,6 +60,7 @@ export default function AccountSetup() {
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [formData, setFormData] = useState<FormData>({
+    name: '',
     resovaApiKey: '',
     resovaApiUrl: RESOVA_DATACENTER_OPTIONS[0].value,
     claudeApiKey: '',
@@ -70,6 +73,10 @@ export default function AccountSetup() {
   // Validation functions
   const validateCredentials = (): boolean => {
     const newErrors: FormErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
 
     if (!formData.resovaApiKey.trim()) {
       newErrors.resovaApiKey = 'Resova API key is required';
@@ -178,6 +185,7 @@ export default function AccountSetup() {
 
       // Save configuration
       ConfigStorage.save({
+        name: formData.name.trim() || undefined,
         activityTypes: formData.activityTypes,
         businessName: formData.businessName.trim() || undefined,
         timezone: formData.timezone,
@@ -251,6 +259,23 @@ export default function AccountSetup() {
                 <p className="text-slate-400 mb-6">
                   Enter your Resova and Claude API keys to get started
                 </p>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Your Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your name"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-400">{errors.name}</p>
+                )}
               </div>
 
               {/* Resova API Key */}

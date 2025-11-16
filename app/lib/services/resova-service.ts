@@ -1477,6 +1477,54 @@ export class ResovaService {
         };
       }
 
+      // Calculate actual date range from data (not requested range)
+      // Use earliest transaction to determine real period
+      let dateRangeLabel = 'Last 365 days (12 months)'; // Default fallback
+
+      if (transactionsResponse.data && transactionsResponse.data.length > 0) {
+        // Find earliest and latest transaction dates
+        const dates = transactionsResponse.data
+          .map(t => new Date(t.created_dt))
+          .filter(d => !isNaN(d.getTime()))
+          .sort((a, b) => a.getTime() - b.getTime());
+
+        if (dates.length > 0) {
+          const earliestDate = dates[0];
+          const latestDate = dates[dates.length - 1];
+          const now = new Date();
+
+          // Calculate days between earliest and now
+          const daysDiff = Math.floor((now.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          // Create human-readable label
+          if (daysDiff <= 7) {
+            dateRangeLabel = 'Last 7 days';
+          } else if (daysDiff <= 14) {
+            dateRangeLabel = 'Last 14 days';
+          } else if (daysDiff <= 30) {
+            dateRangeLabel = 'Last 30 days';
+          } else if (daysDiff <= 60) {
+            dateRangeLabel = 'Last 2 months';
+          } else if (daysDiff <= 90) {
+            dateRangeLabel = 'Last 3 months';
+          } else if (daysDiff <= 180) {
+            dateRangeLabel = 'Last 6 months';
+          } else if (daysDiff <= 270) {
+            dateRangeLabel = 'Last 9 months';
+          } else if (daysDiff <= 365) {
+            dateRangeLabel = 'Last 12 months';
+          } else {
+            // More than a year - show actual date range
+            const months = Math.floor(daysDiff / 30);
+            dateRangeLabel = `Last ${months} months`;
+          }
+
+          logger.info(`Actual data range: ${earliestDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()} (${daysDiff} days) -> Label: "${dateRangeLabel}"`);
+        }
+      }
+
+      analyticsData.dateRangeLabel = dateRangeLabel;
+
       logger.info('Successfully transformed Resova data to analytics format');
 
       return analyticsData;
