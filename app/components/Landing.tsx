@@ -320,7 +320,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
             <div className="md:col-span-2">
               <div className="flex items-center mb-4">
                 <img
-                  src="/RESOVA AI INTELLIGENCE.png"
+                  src="/Resova Logo.svg"
                   alt="Resova"
                   className="h-7"
                 />
