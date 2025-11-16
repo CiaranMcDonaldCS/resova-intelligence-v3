@@ -24,3 +24,95 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* HubSpot Form Styling */
+#hubspot-form-container .hs-form {
+  max-width: 100%;
+}
+
+#hubspot-form-container .hs-form-field {
+  margin-bottom: 1.5rem;
+}
+
+#hubspot-form-container label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+#hubspot-form-container input[type="text"],
+#hubspot-form-container input[type="email"],
+#hubspot-form-container input[type="tel"],
+#hubspot-form-container textarea,
+#hubspot-form-container select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  color: #1f2937;
+  background-color: #ffffff;
+  transition: all 0.2s;
+}
+
+#hubspot-form-container input[type="text"]:focus,
+#hubspot-form-container input[type="email"]:focus,
+#hubspot-form-container input[type="tel"]:focus,
+#hubspot-form-container textarea:focus,
+#hubspot-form-container select:focus {
+  outline: none;
+  border-color: #2685CF;
+  box-shadow: 0 0 0 3px rgba(38, 133, 207, 0.1);
+}
+
+#hubspot-form-container textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+#hubspot-form-container .hs-button {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  background-color: #2685CF;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+#hubspot-form-container .hs-button:hover {
+  background-color: #1E6FB0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+#hubspot-form-container .hs-error-msgs {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.5rem;
+}
+
+#hubspot-form-container .hs-error-msg {
+  color: #ef4444;
+  font-size: 0.875rem;
+}
+
+#hubspot-form-container .hs-form-required {
+  color: #ef4444;
+}
+
+#hubspot-form-container .legal-consent-container {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+#hubspot-form-container .legal-consent-container input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+}
