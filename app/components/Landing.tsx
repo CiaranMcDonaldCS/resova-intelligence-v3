@@ -1,10 +1,10 @@
 'use client';
 
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Zap, 
-  Shield, 
+import {
+  BarChart3,
+  TrendingUp,
+  Zap,
+  Shield,
   Clock,
   CheckCircle,
   ArrowRight,
@@ -13,12 +13,40 @@ import {
   Download,
   Sparkles
 } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface LandingProps {
   onGetStarted: () => void;
 }
 
 export default function Landing({ onGetStarted }: LandingProps) {
+  useEffect(() => {
+    // Load HubSpot form script
+    const script = document.createElement('script');
+    script.src = '//js.hsforms.net/forms/embed/v2.js';
+    script.charset = 'utf-8';
+    script.type = 'text/javascript';
+    script.async = true;
+
+    script.onload = () => {
+      // @ts-ignore
+      if (window.hbspt) {
+        // @ts-ignore
+        window.hbspt.forms.create({
+          portalId: "2371650",
+          formId: "5cba9357-07c7-45a2-9ad9-651d1deadae2",
+          region: "na1",
+          target: '#hubspot-form-container'
+        });
+      }
+    };
+
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
   const features = [
     {
       icon: TrendingUp,
@@ -60,7 +88,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <img
-                src="/logo.png"
+                src="/RESOVA AI INTELLIGENCE.png"
                 alt="Resova"
                 className="h-8"
               />
@@ -85,7 +113,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <div className="text-center max-w-4xl mx-auto">
             <div className="mb-8">
               <img
-                src="/logo.png"
+                src="/RESOVA AI INTELLIGENCE.png"
                 alt="Resova"
                 className="h-32 md:h-40 mx-auto"
               />
@@ -100,13 +128,14 @@ export default function Landing({ onGetStarted }: LandingProps) {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <button
-                onClick={onGetStarted}
+                onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex items-center space-x-2 px-8 py-4 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all shadow-lg hover:shadow-xl text-lg font-semibold"
               >
                 <span>Learn More</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button
+                onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex items-center space-x-2 px-8 py-4 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-all text-lg font-semibold"
               >
                 <span>Contact Sales</span>
@@ -309,9 +338,8 @@ export default function Landing({ onGetStarted }: LandingProps) {
         </div>
       </section>
 
-
-      {/* Contact Sales Section */}
-      <section className="py-20 bg-gray-50">
+      {/* Contact Form Section */}
+      <section id="contact-form" className="py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
             <div className="bg-gradient-to-r from-[#2685CF] to-blue-600 px-8 py-6">
@@ -319,75 +347,12 @@ export default function Landing({ onGetStarted }: LandingProps) {
                 Get Financial Clarity for Your Business
               </h2>
               <p className="text-blue-100 text-lg">
-                Pricing is tailored to your operation. Let's discuss what works best for you.
+                Fill out the form below and we'll be in touch to discuss how Resova Intelligence can help your business.
               </p>
             </div>
 
             <div className="p-8">
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">What You Get:</h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Real-time financial analytics and reporting</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">AI-powered insights on profitability and costs</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Direct integration with your Resova account</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Dedicated onboarding and support</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Perfect For:</h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Multi-location venue operators</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Owner-managers tracking profitability</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Teams needing instant financial reporting</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-[#2685CF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Businesses ready to scale with data</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                <p className="text-gray-700 text-center text-lg">
-                  <strong>Resova Integration:</strong> Seamlessly adds financial intelligence to your existing Resova subscription. Already using Resova? Setup takes minutes.
-                </p>
-              </div>
-
-              <div className="text-center">
-                <button
-                  onClick={onGetStarted}
-                  className="px-10 py-4 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all shadow-lg hover:shadow-xl text-lg font-semibold inline-flex items-center space-x-2"
-                >
-                  <span>Schedule a Call</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-                <p className="mt-4 text-sm text-gray-600">
-                  Talk to our team about pricing and see a live demo tailored to your business
-                </p>
-              </div>
+              <div id="hubspot-form-container"></div>
             </div>
           </div>
         </div>
@@ -410,12 +375,13 @@ export default function Landing({ onGetStarted }: LandingProps) {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <button
-              onClick={onGetStarted}
+              onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
               className="px-10 py-4 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all shadow-xl hover:shadow-2xl text-lg font-semibold"
             >
               Contact Sales
             </button>
             <button
+              onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
               className="px-10 py-4 bg-white/10 text-white border-2 border-white/30 rounded-lg hover:bg-white/20 transition-all text-lg font-semibold backdrop-blur-sm"
             >
               Learn More
@@ -436,7 +402,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
             <div className="md:col-span-2">
               <div className="flex items-center mb-4">
                 <img
-                  src="/logo.png"
+                  src="/RESOVA AI INTELLIGENCE.png"
                   alt="Resova"
                   className="h-7"
                 />
@@ -453,7 +419,6 @@ export default function Landing({ onGetStarted }: LandingProps) {
               <h4 className="font-bold mb-4 text-white">Product</h4>
               <ul className="space-y-3 text-sm text-gray-400">
                 <li><a href="#features" className="hover:text-[#2685CF] transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-[#2685CF] transition-colors">Pricing</a></li>
                 <li><a href="https://get.resova.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Resova Platform</a></li>
                 <li><a href="#" className="hover:text-[#2685CF] transition-colors">API Documentation</a></li>
               </ul>
