@@ -836,10 +836,10 @@ export class ResovaReportingService {
   // ==================== CORE API - GIFT VOUCHERS ====================
 
   /**
-   * Fetch all gift vouchers
+   * Fetch all gift vouchers (simple list, no filters)
    * GET /v1/gift-vouchers
    */
-  async getGiftVouchers(): Promise<ResovaGiftVoucher[]> {
+  async getAllGiftVouchers(): Promise<ResovaGiftVoucher[]> {
     try {
       const url = `${this.baseUrl}/gift-vouchers`;
 
@@ -852,7 +852,7 @@ export class ResovaReportingService {
 
       return response.data || response;
     } catch (error) {
-      this.handleError(error, 'getGiftVouchers');
+      this.handleError(error, 'getAllGiftVouchers');
       throw error;
     }
   }
