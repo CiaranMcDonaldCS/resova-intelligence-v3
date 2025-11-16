@@ -121,7 +121,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Your operations, decoded.
+              Your Operations, Decoded.
             </h1>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
               AI insights that Drive Revenue, Operational Efficiency, and Guest Experience.
@@ -151,99 +151,12 @@ export default function Landing({ onGetStarted }: LandingProps) {
           {/* Screenshot/Demo */}
           <div className="mt-16 relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-[#2685CF] to-cyan-500 blur-3xl opacity-30 rounded-3xl"></div>
-            <div className="relative bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl border border-slate-700 p-6">
-              {/* Dashboard Header */}
-              <div className="bg-gradient-to-r from-[#2685CF] to-blue-600 rounded-t-lg px-6 py-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold text-lg">Resova Intelligence</h3>
-                      <p className="text-blue-100 text-xs">Real-time Analytics Dashboard</p>
-                    </div>
-                  </div>
-                  <div className="hidden sm:flex items-center space-x-2 text-xs text-blue-100">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span>Live</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dashboard Content */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                {/* Metric Cards */}
-                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-400 text-xs">Today's Revenue</span>
-                    <TrendingUp className="w-4 h-4 text-green-400" />
-                  </div>
-                  <div className="text-white text-2xl font-bold">$3,247</div>
-                  <div className="text-green-400 text-xs mt-1">+12.5% vs yesterday</div>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-400 text-xs">Bookings</span>
-                    <BarChart3 className="w-4 h-4 text-[#2685CF]" />
-                  </div>
-                  <div className="text-white text-2xl font-bold">127</div>
-                  <div className="text-[#2685CF] text-xs mt-1">18 this hour</div>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-400 text-xs">Capacity</span>
-                    <Clock className="w-4 h-4 text-amber-400" />
-                  </div>
-                  <div className="text-white text-2xl font-bold">84%</div>
-                  <div className="text-amber-400 text-xs mt-1">Prime time slots</div>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-400 text-xs">Avg. Value</span>
-                    <Star className="w-4 h-4 text-purple-400" />
-                  </div>
-                  <div className="text-white text-2xl font-bold">$42</div>
-                  <div className="text-purple-400 text-xs mt-1">Per booking</div>
-                </div>
-              </div>
-
-              {/* Chart Preview */}
-              <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-white font-semibold text-sm">Revenue Trend (7 Days)</h4>
-                  <Sparkles className="w-4 h-4 text-[#2685CF]" />
-                </div>
-                <div className="h-32 flex items-end justify-between space-x-2">
-                  {[45, 52, 48, 65, 72, 68, 85].map((height, i) => (
-                    <div key={i} className="flex-1 bg-gradient-to-t from-[#2685CF] to-cyan-400 rounded-t opacity-80 hover:opacity-100 transition-opacity" style={{ height: `${height}%` }}></div>
-                  ))}
-                </div>
-                <div className="flex justify-between mt-2 text-xs text-gray-500">
-                  <span>Mon</span>
-                  <span>Tue</span>
-                  <span>Wed</span>
-                  <span>Thu</span>
-                  <span>Fri</span>
-                  <span>Sat</span>
-                  <span>Sun</span>
-                </div>
-              </div>
-
-              {/* AI Insight Banner */}
-              <div className="mt-4 bg-gradient-to-r from-[#2685CF]/20 to-purple-500/20 border border-[#2685CF]/30 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-[#2685CF]/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-[#2685CF]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-white text-sm font-medium mb-1">AI Business Insight</p>
-                    <p className="text-gray-300 text-xs leading-relaxed">
-                      Your Saturday afternoon slots show 35% higher profit margins and 92% guest satisfaction. Consider shifting resources from lower-performing time slots to maximize both revenue and guest experience.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="relative rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+              <img
+                src="/dashboard-preview.png"
+                alt="Resova Intelligence Dashboard"
+                className="w-full h-auto"
+              />
             </div>
           </div>
 
