@@ -56,7 +56,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
     {
       icon: Sparkles,
       title: 'AI-Powered Business Insights',
-      description: 'Natural language questions about your entire business. Ask about profit margins, guest satisfaction trends, capacity utilization, or staffing efficiency—just like talking to your business advisor.'
+      description: 'Natural language questions about your entire business. Ask about profit margins, guest satisfaction trends, capacity utilization, or staffing efficiency, just like talking to your business advisor.'
     },
     {
       icon: BarChart3,
@@ -67,6 +67,16 @@ export default function Landing({ onGetStarted }: LandingProps) {
       icon: MessageSquare,
       title: 'Revenue & Experience Optimization',
       description: 'Identify your most profitable customers, peak booking times, and guest preferences. Discover opportunities to increase revenue, improve guest experience, and optimize operational efficiency.'
+    },
+    {
+      icon: Clock,
+      title: 'Capacity & Resource Planning',
+      description: 'Track real-time capacity utilization across all activities and locations. Optimize staffing levels, identify peak times, and ensure you never miss revenue opportunities due to under or over-booking.'
+    },
+    {
+      icon: CheckCircle,
+      title: 'Guest Experience Tracking',
+      description: 'Monitor guest satisfaction trends, track repeat bookings, and identify patterns in customer behavior. Use AI insights to enhance every touchpoint and build long-term loyalty.'
     }
   ];
 
@@ -114,7 +124,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               Your operations, decoded.
             </h1>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              AI insights that Drive Revenue, Efficiency, and Guest Experience.
+              AI insights that Drive Revenue, Operational Efficiency, and Guest Experience.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <button
@@ -134,7 +144,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               </a>
             </div>
             <p className="mt-8 text-sm text-gray-400">
-              Powered by Claude AI  •  Direct Resova Integration  •  Enterprise Security
+              Powered by Claude AI  •  Direct Resova Integration  •  Secure & Private
             </p>
           </div>
 
@@ -267,11 +277,12 @@ export default function Landing({ onGetStarted }: LandingProps) {
               Business Intelligence for Venue Operators
             </h2>
             <p className="text-xl text-gray-600">
-              Real-time insights for owner-managers who need to understand their business performance—from revenue and costs to guest experience and operational efficiency
+              Real-time insights for owner-managers who need to understand their business performance, from revenue and costs to guest experience and operational efficiency
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
             {features.map((feature, index) => (
               <div
                 key={index}
@@ -305,7 +316,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Connect Your System</h3>
               <p className="text-gray-600 leading-relaxed">
-                Securely link your Resova account with API credentials. Your data syncs automatically—no manual imports required.
+                Securely link your Resova account with API credentials. Your data syncs automatically, no manual imports required.
               </p>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
@@ -402,7 +413,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
                 />
               </div>
               <p className="text-gray-400 text-base leading-relaxed max-w-md">
-                Business intelligence and real-time performance analytics for venue operators and owner-managers using Resova. Track revenue, operations, and guest experience—all in one place.
+                Business intelligence and real-time performance analytics for venue operators and owner-managers using Resova. Track revenue, operations, and guest experience all in one place.
               </p>
               <div className="mt-6 flex items-center space-x-4">
                 <span className="text-sm text-gray-500">Powered by</span>
