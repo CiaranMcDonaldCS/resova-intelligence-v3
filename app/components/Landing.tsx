@@ -328,10 +328,6 @@ export default function Landing({ onGetStarted }: LandingProps) {
               <p className="text-gray-400 text-base leading-relaxed max-w-md">
                 Business intelligence and real-time performance analytics for venue operators and owner-managers using Resova. Track revenue, operations, and guest experience all in one place.
               </p>
-              <div className="mt-6 flex items-center space-x-4">
-                <span className="text-sm text-gray-500">Powered by</span>
-                <span className="text-sm font-semibold text-gray-300">Claude AI</span>
-              </div>
             </div>
             <div>
               <h4 className="font-bold mb-4 text-white">Product</h4>
