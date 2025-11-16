@@ -64,19 +64,9 @@ export default function Landing({ onGetStarted }: LandingProps) {
       description: 'Understand which activities are most profitable, track revenue by location, and identify cost-saving opportunities instantly.'
     },
     {
-      icon: Clock,
-      title: 'Financial Reports in Seconds',
-      description: 'No more waiting days for reports. Get P&L summaries, revenue breakdowns, and profitability analysis on demand—anytime you need them.'
-    },
-    {
       icon: MessageSquare,
       title: 'Revenue Optimization',
       description: 'Identify your most profitable customers, activities, and time slots. Discover opportunities to increase margins and reduce costs.'
-    },
-    {
-      icon: Shield,
-      title: 'Enterprise Security',
-      description: 'SOC 2 compliant infrastructure with end-to-end encryption. Your financial data remains private and secure.'
     }
   ];
 
@@ -88,7 +78,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <img
-                src="/RESOVA AI INTELLIGENCE.png"
+                src="/Resova Logo.svg"
                 alt="Resova"
                 className="h-8"
               />
@@ -96,12 +86,14 @@ export default function Landing({ onGetStarted }: LandingProps) {
             <div className="flex items-center space-x-6">
               <a href="#features" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Features</a>
               <a href="https://get.resova.com" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Resova.com</a>
-              <button
-                onClick={onGetStarted}
+              <a
+                href="https://registration.resova.com/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="px-6 py-2.5 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all font-semibold shadow-sm hover:shadow-md"
               >
-                Contact Sales
-              </button>
+                Free Trial
+              </a>
             </div>
           </div>
         </div>
@@ -113,18 +105,18 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <div className="text-center max-w-4xl mx-auto">
             <div className="mb-8">
               <img
-                src="/RESOVA AI INTELLIGENCE.png"
-                alt="Resova"
+                src="/RESOVAI Pwrd by CS.png"
+                alt="Resova AI"
                 className="h-32 md:h-40 mx-auto"
               />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Financial Clarity for Venue Operators —
-              <span className="block text-[#2685CF] mt-2">In Seconds, Not Days</span>
+              AI-Powered Business Intelligence
+              <span className="block text-[#2685CF] mt-2">For Venue Operators</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Understand the financial health and performance of your business in real time.
-              No spreadsheets. No waiting for reports. Just financial clarity — when you need it.
+              Get instant insights into your revenue, costs, profitability, and operations.
+              Ask questions in plain English and get answers in seconds—powered by AI.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <button
@@ -134,12 +126,14 @@ export default function Landing({ onGetStarted }: LandingProps) {
                 <span>Learn More</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
-              <button
-                onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+              <a
+                href="https://registration.resova.com/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center space-x-2 px-8 py-4 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-all text-lg font-semibold"
               >
-                <span>Contact Sales</span>
-              </button>
+                <span>Start Free Trial</span>
+              </a>
             </div>
             <p className="mt-8 text-sm text-gray-400">
               Powered by Claude AI  •  Direct Resova Integration  •  Enterprise Security
@@ -374,12 +368,14 @@ export default function Landing({ onGetStarted }: LandingProps) {
             Join venue operators who use Resova Intelligence to track profitability, optimize costs, and grow revenue with confidence.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+            <a
+              href="https://registration.resova.com/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-10 py-4 bg-[#2685CF] text-white rounded-lg hover:bg-[#1E6FB0] transition-all shadow-xl hover:shadow-2xl text-lg font-semibold"
             >
-              Contact Sales
-            </button>
+              Start Free Trial
+            </a>
             <button
               onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
               className="px-10 py-4 bg-white/10 text-white border-2 border-white/30 rounded-lg hover:bg-white/20 transition-all text-lg font-semibold backdrop-blur-sm"
