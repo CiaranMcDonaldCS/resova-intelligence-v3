@@ -63,9 +63,9 @@ export default function Dashboard() {
           });
           data = dailySummary.slice(-7).map((item: any) => item.gross || 0);
         } else {
-          // Default sample data
-          labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Today'];
-          data = [2800, 3200, 2900, 4100, 3800];
+          // No data available
+          labels = ['No Data'];
+          data = [0];
         }
       }
 
@@ -337,8 +337,8 @@ export default function Dashboard() {
       }
 
       default:
-        console.warn(`⚠️ Unknown data source: ${dataSource}, using fallback data`);
-        return { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Today'], data: [2800, 3200, 2900, 4100, 3800] };
+        console.warn(`⚠️ Unknown data source: ${dataSource}, no data available`);
+        return { labels: ['No Data'], data: [0] };
     }
   };
 
