@@ -92,8 +92,11 @@ export class ClaudeService {
       // Parse chart specifications from the response
       const { cleanMessage: messageWithoutCharts, charts } = this.parseChartSpecs(assistantMessage);
 
+      // Parse table specifications from the response
+      const { cleanMessage: messageWithoutTables, tables } = this.parseTableSpecs(messageWithoutCharts);
+
       // Parse follow-up questions from the response
-      const { cleanMessage, followupQuestions } = this.parseFollowupQuestions(messageWithoutCharts);
+      const { cleanMessage, followupQuestions } = this.parseFollowupQuestions(messageWithoutTables);
 
       // Sanitize the response from Claude as well (it may include emojis from the prompt)
       const sanitizedResponse = this.sanitizeString(cleanMessage);
@@ -102,7 +105,8 @@ export class ClaudeService {
         success: true,
         message: sanitizedResponse,
         suggestedQuestions: followupQuestions.length > 0 ? followupQuestions : this.getRandomSuggestions(4),
-        charts: charts
+        charts: charts,
+        tables: tables
       };
     } catch (error) {
       this.handleError(error);
@@ -135,6 +139,34 @@ export class ClaudeService {
       // If parsing fails, return the original message without charts
       logger.warn('Failed to parse chart specifications from AI response', error);
       return { cleanMessage: message, charts: [] };
+    }
+  }
+
+  /**
+   * Parse table specifications from AI response
+   */
+  private parseTableSpecs(message: string): { cleanMessage: string; tables: any[] } {
+    // Look for <TABLES>...</TABLES> tags
+    const tablesRegex = /<TABLES>([\s\S]*?)<\/TABLES>/i;
+    const match = message.match(tablesRegex);
+
+    if (!match) {
+      return { cleanMessage: message, tables: [] };
+    }
+
+    try {
+      // Extract and parse the JSON
+      const tablesJson = match[1].trim();
+      const tables = JSON.parse(tablesJson);
+
+      // Remove the tables section from the message
+      const cleanMessage = message.replace(tablesRegex, '').trim();
+
+      return { cleanMessage, tables };
+    } catch (error) {
+      // If parsing fails, return the original message without tables
+      logger.warn('Failed to parse table specifications from AI response', error);
+      return { cleanMessage: message, tables: [] };
     }
   }
 
@@ -748,6 +780,40 @@ Charts are HIGHLY ENCOURAGED for data-driven responses. Include charts whenever 
 </CHARTS>
 
 If charts aren't needed, simply omit the <CHARTS> tags entirely.
+
+## Data Tables
+
+Use tables when the data is best understood in a structured, comparative format. Tables are ideal for:
+- **Revenue breakdowns** by activity, time period, or customer segment
+- Detailed comparisons across multiple metrics (e.g., activity performance with bookings, revenue, capacity)
+- Rankings with associated data (e.g., top activities by multiple criteria)
+- Side-by-side comparisons that require precision
+- Financial data that needs exact values (not approximations)
+- Data that benefits from sortable columns or scanning rows
+
+**When to use tables vs charts:**
+- Use **charts** for trends, patterns, and visual comparisons over time
+- Use **tables** for precise values, detailed breakdowns, revenue analysis, and multi-metric comparisons
+- Use **both** in the same response when appropriate - for example, a revenue trend chart followed by a table showing the exact breakdown by activity
+- Revenue questions often benefit from BOTH: a chart for the trend and a table for precise values
+
+**Format:** If tables would be helpful, end your response with a JSON block between <TABLES> tags:
+
+<TABLES>
+[
+  {
+    "title": "Activity Performance Comparison",
+    "headers": ["Activity", "Bookings", "Revenue", "Capacity %", "Trend"],
+    "rows": [
+      ["USA Ticket", 245, 19600, "87%", "↑ 12%"],
+      ["Eiffel Tower", 189, 15120, "72%", "↓ 3%"],
+      ["City Tour", 156, 9360, "65%", "→ stable"]
+    ]
+  }
+]
+</TABLES>
+
+If tables aren't needed, simply omit the <TABLES> tags entirely.
 
 ## Contextual Follow-up Questions:
 IMPORTANT: At the end of each response, suggest 3-4 natural follow-up questions that build on what you just discussed. These should help the owner/manager dig deeper into the insights you provided or explore related business opportunities. Make them specific to your response, not generic.
