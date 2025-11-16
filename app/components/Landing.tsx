@@ -50,23 +50,23 @@ export default function Landing({ onGetStarted }: LandingProps) {
   const features = [
     {
       icon: TrendingUp,
-      title: 'Instant Financial Clarity',
-      description: 'Ask "What was my net revenue last week?" and get instant answers. Track revenue, costs, and profitability in real time across all activities and locations.'
+      title: 'Operational Intelligence',
+      description: 'Ask "What was my net revenue last week?" or "Which activities had the highest capacity?" Get instant answers about revenue, costs, profitability, and operational performance across all activities and locations.'
     },
     {
       icon: Sparkles,
-      title: 'AI-Powered Financial Insights',
-      description: 'Natural language questions about your financial performance. Ask about profit margins, cost breakdowns, or revenue trends—just like talking to your CFO.'
+      title: 'AI-Powered Business Insights',
+      description: 'Natural language questions about your entire business. Ask about profit margins, guest satisfaction trends, capacity utilization, or staffing efficiency—just like talking to your business advisor.'
     },
     {
       icon: BarChart3,
       title: 'Real-Time Performance Analytics',
-      description: 'Understand which activities are most profitable, track revenue by location, and identify cost-saving opportunities instantly.'
+      description: 'Understand which activities drive the most revenue, track guest booking patterns, monitor capacity utilization, and identify opportunities to improve efficiency across operations.'
     },
     {
       icon: MessageSquare,
-      title: 'Revenue Optimization',
-      description: 'Identify your most profitable customers, activities, and time slots. Discover opportunities to increase margins and reduce costs.'
+      title: 'Revenue & Experience Optimization',
+      description: 'Identify your most profitable customers, peak booking times, and guest preferences. Discover opportunities to increase revenue, improve guest experience, and optimize operational efficiency.'
     }
   ];
 
@@ -114,7 +114,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               Your operations, decoded.
             </h1>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              AI insights that drive revenue, efficiency, and guest experience.
+              AI insights that Drive Revenue, Efficiency, and Guest Experience.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <button
@@ -227,9 +227,9 @@ export default function Landing({ onGetStarted }: LandingProps) {
                     <Sparkles className="w-4 h-4 text-[#2685CF]" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-white text-sm font-medium mb-1">AI Financial Insight</p>
+                    <p className="text-white text-sm font-medium mb-1">AI Business Insight</p>
                     <p className="text-gray-300 text-xs leading-relaxed">
-                      Your Saturday afternoon slots show 35% higher profit margins. Consider shifting resources from lower-margin time slots to maximize profitability.
+                      Your Saturday afternoon slots show 35% higher profit margins and 92% guest satisfaction. Consider shifting resources from lower-performing time slots to maximize both revenue and guest experience.
                     </p>
                   </div>
                 </div>
@@ -264,10 +264,10 @@ export default function Landing({ onGetStarted }: LandingProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Financial Intelligence for Venue Operators
+              Business Intelligence for Venue Operators
             </h2>
             <p className="text-xl text-gray-600">
-              Real-time financial clarity for owner-managers who need to understand their business performance
+              Real-time insights for owner-managers who need to understand their business performance—from revenue and costs to guest experience and operational efficiency
             </p>
           </div>
 
@@ -293,9 +293,9 @@ export default function Landing({ onGetStarted }: LandingProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Financial Intelligence in Minutes, Not Days
+              Business Intelligence in Minutes, Not Days
             </h2>
-            <p className="text-lg text-gray-600">No spreadsheets. No waiting for reports. Just instant financial clarity.</p>
+            <p className="text-lg text-gray-600">No spreadsheets. No waiting for reports. Just instant clarity on your operations, revenue, and guest experience.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -312,9 +312,9 @@ export default function Landing({ onGetStarted }: LandingProps) {
               <div className="w-16 h-16 bg-gradient-to-br from-[#2685CF] to-blue-600 text-white rounded-xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
                 2
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Track Financial Performance</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Track Business Performance</h3>
               <p className="text-gray-600 leading-relaxed">
-                Monitor revenue, costs, and profitability in real time. Understand which activities drive profit and where costs are trending.
+                Monitor revenue, costs, capacity utilization, and guest satisfaction in real time. Understand which activities drive profit, where efficiency can improve, and how guests experience your venue.
               </p>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
@@ -323,7 +323,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Make Better Decisions</h3>
               <p className="text-gray-600 leading-relaxed">
-                Get AI-powered recommendations to improve margins, reduce costs, and grow profitability across your business.
+                Get AI-powered recommendations to improve margins, optimize operations, enhance guest experience, and grow revenue across your business.
               </p>
             </div>
           </div>
@@ -336,10 +336,10 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
             <div className="bg-gradient-to-r from-[#2685CF] to-blue-600 px-8 py-6">
               <h2 className="text-3xl font-bold text-white mb-2">
-                Get Financial Clarity for Your Business
+                Get Complete Business Clarity
               </h2>
               <p className="text-blue-100 text-lg">
-                Fill out the form below and we'll be in touch to discuss how Resova Intelligence can help your business.
+                Fill out the form below and we'll be in touch to discuss how Resova Intelligence can help you understand and optimize your entire operation.
               </p>
             </div>
 
@@ -359,11 +359,11 @@ export default function Landing({ onGetStarted }: LandingProps) {
         </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-            Ready to Transform Your Financial Reporting?
-            <span className="block text-[#2685CF] mt-2">Get Clarity in Minutes, Not Days</span>
+            Ready to Transform Your Business Operations?
+            <span className="block text-[#2685CF] mt-2">Get Complete Clarity in Minutes, Not Days</span>
           </h2>
           <p className="text-xl text-gray-300 mb-10 leading-relaxed">
-            Join venue operators who use Resova Intelligence to track profitability, optimize costs, and grow revenue with confidence.
+            Join venue operators who use Resova Intelligence to track profitability, optimize operations, enhance guest experience, and grow revenue with confidence.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <a
@@ -402,7 +402,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
                 />
               </div>
               <p className="text-gray-400 text-base leading-relaxed max-w-md">
-                Financial intelligence and real-time performance analytics for venue operators and owner-managers using Resova.
+                Business intelligence and real-time performance analytics for venue operators and owner-managers using Resova. Track revenue, operations, and guest experience—all in one place.
               </p>
               <div className="mt-6 flex items-center space-x-4">
                 <span className="text-sm text-gray-500">Powered by</span>
