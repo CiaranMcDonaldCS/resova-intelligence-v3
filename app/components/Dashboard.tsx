@@ -76,14 +76,14 @@ export default function Dashboard() {
         });
         data = revenueTrend.map((item: any) => item.revenue || 0);
       } else {
-        // Fallback to daily summary if revenueTrends is not available
-        const dailySummary = analyticsData.dailySummary || [];
-        if (dailySummary.length > 0) {
-          labels = dailySummary.slice(-7).map((item: any) => {
+        // Fallback to daily breakdown if revenueTrends is not available
+        const dailyBreakdown = analyticsData.dailyBreakdown || [];
+        if (dailyBreakdown.length > 0) {
+          labels = dailyBreakdown.slice(-7).map((item: any) => {
             const date = new Date(item.date);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           });
-          data = dailySummary.slice(-7).map((item: any) => item.gross || 0);
+          data = dailyBreakdown.slice(-7).map((item: any) => item.revenue || 0);
         } else {
           // No data available
           labels = ['No Data'];
@@ -258,7 +258,7 @@ export default function Dashboard() {
 
     switch (dataSource) {
       case 'revenue_trend': {
-        const revenueTrend = analyticsData.revenueTrends || analyticsData.dailySummary || [];
+        const revenueTrend = analyticsData.revenueTrends || analyticsData.dailyBreakdown || [];
         if (revenueTrend.length === 0) {
           console.warn('⚠️ No revenue trend data available');
           return { labels: ['No Data'], data: [0] };
@@ -287,12 +287,12 @@ export default function Dashboard() {
       }
 
       case 'bookings_by_day': {
-        const dailySummary = analyticsData.dailySummary || [];
-        if (dailySummary.length === 0) return { labels: ['No Data'], data: [0] };
+        const dailyBreakdown = analyticsData.dailyBreakdown || [];
+        if (dailyBreakdown.length === 0) return { labels: ['No Data'], data: [0] };
 
         // Group by day of week
         const dayMap: { [key: string]: number } = {};
-        dailySummary.forEach((item: any) => {
+        dailyBreakdown.forEach((item: any) => {
           const date = new Date(item.date);
           const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
           dayMap[dayName] = (dayMap[dayName] || 0) + (item.bookings || 0);
@@ -345,30 +345,30 @@ export default function Dashboard() {
       }
 
       case 'guest_trend': {
-        const dailySummary = analyticsData.dailySummary || [];
-        if (dailySummary.length === 0) return { labels: ['No Data'], data: [0] };
+        const dailyBreakdown = analyticsData.dailyBreakdown || [];
+        if (dailyBreakdown.length === 0) return { labels: ['No Data'], data: [0] };
 
-        const labels = dailySummary.map((item: any) => {
+        const labels = dailyBreakdown.map((item: any) => {
           const date = new Date(item.date);
           return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         });
-        const data = dailySummary.map((item: any) => item.guests || 0);
+        const data = dailyBreakdown.map((item: any) => item.guests || 0);
         return { labels, data };
       }
 
       case 'sales_metrics':
       case 'guest_metrics': {
-        const dailySummary = analyticsData.dailySummary || [];
-        if (dailySummary.length === 0) {
+        const dailyBreakdown = analyticsData.dailyBreakdown || [];
+        if (dailyBreakdown.length === 0) {
           console.warn('⚠️ No daily summary data available');
           return { labels: ['No Data'], data: [0] };
         }
 
-        const labels = dailySummary.slice(-7).map((item: any) => {
+        const labels = dailyBreakdown.slice(-7).map((item: any) => {
           const date = new Date(item.date);
           return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         });
-        const data = dailySummary.slice(-7).map((item: any) => {
+        const data = dailyBreakdown.slice(-7).map((item: any) => {
           if (dataSource === 'sales_metrics') {
             const rawValue = item.gross || 0;
             return convertCentsToDollars(rawValue);
@@ -630,9 +630,9 @@ export default function Dashboard() {
   const capacityPercent = analyticsData.businessInsights?.capacityUtilization?.overallUtilization || 0;
 
   // Additional metrics for Owner's Box - Three Pillars
-  const avgRevenuePerBooking = analyticsData.salesSummary?.averageRevenuePerBooking || 0;
-  const repeatCustomerRate = analyticsData.customerInsights?.repeatCustomerRate || 0;
-  const totalGuests = analyticsData.guestAnalytics?.totalGuests || 0;
+  const avgRevenuePerBooking = analyticsData.salesSummary?.avgRevPerBooking || 0;
+  const repeatCustomerRate = 0; // TODO: Fix after determining correct property
+  const totalGuests = analyticsData.guestSummary?.totalGuests || 0;
 
   return (
     <div className="min-h-screen flex flex-col max-w-4xl mx-auto bg-[#121212] text-white">

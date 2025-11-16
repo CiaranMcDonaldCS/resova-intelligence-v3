@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { item_id: string } }
+  { params }: { params: Promise<{ item_id: string }> }
 ) {
   try {
     const apiKey = request.headers.get('x-api-key');
@@ -21,7 +21,7 @@ export async function GET(
       );
     }
 
-    const { item_id } = params;
+    const { item_id } = await params;
 
     if (!item_id) {
       return NextResponse.json(

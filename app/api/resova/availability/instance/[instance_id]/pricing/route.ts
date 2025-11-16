@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { instance_id: string } }
+  { params }: { params: Promise<{ instance_id: string }> }
 ) {
   try {
     const apiKey = request.headers.get('x-api-key');
@@ -31,7 +31,7 @@ export async function POST(
       );
     }
 
-    const { instance_id } = params;
+    const { instance_id } = await params;
 
     if (!instance_id) {
       return NextResponse.json(

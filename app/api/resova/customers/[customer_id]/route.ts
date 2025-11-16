@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { customer_id: string } }
+  { params }: { params: Promise<{ customer_id: string }> }
 ) {
   try {
     const apiKey = request.headers.get('x-api-key');
@@ -24,7 +24,7 @@ export async function GET(
       );
     }
 
-    const { customer_id } = params;
+    const { customer_id } = await params;
 
     if (!customer_id) {
       return NextResponse.json(

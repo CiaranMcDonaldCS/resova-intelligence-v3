@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { voucher_id: string } }
+  { params }: { params: Promise<{ voucher_id: string }> }
 ) {
   try {
     const apiKey = request.headers.get('x-api-key');
@@ -26,7 +26,7 @@ export async function GET(
       );
     }
 
-    const { voucher_id } = params;
+    const { voucher_id } = await params;
 
     if (!voucher_id) {
       return NextResponse.json(
