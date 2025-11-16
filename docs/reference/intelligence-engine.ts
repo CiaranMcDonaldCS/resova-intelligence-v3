@@ -1,5 +1,32 @@
 /**
- * Intelligence Engine
+ * Intelligence Engine - DISABLED
+ *
+ * STATUS: This file is disabled from compilation (.ts.disabled extension)
+ *
+ * REASON FOR DISABLING:
+ * - Contains 68 TypeScript compilation errors
+ * - Built for an older version of the type definitions
+ * - Uses properties that don't exist in current interfaces (e.g., ResovaTransaction.gross, ResovaTransaction.net)
+ * - Not currently imported or used anywhere in the active codebase
+ *
+ * CURRENT ACTIVE ALTERNATIVES:
+ * - resova-data-transformer.ts - Core analytics transformation
+ * - customer-intelligence-transformer.ts - Customer CLV, segments, voucher/conversion intelligence
+ *
+ * FUTURE PLANS:
+ * - Keep disabled as reference for future advanced analytics implementation
+ * - See INTEGRATION_SUMMARY.md for planned integration roadmap
+ * - Would require significant refactoring to align with current type definitions
+ *
+ * DO NOT RE-ENABLE without:
+ * 1. Updating all type references to match current interfaces
+ * 2. Fixing all 68 TypeScript compilation errors
+ * 3. Testing thoroughly with real Resova API data
+ * 4. Integrating into the main analytics pipeline
+ *
+ * ---
+ *
+ * ORIGINAL PURPOSE:
  * Transforms raw Resova data into 5-layer intelligence framework
  * - Layer 1: Raw Insights (Facts)
  * - Layer 2: Derived Insights (Calculations)
