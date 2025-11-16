@@ -1376,7 +1376,7 @@ export class ResovaService {
             allBookings,
             [], // Empty vouchers array - will be calculated from transaction data instead
             inventoryItems, // Pass inventory items for activity profitability
-            availabilityInstances?.data || [] // Extract data array from availability response
+            availabilityInstances || [] // availabilityInstances is already an array
           );
 
           logger.info('Successfully added business insights');
@@ -1401,8 +1401,28 @@ export class ResovaService {
             if (!analyticsData.businessInsights) {
               analyticsData.businessInsights = {
                 items: [],
-                customers: { totalCustomers: 0, newCustomers: 0, repeatRate: 0, topCustomers: [] },
-                vouchers: { totalActive: 0, totalRedeemed: 0, totalValue: 0, redemptionRate: 0, expiringWithin30Days: 0 },
+                customers: {
+                  totalCustomers: 0,
+                  newCustomers: 0,
+                  repeatRate: 0,
+                  topCustomers: [],
+                  topCustomersByRevenue: []
+                },
+                vouchers: {
+                  totalActive: 0,
+                  totalRedeemed: 0,
+                  totalValue: 0,
+                  redemptionRate: 0,
+                  expiringWithin30Days: 0,
+                  giftSales: 0,
+                  redeemedCount: 0,
+                  redeemedValue: 0,
+                  availableCount: 0,
+                  availableValue: 0,
+                  breakageRate: 0,
+                  averageVoucherValue: 0,
+                  averageRedemptionValue: 0
+                },
                 availability: { utilizationRate: 0, peakDays: [], lowBookingDays: [], averageCapacity: 0, averageBooked: 0 }
               };
             }
@@ -1410,10 +1430,10 @@ export class ResovaService {
             // Note: customerIntelligence is already set by ResovaDataTransformer.transformBusinessInsights
             // We only add the voucher and conversion intelligence here from Core APIs
 
-            analyticsData.businessInsights.voucherIntelligence =
+            analyticsData.businessInsights!.voucherIntelligence =
               CustomerIntelligenceTransformer.transformVoucherIntelligence(vouchers, transactionsResponse.data);
 
-            analyticsData.businessInsights.conversionIntelligence =
+            analyticsData.businessInsights!.conversionIntelligence =
               CustomerIntelligenceTransformer.transformConversionIntelligence(abandonedCarts);
 
             logger.info('Successfully added customer, voucher, and conversion intelligence');

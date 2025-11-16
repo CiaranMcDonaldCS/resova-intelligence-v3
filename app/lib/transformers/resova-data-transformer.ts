@@ -975,7 +975,7 @@ export class ResovaDataTransformer {
    * Transform business insights from Core API data
    */
   static transformBusinessInsights(
-    items: ResovaItem[],
+    items: ResovaItem[] | ResovaInventoryItem[],
     transactions: ResovaTransaction[],
     allBookings: ResovaAllBooking[],
     vouchers: ResovaGiftVoucher[],
@@ -984,15 +984,44 @@ export class ResovaDataTransformer {
   ): BusinessInsights {
     logger.info('Transforming business insights');
 
+    // If items is ResovaInventoryItem[], convert to ItemDetails without using transformItemDetails
+    // Otherwise use transformItemDetails for ResovaItem[]
+    const itemDetails = this.isResovaInventoryItemArray(items)
+      ? this.transformInventoryItemsToDetails(items)
+      : this.transformItemDetails(items);
+
     return {
-      items: this.transformItemDetails(items),
+      items: itemDetails,
       customers: this.transformCustomerInsights(transactions),
       vouchers: this.transformVoucherInsights(vouchers),
-      availability: this.transformAvailabilityInsights(allBookings, items),
+      availability: this.transformAvailabilityInsights(allBookings, inventoryItems || []),
       activityProfitability: inventoryItems ? this.transformActivityProfitability(inventoryItems) : undefined,
       capacityUtilization: availabilityInstances ? this.transformCapacityUtilization(availabilityInstances) : undefined,
       customerIntelligence: this.transformCustomerIntelligence(transactions)
     };
+  }
+
+  /**
+   * Type guard to check if items is ResovaInventoryItem[]
+   */
+  private static isResovaInventoryItemArray(items: ResovaItem[] | ResovaInventoryItem[]): items is ResovaInventoryItem[] {
+    return items.length > 0 && 'total_bookings' in items[0];
+  }
+
+  /**
+   * Convert inventory items to item details format
+   */
+  private static transformInventoryItemsToDetails(items: ResovaInventoryItem[]): ItemDetails[] {
+    return items.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.short_description || item.long_description || '',
+      duration: item.duration,
+      capacity: parseInt(item.capacity || '0'),
+      pricingType: item.privacy_type || 'standard',
+      status: item.status_label || 'active',
+      categories: [] // Inventory items don't have categories
+    }));
   }
 
   /**
@@ -1224,7 +1253,7 @@ export class ResovaDataTransformer {
   private static transformVoucherInsights(vouchers: ResovaGiftVoucher[]): VoucherInsight {
     const active = vouchers.filter(v => v.status === 'active');
     const redeemed = vouchers.filter(v => v.redeemed_at !== null);
-    const totalValue = vouchers.reduce((sum, v) => sum + parseFloat(v.amount), 0);
+    const totalValue = vouchers.reduce((sum, v) => sum + parseFloat(String(v.amount || '0')), 0);
 
     const now = new Date();
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -1238,21 +1267,21 @@ export class ResovaDataTransformer {
     // Note: This uses basic voucher data. For detailed tracking, use reportingVouchers API data in transformVoucherInsightsDetailed()
 
     // Calculate gift sales revenue (total amount paid for vouchers)
-    const giftSales = vouchers.reduce((sum, v) => sum + parseFloat(v.amount || '0'), 0);
+    const giftSales = vouchers.reduce((sum, v) => sum + parseFloat(String(v.amount || '0')), 0);
 
     // Count fully redeemed vouchers (where redeemed_at is not null)
     const redeemedCount = redeemed.length;
 
     // Calculate total value of redeemed vouchers
     // Note: This is approximate - for precise tracking, use ResovaGiftVoucherReporting.total_redeemed
-    const redeemedValue = redeemed.reduce((sum, v) => sum + parseFloat(v.amount || '0'), 0);
+    const redeemedValue = redeemed.reduce((sum, v) => sum + parseFloat(String(v.amount || '0')), 0);
 
     // Count available vouchers (active and not fully redeemed)
     const availableCount = active.length;
 
     // Calculate total value still available to redeem
     // Note: This is approximate - for precise tracking, use ResovaGiftVoucherReporting.total_remaining
-    const availableValue = active.reduce((sum, v) => sum + parseFloat(v.amount || '0'), 0);
+    const availableValue = active.reduce((sum, v) => sum + parseFloat(String(v.amount || '0')), 0);
 
     // Calculate breakage rate (percentage of vouchers that expired unredeemed)
     const expired = vouchers.filter(v => {
@@ -1292,10 +1321,14 @@ export class ResovaDataTransformer {
    */
   private static transformAvailabilityInsights(
     allBookings: ResovaAllBooking[],
-    items: ResovaItem[]
+    items: (ResovaItem | ResovaInventoryItem)[]
   ): AvailabilityInsight {
     // Calculate overall capacity utilization
-    const totalCapacity = items.reduce((sum, item) => sum + item.max_capacity, 0);
+    const totalCapacity = items.reduce((sum, item) => {
+      // Handle both ResovaItem (has max_capacity) and ResovaInventoryItem (has capacity as string)
+      const capacity = 'max_capacity' in item ? item.max_capacity : parseInt(item.capacity || '0');
+      return sum + capacity;
+    }, 0);
     const totalBooked = allBookings.reduce((sum, b) => sum + b.total_quantity, 0);
     const utilizationRate = totalCapacity > 0 ? (totalBooked / totalCapacity) * 100 : 0;
 

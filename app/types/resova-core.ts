@@ -10,6 +10,7 @@ export interface ResovaCustomer {
   reference: string;
   first_name: string;
   last_name: string;
+  name: string;                  // Full name (first + last)
   email: string;
   mobile: string;
   telephone: string;
@@ -48,11 +49,13 @@ export interface CustomerListResponse {
 export interface ResovaGiftVoucher {
   id: string;
   name: string;
-  amount: number;           // Purchase price
+  amount: number | string;   // Purchase price (can be number or string)
   voucher_type: 'value' | 'spaces';
   discount: number;         // Redeemable amount
   description: string;
   status: 'active' | 'inactive';
+  redeemed_at: string | null; // Date when voucher was redeemed (null if not redeemed)
+  expires_at: string;        // Expiration date
   created_at: string;
   updated_at: string;
 }
