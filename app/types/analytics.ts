@@ -585,6 +585,9 @@ export interface RawApiData {
   abandonedCarts?: any[];
   items?: any[];
   futureBookings?: any[]; // Next 90 days of bookings for forward-looking analysis
+  reviews?: any[]; // Product reviews with ratings and text
+  extras?: any[]; // Add-ons/extras sales and inventory data
+  reportingVouchers?: any[]; // Gift voucher sales and redemption tracking
 }
 
 export interface AnalyticsData {
