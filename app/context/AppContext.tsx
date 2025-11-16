@@ -62,11 +62,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Initialize authentication from storage on mount
   const initializeAuth = useCallback(async (): Promise<boolean> => {
+    console.log('🔐 [AppContext] initializeAuth() called');
     logger.info('Initializing authentication from storage...');
 
     try {
       // Check if user is authenticated via storage
-      if (!AuthStorage.isAuthenticated()) {
+      const isAuth = AuthStorage.isAuthenticated();
+      console.log('🔐 [AppContext] AuthStorage.isAuthenticated():', isAuth);
+
+      if (!isAuth) {
         logger.info('No stored credentials found');
         setState(prev => ({ ...prev, isAuthenticated: false }));
         return false;
@@ -74,6 +78,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       // Load credentials from storage
       const authData = AuthStorage.load();
+      console.log('🔐 [AppContext] Loaded auth data:', authData ? {
+        hasResovaKey: !!authData.resovaApiKey,
+        hasClaudeKey: !!authData.claudeApiKey,
+        resovaUrl: authData.resovaApiUrl
+      } : 'NULL');
+
       if (!authData) {
         logger.warn('Auth check passed but failed to load credentials');
         setState(prev => ({ ...prev, isAuthenticated: false }));
@@ -88,7 +98,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
 
       // Initialize analytics service
+      console.log('🔐 [AppContext] Creating analytics service...');
       const analyticsService = createAnalyticsService(credentials);
+      console.log('🔐 [AppContext] Analytics service created:', !!analyticsService);
 
       logger.info('Authentication initialized successfully');
 
@@ -98,18 +110,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         analyticsService,
       }));
 
+      console.log('🔐 [AppContext] State updated with service');
       return true;
     } catch (error: any) {
+      console.error('🔐 [AppContext] Failed to initialize auth:', error);
       logger.error('Failed to initialize auth', error);
       setState(prev => ({ ...prev, isAuthenticated: false }));
       return false;
     }
   }, []);
 
-  // Initialize on mount
+  // Initialize on mount - empty deps to run once
   useEffect(() => {
     initializeAuth();
-  }, [initializeAuth]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Logout and clear storage
   const logout = useCallback(() => {
@@ -120,7 +134,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ConfigStorage.clear();
 
     // Clear state
-    setState({
+    setState(prev => ({
+      ...prev,
       isAuthenticated: false,
       analyticsData: null,
       analyticsLoading: false,
@@ -129,23 +144,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       chatLoading: false,
       chatError: null,
       analyticsService: null,
-    });
+    }));
   }, []);
 
-  // Fetch analytics data
+  // Fetch analytics data via API route
   const fetchAnalytics = useCallback(async (dateRange?: string) => {
-    // Get current service from state
-    let currentService: AnalyticsService | null = null;
-    setState(prev => {
-      currentService = prev.analyticsService;
-      return prev;
-    });
+    console.log('📈 [AppContext] fetchAnalytics() called with dateRange:', dateRange);
 
-    if (!currentService) {
-      logger.warn('Analytics service not initialized - skipping fetch');
+    // Load credentials from storage
+    const authData = AuthStorage.load();
+    if (!authData) {
+      console.warn('📈 [AppContext] No credentials - skipping fetch');
+      logger.warn('Credentials not available - skipping fetch');
       return;
     }
 
+    const credentials: Credentials = {
+      resovaApiKey: authData.resovaApiKey,
+      resovaApiUrl: authData.resovaApiUrl,
+      claudeApiKey: authData.claudeApiKey,
+    };
+
+    console.log('📈 [AppContext] Setting loading state...');
     setState(prev => ({
       ...prev,
       analyticsLoading: true,
@@ -153,15 +173,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
 
     try {
-      const data = await currentService.getAnalytics(dateRange);
+      console.log('📈 [AppContext] Calling /api/analytics...');
+      const response = await fetch('/api/analytics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          credentials,
+          dateRange,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch analytics');
+      }
+
+      const result = await response.json();
+      console.log('📈 [AppContext] Data received:', result.data ? 'SUCCESS' : 'NULL');
       logger.service('analytics', 'Data fetched successfully');
 
       setState(prev => ({
         ...prev,
-        analyticsData: data,
+        analyticsData: result.data,
         analyticsLoading: false,
       }));
+      console.log('📈 [AppContext] State updated with analytics data');
     } catch (error: any) {
+      console.error('📈 [AppContext] Fetch failed:', error.message);
       logger.error('Failed to fetch analytics', error);
 
       setState(prev => ({
@@ -273,12 +313,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  // Auto-fetch analytics when service becomes available
+  // Auto-fetch analytics when authenticated
   useEffect(() => {
-    if (state.analyticsService && !state.analyticsData && !state.analyticsLoading) {
+    console.log('🔄 [AppContext] Auto-fetch check:', {
+      isAuthenticated: state.isAuthenticated,
+      hasData: !!state.analyticsData,
+      isLoading: state.analyticsLoading,
+      willFetch: !!(state.isAuthenticated && !state.analyticsData && !state.analyticsLoading)
+    });
+
+    if (state.isAuthenticated && !state.analyticsData && !state.analyticsLoading) {
+      console.log('✅ [AppContext] Triggering auto-fetch...');
       fetchAnalytics();
     }
-  }, [state.analyticsService, state.analyticsData, state.analyticsLoading, fetchAnalytics]);
+  }, [state.isAuthenticated, state.analyticsData, state.analyticsLoading, fetchAnalytics]);
 
   const value: AppContextType = {
     ...state,

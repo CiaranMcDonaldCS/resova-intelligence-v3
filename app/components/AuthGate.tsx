@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { SimpleAuth } from '@/app/lib/simple-auth';
 import { AuthStorage } from '@/app/lib/storage/auth-storage';
 import { ConfigStorage } from '@/app/lib/storage/config-storage';
 
@@ -13,12 +14,12 @@ interface AuthGateProps {
  * Authentication Gate
  *
  * Handles routing logic based on authentication status:
- * - If not authenticated → redirect to /onboarding
- * - If authenticated but not onboarded → redirect to /onboarding
- * - If authenticated and onboarded → allow access
+ * - If not signed in → redirect to /signin
+ * - If signed in but not onboarded → redirect to /onboarding
+ * - If signed in and onboarded → allow access
  *
- * Special routes that bypass auth:
- * - /onboarding (public, for setup)
+ * Public routes that bypass auth:
+ * - /signin, /signup, /onboarding
  */
 export default function AuthGate({ children }: AuthGateProps) {
   const router = useRouter();
@@ -27,30 +28,29 @@ export default function AuthGate({ children }: AuthGateProps) {
 
   useEffect(() => {
     // Public routes that don't require auth
-    const publicRoutes = ['/onboarding'];
+    const publicRoutes = ['/', '/signin', '/signup', '/onboarding'];
 
     if (publicRoutes.includes(pathname)) {
       setIsChecking(false);
       return;
     }
 
-    // Check authentication status
-    const checkAuth = () => {
-      const isAuthenticated = AuthStorage.isAuthenticated();
-      const isOnboarded = ConfigStorage.isOnboardingComplete();
+    // Check authentication - run once, prevent loops
+    const isSignedIn = SimpleAuth.isSignedIn();
+    const hasResovaKeys = AuthStorage.isAuthenticated();
+    const isOnboarded = ConfigStorage.isOnboardingComplete();
 
-      if (!isAuthenticated || !isOnboarded) {
-        // Not authenticated or not onboarded → go to onboarding
-        setIsChecking(false);
-        router.push('/onboarding');
-      } else {
-        // Authenticated and onboarded → allow access
-        setIsChecking(false);
-      }
-    };
+    if (!isSignedIn) {
+      // No user account → go to signin
+      router.push('/signin');
+    } else if (!hasResovaKeys || !isOnboarded) {
+      // Signed in but missing API keys → go to onboarding
+      router.push('/onboarding');
+    }
 
-    checkAuth();
-  }, [pathname, router]);
+    // Set checking to false regardless - prevent infinite loops
+    setIsChecking(false);
+  }, []); // Empty deps - only run once on mount
 
   // Show loading state while checking auth
   if (isChecking) {

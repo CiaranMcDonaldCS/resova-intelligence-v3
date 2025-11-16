@@ -4,7 +4,7 @@ import React from 'react';
 
 /**
  * Quick Insights Component
- * Clean 3-button grid matching reference design
+ * Matches HTML mockup design exactly - 3-button grid
  */
 export default function QuickInsights() {
   const insights = [
@@ -31,21 +31,19 @@ export default function QuickInsights() {
   };
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-3 text-center">
       {insights.map((insight) => (
         <button
           key={insight.id}
           onClick={() => handleInsightClick(insight.id)}
-          className="bg-[#1D212B] border border-[#383838] rounded-lg p-4 transition-all hover:border-[#3D8DDA] hover:bg-[#252A35]"
+          className="flex flex-col-reverse items-center justify-center space-y-2 space-y-reverse p-3 bg-[--surface-dark] border border-[--border-color] rounded-xl hover:border-[--primary] transition-colors"
         >
-          <div className="flex flex-col items-center gap-2">
-            <span className="material-symbols-outlined text-[#3D8DDA] text-3xl">
-              {insight.icon}
-            </span>
-            <span className="text-white text-sm font-medium">
-              {insight.label}
-            </span>
-          </div>
+          <span className="material-symbols-outlined text-[--primary]">
+            {insight.icon}
+          </span>
+          <span className="text-sm font-medium text-[--text-secondary] leading-tight">
+            {insight.label}
+          </span>
         </button>
       ))}
     </div>

@@ -189,8 +189,9 @@ export default function AccountSetup() {
       // Mark onboarding complete
       ConfigStorage.setOnboardingComplete();
 
-      // Redirect to dashboard
-      router.push('/');
+      // Force a full page reload to re-initialize AppContext with new credentials
+      // This ensures the analytics service picks up the freshly saved API keys
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Failed to save account setup:', error);
       alert('Failed to save settings. Please try again.');
