@@ -5,6 +5,56 @@ All notable changes to Resova Intelligence will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-01-15
+
+### Added - AI Enhancement Release
+- **Table Support in AI Responses**: Claude can now generate structured data tables alongside charts
+  - JSON-based table specifications parsed from AI responses
+  - Responsive table UI with hover effects and proper formatting
+  - Automatic number formatting (commas for values > 1000)
+  - Ideal for revenue breakdowns, activity comparisons, and detailed analytics
+- **Revenue Data Visualization**: Enhanced table documentation in AI system prompt
+  - Tables highlighted as primary tool for revenue analysis
+  - Guidance to use both charts and tables for comprehensive insights
+  - Revenue questions benefit from trend charts + precise value tables
+- **Resova Knowledge Center Integration**: AI can now reference platform features and documentation
+  - Comprehensive platform feature documentation in system prompt
+  - 8+ feature categories: Settings, Inventory, Marketing, Payments, Integrations, Reporting, Customer Management
+  - Direct article linking capability with format examples
+  - Common topic references for Marketing, Email, Discounts, Customers, Reports, Payments, Inventory
+- **Intelligent Recommendations**: AI provides actionable advice with Knowledge Center links
+  - Feature-specific guidance with step-by-step article references
+  - Template text for including helpful documentation links
+  - Enhanced example recommendations showing Resova feature integration
+
+### Changed
+- **Chart Data Improvements**: Added `convertCentsToDollars()` helper function
+  - Automatic detection of cent-based values (> 1000) and conversion to dollars
+  - Comprehensive logging for chart data source mapping
+  - Fixed revenue display issues in charts
+- **AI System Prompt**: Significantly enhanced with structured guidance
+  - Table vs chart decision guidance with clear use cases
+  - Multi-metric comparison instructions
+  - Side-by-side comparison best practices
+  - Knowledge Center article linking format and examples
+
+### Technical Details
+- Modified [claude-service.ts](app/lib/services/claude-service.ts):
+  - Lines 752-784: Table documentation with revenue-specific guidance
+  - Lines 831-886: Resova Platform Knowledge section with article links
+  - Lines 912-914: Updated example recommendations
+- Modified [Dashboard.tsx](app/components/Dashboard.tsx):
+  - Lines 196-200: `convertCentsToDollars()` helper function
+  - Lines 203-302: `getChartDataFromSource()` with comprehensive logging
+  - Lines 820-856: Table rendering UI with responsive design
+- Enhanced [layout.tsx](app/layout.tsx): Updated dependencies for Chart.js support
+- Updated [globals.css](app/globals.css): Enhanced styling for tables and charts
+
+### Commits
+- `7962505`: Table support, chart improvements, revenue conversion fixes
+- `eb0121c`: Resova Knowledge Center integration
+- `a116225`: Knowledge Center article link guidance
+
 ## [1.0.2] - 2025-01-06
 
 ### Added - Production Ready Release
@@ -193,6 +243,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **v1.0.3** (2025-01-15): AI enhancements with table support and Resova Knowledge Center integration
 - **v1.0.2** (2025-01-06): Production-ready release with security, monitoring, and optimizations
 - **v1.0.1** (2025-01-06): Bug fixes for calculations and UX improvements
 - **v1.0.0** (2025-01-05): Initial release with full feature set
@@ -200,6 +251,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## Migration Guide
+
+### From v1.0.2 to v1.0.3
+
+**No Migration Required**: This is an enhancement release. All changes are backward compatible and automatically available to users.
+
+**New Features Available**:
+- AI can now generate data tables alongside charts for more detailed analysis
+- Claude references Resova Knowledge Center articles in recommendations
+- Improved revenue visualization with automatic cent-to-dollar conversion
+- Enhanced AI responses with platform-specific guidance
+
+**Action Recommended**:
+1. Try asking revenue-related questions to see new table formatting
+2. Ask for recommendations to see Knowledge Center article links
+3. Review improved chart data accuracy for revenue metrics
+
+**Benefits**:
+- More comprehensive analytics with table + chart combinations
+- Actionable recommendations with direct links to Resova documentation
+- Better data visualization with correct currency formatting
+- Enhanced AI guidance for using Resova platform features
 
 ### From v1.0.1 to v1.0.2
 
