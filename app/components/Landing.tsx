@@ -111,12 +111,10 @@ export default function Landing({ onGetStarted }: LandingProps) {
               />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              AI-Powered Business Intelligence
-              <span className="block text-[#2685CF] mt-2">For Venue Operators</span>
+              Your operations, decoded.
             </h1>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Get instant insights into your revenue, costs, profitability, and operations.
-              Ask questions in plain English and get answers in seconds—powered by AI.
+              AI insights that drive revenue, efficiency, and guest experience.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <button
