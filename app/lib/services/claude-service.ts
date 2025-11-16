@@ -105,8 +105,7 @@ export class ClaudeService {
         success: true,
         message: sanitizedResponse,
         suggestedQuestions: followupQuestions.length > 0 ? followupQuestions : this.getRandomSuggestions(4),
-        charts: charts,
-        tables: tables
+        charts: charts
       };
     } catch (error) {
       this.handleError(error);
