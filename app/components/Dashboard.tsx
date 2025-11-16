@@ -578,6 +578,11 @@ export default function Dashboard() {
   const upcomingBookings = analyticsData.todaysAgenda?.bookings || 0;
   const capacityPercent = analyticsData.businessInsights?.capacityUtilization?.overallUtilization || 0;
 
+  // Additional metrics for Owner's Box - Three Pillars
+  const avgRevenuePerBooking = analyticsData.salesSummary?.averageRevenuePerBooking || 0;
+  const repeatCustomerRate = analyticsData.customerInsights?.repeatCustomerRate || 0;
+  const totalGuests = analyticsData.guestAnalytics?.totalGuests || 0;
+
   return (
     <div className="min-h-screen flex flex-col max-w-4xl mx-auto bg-[#121212] text-white">
       {/* Header */}
@@ -597,19 +602,19 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow p-4 sm:p-6 md:p-8 space-y-8 pb-28">
+      <main className="flex-grow p-4 sm:p-6 md:p-8 space-y-10 pb-28">
         {/* Greeting */}
-        <div className="bg-gradient-to-r from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl p-5 sm:p-6 text-center shadow-lg">
-          <h2 className="text-lg text-white md:text-xl font-semibold mb-2 tracking-tight">Welcome back, {businessName}</h2>
-          <p className="text-sm text-[#B0B0B0] md:text-base max-w-xl mx-auto">
+        <div className="bg-gradient-to-r from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl p-6 sm:p-7 text-center shadow-xl">
+          <h2 className="text-xl text-white md:text-2xl font-bold mb-2 tracking-tight">Welcome back, {businessName}</h2>
+          <p className="text-sm text-[#B0B0B0] md:text-base max-w-2xl mx-auto">
             Your business intelligence dashboard is ready
           </p>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-10">
           {/* Attention Required */}
           <div className="space-y-6">
-            <h3 className="font-semibold text-lg md:text-xl px-1">Attention Required</h3>
+            <h3 className="font-bold text-xl md:text-2xl px-1 tracking-tight">Attention Required</h3>
             <div className="space-y-4">
               {analyticsData.businessInsights?.capacityUtilization &&
                analyticsData.businessInsights.capacityUtilization.overallUtilization > 90 && (
@@ -639,96 +644,157 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Owner's Box */}
-          <div className="bg-[#1D212B] border border-[#383838] rounded-2xl p-4 sm:p-5">
-            <div className="flex items-center mb-4">
-              <span className="material-symbols-outlined text-[#3D8DDA] mr-2.5">business_center</span>
-              <h3 className="font-semibold text-lg md:text-xl text-white">Owner's Box</h3>
+          {/* Owner's Box - Three Pillars */}
+          <div className="bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl p-5 sm:p-6 shadow-xl">
+            <div className="flex items-center mb-6">
+              <span className="material-symbols-outlined text-[#3D8DDA] mr-3 text-2xl">business_center</span>
+              <h3 className="font-bold text-xl md:text-2xl text-white tracking-tight">Owner's Box</h3>
             </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg">
-                <div>
-                  <p className="text-xs text-[#A0A0A0]">Period Revenue</p>
-                  <p className="text-lg font-semibold text-white">${todayRevenue.toLocaleString()}</p>
+
+            {/* Three Pillars Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+              {/* Drive Revenue Pillar */}
+              <div className="bg-gradient-to-br from-[#3D8DDA]/10 to-transparent border border-[#3D8DDA]/30 rounded-xl p-5 shadow-lg hover:shadow-xl hover:border-[#3D8DDA]/50 transition-all">
+                <div className="flex items-center mb-4">
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-xl mr-2">trending_up</span>
+                  <h4 className="text-sm font-bold text-[#3D8DDA] uppercase tracking-wide">Drive Revenue</h4>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-[#A0A0A0]">vs. Previous</p>
-                  <p className={`text-lg font-semibold flex items-center justify-end ${revenueChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    <span className="material-symbols-outlined text-base mr-1">
-                      {revenueChange >= 0 ? 'arrow_upward' : 'arrow_downward'}
-                    </span>
-                    {Math.abs(revenueChange).toFixed(1)}%
-                  </p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-[#A0A0A0] mb-1">Period Revenue</p>
+                    <p className="text-2xl font-bold text-white">${todayRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-[#3D8DDA]/20">
+                    <p className="text-xs text-[#A0A0A0]">vs. Previous</p>
+                    <p className={`text-sm font-semibold flex items-center ${revenueChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <span className="material-symbols-outlined text-xs mr-0.5">
+                        {revenueChange >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                      </span>
+                      {Math.abs(revenueChange).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-[#A0A0A0]">Avg/Booking</p>
+                    <p className="text-sm font-semibold text-white">${avgRevenuePerBooking.toLocaleString()}</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg">
-                <div>
-                  <p className="text-xs text-[#A0A0A0]">Today's Bookings</p>
-                  <p className="text-lg font-semibold text-white">{upcomingBookings}</p>
+
+              {/* Operational Efficiency Pillar */}
+              <div className="bg-gradient-to-br from-[#10B981]/10 to-transparent border border-[#10B981]/30 rounded-xl p-5 shadow-lg hover:shadow-xl hover:border-[#10B981]/50 transition-all">
+                <div className="flex items-center mb-4">
+                  <span className="material-symbols-outlined text-[#10B981] text-xl mr-2">settings_suggest</span>
+                  <h4 className="text-sm font-bold text-[#10B981] uppercase tracking-wide">Efficiency</h4>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-[#A0A0A0]">Capacity</p>
-                  <p className="text-lg font-semibold text-[#3D8DDA]">{capacityPercent.toFixed(0)}%</p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-[#A0A0A0] mb-1">Capacity Usage</p>
+                    <p className="text-2xl font-bold text-white">{capacityPercent.toFixed(0)}%</p>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-[#10B981]/20">
+                    <p className="text-xs text-[#A0A0A0]">Today's Bookings</p>
+                    <p className="text-sm font-semibold text-white">{upcomingBookings}</p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-[#A0A0A0]">Status</p>
+                    <p className={`text-sm font-semibold ${capacityPercent >= 80 ? 'text-green-400' : capacityPercent >= 50 ? 'text-yellow-400' : 'text-orange-400'}`}>
+                      {capacityPercent >= 80 ? 'Optimized' : capacityPercent >= 50 ? 'Moderate' : 'Low'}
+                    </p>
+                  </div>
                 </div>
               </div>
+
+              {/* Guest Experience Pillar */}
+              <div className="bg-gradient-to-br from-[#F59E0B]/10 to-transparent border border-[#F59E0B]/30 rounded-xl p-5 shadow-lg hover:shadow-xl hover:border-[#F59E0B]/50 transition-all">
+                <div className="flex items-center mb-4">
+                  <span className="material-symbols-outlined text-[#F59E0B] text-xl mr-2">groups</span>
+                  <h4 className="text-sm font-bold text-[#F59E0B] uppercase tracking-wide">Guest Experience</h4>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-[#A0A0A0] mb-1">Total Guests</p>
+                    <p className="text-2xl font-bold text-white">{totalGuests.toLocaleString()}</p>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-[#F59E0B]/20">
+                    <p className="text-xs text-[#A0A0A0]">Repeat Rate</p>
+                    <p className="text-sm font-semibold text-white">{repeatCustomerRate.toFixed(0)}%</p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-[#A0A0A0]">Loyalty</p>
+                    <p className={`text-sm font-semibold ${repeatCustomerRate >= 30 ? 'text-green-400' : repeatCustomerRate >= 15 ? 'text-yellow-400' : 'text-orange-400'}`}>
+                      {repeatCustomerRate >= 30 ? 'Strong' : repeatCustomerRate >= 15 ? 'Moderate' : 'Growing'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Row */}
+            <div className="bg-black/30 p-4 rounded-xl text-center border border-white/5">
+              <p className="text-xs text-[#A0A0A0] mb-2 uppercase tracking-wide font-medium">Quick Summary</p>
+              <p className="text-sm md:text-base text-white">
+                <span className="font-bold text-[#3D8DDA]">${todayRevenue.toLocaleString()}</span> revenue •
+                <span className="font-bold text-[#10B981] ml-1">{capacityPercent.toFixed(0)}%</span> capacity •
+                <span className="font-bold text-[#F59E0B] ml-1">{totalGuests.toLocaleString()}</span> guests
+              </p>
             </div>
           </div>
 
           {/* Quick Insights */}
-          <div className="space-y-5">
-            <h3 className="font-semibold text-lg md:text-xl px-1 tracking-tight">Quick Insights</h3>
-            <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-6">
+            <h3 className="font-bold text-xl md:text-2xl px-1 tracking-tight">Quick Insights</h3>
+            <div className="grid grid-cols-3 gap-4">
               <button
-                onClick={() => handleSend("Show me my revenue trends")}
+                onClick={() => handleSend("Provide a comprehensive analysis of all Drive Revenue insights including: revenue trends and patterns, product/activity performance, upsell opportunities from extras and add-ons, promotion and discount effectiveness, pricing optimization recommendations, and revenue forecasting.")}
                 disabled={chatLoading}
-                className="group flex flex-col items-center justify-center space-y-3 p-4 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-lg hover:shadow-[#3D8DDA]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex flex-col items-center justify-center space-y-4 p-5 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-xl hover:shadow-[#3D8DDA]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="p-3 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
-                  <span className="material-symbols-outlined text-[#3D8DDA] text-2xl">monitoring</span>
+                <div className="p-3.5 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-3xl">trending_up</span>
                 </div>
-                <span className="text-xs font-semibold text-white tracking-tight">Revenue</span>
+                <span className="text-sm font-bold text-white tracking-tight text-center">Drive Revenue</span>
               </button>
               <button
-                onClick={() => handleSend("Tell me about my operations performance")}
+                onClick={() => handleSend("Provide a comprehensive analysis of all Operational Efficiency insights including: capacity utilization and optimization, booking source performance, channel effectiveness, time slot utilization, resource allocation, staff scheduling opportunities, and operational bottlenecks.")}
                 disabled={chatLoading}
-                className="group flex flex-col items-center justify-center space-y-3 p-4 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-lg hover:shadow-[#3D8DDA]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex flex-col items-center justify-center space-y-4 p-5 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-xl hover:shadow-[#3D8DDA]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="p-3 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
-                  <span className="material-symbols-outlined text-[#3D8DDA] text-2xl">construction</span>
+                <div className="p-3.5 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-3xl">settings_suggest</span>
                 </div>
-                <span className="text-xs font-semibold text-white tracking-tight">Operations</span>
+                <span className="text-sm font-bold text-white tracking-tight text-center">Operational Efficiency</span>
               </button>
               <button
-                onClick={() => handleSend("Give me insights about my guests")}
+                onClick={() => handleSend("Provide a comprehensive analysis of all Guest Experience insights including: customer satisfaction metrics, repeat customer analysis, guest feedback themes, no-show patterns, group size trends, average revenue per guest, customer lifetime value, and guest retention strategies.")}
                 disabled={chatLoading}
-                className="group flex flex-col items-center justify-center space-y-3 p-4 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-lg hover:shadow-[#3D8DDA]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex flex-col items-center justify-center space-y-4 p-5 bg-gradient-to-br from-[#1D212B] to-[#1A1E28] border border-[#383838] rounded-2xl hover:border-[#3D8DDA] hover:shadow-xl hover:shadow-[#3D8DDA]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="p-3 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
-                  <span className="material-symbols-outlined text-[#3D8DDA] text-2xl">sentiment_satisfied</span>
+                <div className="p-3.5 bg-[#3D8DDA]/10 rounded-xl group-hover:bg-[#3D8DDA]/20 transition-colors">
+                  <span className="material-symbols-outlined text-[#3D8DDA] text-3xl">groups</span>
                 </div>
-                <span className="text-xs font-semibold text-white tracking-tight">Guests</span>
+                <span className="text-sm font-bold text-white tracking-tight text-center">Guest Experience</span>
               </button>
             </div>
           </div>
 
           {/* AI Chat */}
-          <div className="space-y-8">
+          <div className="space-y-10">
             {conversationHistory.map((msg: any, idx: number) => (
               <div key={idx}>
                 {msg.role === 'user' && (
-                  <div className="flex justify-end pt-4">
-                    <div className="bg-[#3D8DDA] text-white rounded-t-2xl rounded-bl-2xl px-4 py-3 max-w-[85%] md:max-w-[70%]">
-                      <p>{msg.content}</p>
+                  <div className="flex justify-end pt-6">
+                    <div className="bg-gradient-to-br from-[#3D8DDA] to-[#2c79c1] text-white rounded-t-2xl rounded-bl-2xl px-6 py-4 max-w-[85%] md:max-w-[70%] shadow-xl shadow-[#3D8DDA]/30">
+                      <p className="text-sm md:text-base leading-relaxed font-medium">{msg.content}</p>
                     </div>
                   </div>
                 )}
 
                 {msg.role === 'assistant' && (
-                  <div className="flex items-start space-x-3 md:space-x-4">
-                    <div className="bg-[#3D8DDA] rounded-full p-2 mt-1 flex-shrink-0">
-                      <span className="material-symbols-outlined text-white" style={{ fontSize: '20px' }}>auto_awesome</span>
+                  <div className="flex items-start space-x-4 md:space-x-5 mb-8">
+                    <div className="bg-gradient-to-br from-[#3D8DDA] to-[#2c79c1] rounded-full p-2.5 md:p-3 mt-1 flex-shrink-0 shadow-xl shadow-[#3D8DDA]/40">
+                      <img src="/logo.png" alt="Resova" className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
-                    <div className="w-full space-y-6">
+                    <div className="w-full space-y-6 flex-1 min-w-0 bg-gradient-to-br from-[#1D212B]/40 to-transparent border border-[#383838]/40 rounded-2xl p-5 md:p-7 shadow-lg">
                       {(() => {
                         // Parse the content to extract Key Insights and Recommended Actions
                         const lines = msg.content.split('\n');
@@ -773,18 +839,18 @@ export default function Dashboard() {
                             <div className="prose prose-invert prose-sm md:prose-base max-w-none">
                               {sections.main.map((line: string, lineIdx: number) => {
                                 if (line.startsWith('### ')) {
-                                  return <h3 key={lineIdx} className="text-base md:text-lg font-semibold text-white mt-6 mb-3 tracking-tight">{line.replace('### ', '')}</h3>;
+                                  return <h3 key={lineIdx} className="text-base md:text-lg font-bold text-white mt-8 mb-4 tracking-tight border-b border-[#383838]/50 pb-2">{line.replace('### ', '')}</h3>;
                                 }
                                 if (line.startsWith('## ')) {
-                                  return <h2 key={lineIdx} className="text-lg md:text-xl font-semibold text-white mt-7 mb-4 tracking-tight">{line.replace('## ', '')}</h2>;
+                                  return <h2 key={lineIdx} className="text-lg md:text-xl font-bold text-white mt-10 mb-5 tracking-tight border-b border-[#383838] pb-3">{line.replace('## ', '')}</h2>;
                                 }
                                 if (line.startsWith('# ')) {
-                                  return <h1 key={lineIdx} className="text-xl md:text-2xl font-bold text-white mt-8 mb-5 tracking-tight">{line.replace('# ', '')}</h1>;
+                                  return <h1 key={lineIdx} className="text-xl md:text-2xl font-bold text-white mt-12 mb-6 tracking-tight border-b-2 border-[#3D8DDA] pb-3">{line.replace('# ', '')}</h1>;
                                 }
                                 if (line.trim().startsWith('- ')) {
                                   const content = line.replace(/^-\s*/, '');
                                   return (
-                                    <li key={lineIdx} className="text-[#E0E0E0] ml-4 mb-2 leading-relaxed" dangerouslySetInnerHTML={{
+                                    <li key={lineIdx} className="text-[#E8E8E8] ml-5 mb-3 leading-relaxed text-sm md:text-base pl-1" dangerouslySetInnerHTML={{
                                       __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
                                     }} />
                                   );
@@ -792,29 +858,29 @@ export default function Dashboard() {
                                 if (line.match(/^\d+\.\s/)) {
                                   const content = line.replace(/^\d+\.\s/, '');
                                   return (
-                                    <li key={lineIdx} className="text-[#E0E0E0] ml-4 mb-2 leading-relaxed" dangerouslySetInnerHTML={{
+                                    <li key={lineIdx} className="text-[#E8E8E8] ml-5 mb-3 leading-relaxed text-sm md:text-base pl-1" dangerouslySetInnerHTML={{
                                       __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
                                     }} />
                                   );
                                 }
                                 // Parse bold text in paragraphs
                                 const parsedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
-                                return <p key={lineIdx} className="text-[#E0E0E0] leading-relaxed mb-3 text-sm md:text-base" dangerouslySetInnerHTML={{ __html: parsedLine }} />;
+                                return <p key={lineIdx} className="text-[#E8E8E8] leading-[1.7] mb-4 text-sm md:text-base" dangerouslySetInnerHTML={{ __html: parsedLine }} />;
                               })}
                             </div>
 
                             {/* Key Insights and Recommended Actions in styled cards */}
                             {(hasInsights || hasActions) && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+                              <div className={`grid grid-cols-1 gap-5 mt-8 ${hasInsights && hasActions ? 'md:grid-cols-2' : ''}`}>
                                 {hasInsights && (
-                                  <div className="bg-gradient-to-br from-[#1D212B] to-[#181C25] p-5 md:p-6 rounded-xl border border-[#383838] shadow-lg">
-                                    <div className="flex items-center mb-4">
-                                      <div className="p-2 bg-[#3D8DDA]/10 rounded-lg mr-3">
+                                  <div className="bg-gradient-to-br from-[#1D212B] via-[#1A1E28] to-[#181C25] p-6 md:p-7 rounded-2xl border border-[#383838] shadow-2xl shadow-[#3D8DDA]/10 hover:border-[#3D8DDA]/50 transition-all duration-300">
+                                    <div className="flex items-center mb-5">
+                                      <div className="p-2.5 bg-gradient-to-br from-[#3D8DDA]/20 to-[#3D8DDA]/5 rounded-xl mr-3 shadow-lg shadow-[#3D8DDA]/20">
                                         <span className="material-symbols-outlined text-[#3D8DDA] text-xl">lightbulb</span>
                                       </div>
-                                      <h3 className="font-semibold text-white text-base tracking-tight">Key Insights</h3>
+                                      <h3 className="font-bold text-white text-base md:text-lg tracking-tight">Key Insights</h3>
                                     </div>
-                                    <ul className="space-y-3 list-none">
+                                    <ul className="space-y-4 list-none">
                                       {sections.insights.map((line: string, i: number) => {
                                         const trimmedLine = line.trim();
 
@@ -823,9 +889,9 @@ export default function Dashboard() {
                                           const content = trimmedLine.replace(/^[-*\d]+[\.\)]\s*/, '');
                                           if (content) {
                                             return (
-                                              <li key={i} className="flex items-start group">
-                                                <span className="material-symbols-outlined text-[#3D8DDA] text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform">trending_up</span>
-                                                <span className="text-[#E0E0E0] leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                              <li key={i} className="flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 -ml-2.5">
+                                                <span className="material-symbols-outlined text-[#3D8DDA] text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200">trending_up</span>
+                                                <span className="text-[#E0E0E0] leading-relaxed text-sm md:text-base" dangerouslySetInnerHTML={{
                                                   __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
                                                 }} />
                                               </li>
@@ -839,14 +905,14 @@ export default function Dashboard() {
                                 )}
 
                                 {hasActions && (
-                                  <div className="bg-gradient-to-br from-[#1D212B] to-[#181C25] p-5 md:p-6 rounded-xl border border-[#383838] shadow-lg">
-                                    <div className="flex items-center mb-4">
-                                      <div className="p-2 bg-green-500/10 rounded-lg mr-3">
+                                  <div className="bg-gradient-to-br from-[#1D212B] via-[#1A1E28] to-[#181C25] p-6 md:p-7 rounded-2xl border border-[#383838] shadow-2xl shadow-green-500/10 hover:border-green-500/50 transition-all duration-300">
+                                    <div className="flex items-center mb-5">
+                                      <div className="p-2.5 bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-xl mr-3 shadow-lg shadow-green-500/20">
                                         <span className="material-symbols-outlined text-green-400 text-xl">task_alt</span>
                                       </div>
-                                      <h3 className="font-semibold text-white text-base tracking-tight">Recommended Actions</h3>
+                                      <h3 className="font-bold text-white text-base md:text-lg tracking-tight">Recommended Actions</h3>
                                     </div>
-                                    <ul className="space-y-3 list-none">
+                                    <ul className="space-y-4 list-none">
                                       {sections.actions.map((line: string, i: number) => {
                                         const trimmedLine = line.trim();
 
@@ -854,10 +920,10 @@ export default function Dashboard() {
                                         let match = trimmedLine.match(/^[-*\d]*[\.\)]?\s*\*\*(.*?)\*\*:\s*(.*)/);
                                         if (match) {
                                           return (
-                                            <li key={i} className="flex items-start group">
-                                              <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform">check_circle</span>
+                                            <li key={i} className="flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 -ml-2.5">
+                                              <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200">check_circle</span>
                                               <div className="flex-1">
-                                                <div className="text-[#E0E0E0] leading-relaxed text-sm">
+                                                <div className="text-[#E0E0E0] leading-relaxed text-sm md:text-base">
                                                   <strong className="font-semibold text-white">{match[1]}</strong>
                                                   <span className="text-[#E0E0E0]">: {match[2]}</span>
                                                 </div>
@@ -871,9 +937,9 @@ export default function Dashboard() {
                                           const content = trimmedLine.replace(/^[-*\d]+[\.\)]\s*/, '');
                                           if (content) {
                                             return (
-                                              <li key={i} className="flex items-start group">
-                                                <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform">check_circle</span>
-                                                <span className="text-[#E0E0E0] leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                              <li key={i} className="flex items-start group hover:bg-white/5 p-2.5 rounded-lg transition-all duration-200 -ml-2.5">
+                                                <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200">check_circle</span>
+                                                <span className="text-[#E0E0E0] leading-relaxed text-sm md:text-base" dangerouslySetInnerHTML={{
                                                   __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
                                                 }} />
                                               </li>
@@ -894,14 +960,16 @@ export default function Dashboard() {
 
                       {/* Charts from AI response */}
                       {msg.charts && msg.charts.length > 0 && (
-                        <div className="space-y-6">
+                        <div className="space-y-6 mt-6">
                           {msg.charts.map((chart: any, chartIdx: number) => (
-                            <div key={chartIdx} className="bg-[#1D212B] border border-[#383838] rounded-xl p-4 md:p-5">
-                              <div className="flex items-center mb-4">
-                                <span className="material-symbols-outlined text-[#3D8DDA] mr-2">insights</span>
-                                <h3 className="font-semibold text-white">{chart.title || 'Chart'}</h3>
+                            <div key={chartIdx} className="bg-gradient-to-br from-[#1D212B] to-[#181C25] border border-[#383838] rounded-2xl p-5 md:p-6 shadow-2xl shadow-black/20 hover:border-[#3D8DDA]/30 transition-all duration-300">
+                              <div className="flex items-center mb-5">
+                                <div className="p-2 bg-[#3D8DDA]/10 rounded-lg mr-3">
+                                  <span className="material-symbols-outlined text-[#3D8DDA] text-xl">insights</span>
+                                </div>
+                                <h3 className="font-bold text-white text-base md:text-lg">{chart.title || 'Chart'}</h3>
                               </div>
-                              <div className="relative h-56 sm:h-64 md:h-72 w-full">
+                              <div className="relative h-56 sm:h-64 md:h-72 w-full bg-black/20 rounded-xl p-4">
                                 <canvas id={`chart-${idx}-${chartIdx}`} className="w-full h-full"></canvas>
                               </div>
                             </div>
@@ -911,19 +979,21 @@ export default function Dashboard() {
 
                       {/* Tables from AI response */}
                       {msg.tables && msg.tables.length > 0 && (
-                        <div className="space-y-6">
+                        <div className="space-y-6 mt-6">
                           {msg.tables.map((table: any, tableIdx: number) => (
-                            <div key={tableIdx} className="bg-[#1D212B] border border-[#383838] rounded-xl p-4 md:p-5 overflow-x-auto">
-                              <div className="flex items-center mb-4">
-                                <span className="material-symbols-outlined text-[#3D8DDA] mr-2">table_chart</span>
-                                <h3 className="font-semibold text-white">{table.title || 'Table'}</h3>
+                            <div key={tableIdx} className="bg-gradient-to-br from-[#1D212B] to-[#181C25] border border-[#383838] rounded-2xl p-5 md:p-6 shadow-2xl shadow-black/20 hover:border-[#3D8DDA]/30 transition-all duration-300">
+                              <div className="flex items-center mb-5">
+                                <div className="p-2 bg-[#3D8DDA]/10 rounded-lg mr-3">
+                                  <span className="material-symbols-outlined text-[#3D8DDA] text-xl">table_chart</span>
+                                </div>
+                                <h3 className="font-bold text-white text-base md:text-lg">{table.title || 'Table'}</h3>
                               </div>
-                              <div className="overflow-x-auto">
+                              <div className="overflow-x-auto -mx-2 px-2">
                                 <table className="w-full text-sm">
                                   <thead>
-                                    <tr className="border-b border-[#383838]">
+                                    <tr className="border-b-2 border-[#3D8DDA]/30">
                                       {table.headers?.map((header: string, hIdx: number) => (
-                                        <th key={hIdx} className="text-left py-3 px-4 font-semibold text-white">
+                                        <th key={hIdx} className="text-left py-3.5 px-4 font-bold text-white text-xs md:text-sm uppercase tracking-wider">
                                           {header}
                                         </th>
                                       ))}
@@ -931,9 +1001,9 @@ export default function Dashboard() {
                                   </thead>
                                   <tbody>
                                     {table.rows?.map((row: any[], rIdx: number) => (
-                                      <tr key={rIdx} className="border-b border-[#383838]/50 hover:bg-white/5 transition-colors">
+                                      <tr key={rIdx} className="border-b border-[#383838]/30 hover:bg-white/5 transition-all duration-150">
                                         {row.map((cell: any, cIdx: number) => (
-                                          <td key={cIdx} className="py-3 px-4 text-[#E0E0E0]">
+                                          <td key={cIdx} className="py-3.5 px-4 text-[#E0E0E0] text-sm md:text-base">
                                             {typeof cell === 'number' && cell > 1000 ? cell.toLocaleString() : cell}
                                           </td>
                                         ))}
@@ -948,14 +1018,17 @@ export default function Dashboard() {
                       )}
 
                       {msg.suggestedQuestions && msg.suggestedQuestions.length > 0 && (
-                        <div className="pt-2">
-                          <p className="text-sm text-[#A0A0A0] mb-3">Suggested next steps:</p>
-                          <div className="flex flex-wrap gap-2">
+                        <div className="pt-4 mt-6 border-t border-[#383838]/50">
+                          <p className="text-sm text-[#A0A0A0] mb-4 flex items-center">
+                            <span className="material-symbols-outlined text-base mr-2">tips_and_updates</span>
+                            Suggested next steps:
+                          </p>
+                          <div className="flex flex-wrap gap-2.5">
                             {msg.suggestedQuestions.map((question: string, qIdx: number) => (
                               <button
                                 key={qIdx}
                                 onClick={() => handleSend(question)}
-                                className="text-xs text-white bg-white/10 px-3 py-1.5 rounded-full border border-transparent hover:border-[#3D8DDA] transition-colors"
+                                className="text-xs md:text-sm text-white bg-gradient-to-br from-white/10 to-white/5 px-4 py-2 rounded-full border border-[#383838] hover:border-[#3D8DDA] hover:shadow-lg hover:shadow-[#3D8DDA]/20 transition-all duration-200 hover:scale-105"
                               >
                                 "{question}"
                               </button>
