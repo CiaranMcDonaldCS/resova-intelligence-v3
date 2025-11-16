@@ -1259,6 +1259,8 @@ export class ResovaService {
         futureBookingsRaw,
         inventoryItems,
         availabilityInstances,
+        extras, // Add-ons/extras data
+        reportingVouchers, // Gift vouchers from Reporting API (with redemption data)
         // Previous period data for accurate comparisons
         previousTransactionsResponse,
         previousAllBookings,
@@ -1307,6 +1309,19 @@ export class ResovaService {
           start_date: availabilityStartDate,
           end_date: availabilityEndDate
         }),
+        // Get extras/add-ons with sales data for upsell analysis
+        this.getExtras({
+          date_range: resovaDateRange,
+          extras: 'all',
+          transaction_status: 'active'
+        }),
+        // Get gift vouchers from Reporting API (with redemption tracking)
+        this.getReportingGiftVouchers({
+          date_range: resovaDateRange,
+          type: 'all_gifts',
+          transaction_status: 'active',
+          gift_status: 'all'
+        }),
         // PREVIOUS PERIOD DATA (for accurate year-over-year comparisons)
         this.getTransactions({
           limit: 500, // Increased limit for 12 months of previous data
@@ -1332,7 +1347,7 @@ export class ResovaService {
       logger.info(`✅ PREVIOUS PERIOD (year-over-year): ${previousTransactionsResponse.data.length} transactions, ${previousAllBookings.length} bookings, ${previousAllPayments.length} payments`);
       logger.info(`✅ FORWARD-LOOKING (90 days): ${futureBookings.length} future bookings`);
       logger.info(`✅ TODAY'S AGENDA: ${todaysBookings.length} bookings today`);
-      logger.info(`📊 Additional data: ${itemizedRevenue.length} revenue items, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances`);
+      logger.info(`📊 Additional data: ${itemizedRevenue.length} revenue items, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances, ${extras.length} extras/add-ons, ${reportingVouchers.length} gift vouchers`);
 
       // Transform Resova data to our analytics format (with previous period for accurate comparisons)
       const analyticsData = ResovaDataTransformer.transform(
@@ -1411,6 +1426,8 @@ export class ResovaService {
               allPayments,
               inventoryItems,
               availabilityInstances,
+              extras, // Add-ons/extras data for upsell analysis
+              reportingVouchers, // Gift vouchers from Reporting API with redemption tracking
               customers,
               vouchers,
               abandonedCarts,
@@ -1428,6 +1445,8 @@ export class ResovaService {
               allPayments,
               inventoryItems,
               availabilityInstances,
+              extras, // Add-ons/extras data for upsell analysis
+              reportingVouchers, // Gift vouchers from Reporting API with redemption tracking
               items: inventoryItems, // Use inventoryItems as items for backward compatibility
               futureBookings
             };
@@ -1440,6 +1459,8 @@ export class ResovaService {
             itemizedRevenue,
             allBookings,
             allPayments,
+            extras, // Add-ons/extras data for upsell analysis
+            reportingVouchers, // Gift vouchers from Reporting API with redemption tracking
             futureBookings
           };
         }
@@ -1450,6 +1471,8 @@ export class ResovaService {
           itemizedRevenue,
           allBookings,
           allPayments,
+          extras, // Add-ons/extras data for upsell analysis
+          reportingVouchers, // Gift vouchers from Reporting API with redemption tracking
           futureBookings
         };
       }

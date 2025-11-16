@@ -814,18 +814,23 @@ export default function Dashboard() {
                                       </div>
                                       <h3 className="font-semibold text-white text-base tracking-tight">Key Insights</h3>
                                     </div>
-                                    <ul className="space-y-3 text-sm list-none">
+                                    <ul className="space-y-3 list-none">
                                       {sections.insights.map((line: string, i: number) => {
-                                        if (line.trim().startsWith('-') || line.trim().startsWith('*')) {
-                                          const content = line.replace(/^[-*]\s*/, '');
-                                          return (
-                                            <li key={i} className="flex items-start group">
-                                              <span className="material-symbols-outlined text-[#3D8DDA] text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform">trending_up</span>
-                                              <span className="text-[#E0E0E0] leading-relaxed text-sm" dangerouslySetInnerHTML={{
-                                                __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
-                                              }} />
-                                            </li>
-                                          );
+                                        const trimmedLine = line.trim();
+
+                                        // Match bullet or numbered items
+                                        if (trimmedLine.startsWith('-') || trimmedLine.startsWith('*') || trimmedLine.match(/^\d+\./)) {
+                                          const content = trimmedLine.replace(/^[-*\d]+[\.\)]\s*/, '');
+                                          if (content) {
+                                            return (
+                                              <li key={i} className="flex items-start group">
+                                                <span className="material-symbols-outlined text-[#3D8DDA] text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform">trending_up</span>
+                                                <span className="text-[#E0E0E0] leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                                  __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
+                                                }} />
+                                              </li>
+                                            );
+                                          }
                                         }
                                         return null;
                                       })}
@@ -841,63 +846,44 @@ export default function Dashboard() {
                                       </div>
                                       <h3 className="font-semibold text-white text-base tracking-tight">Recommended Actions</h3>
                                     </div>
-                                    <div className="space-y-3">
+                                    <ul className="space-y-3 list-none">
                                       {sections.actions.map((line: string, i: number) => {
                                         const trimmedLine = line.trim();
 
-                                        // Try different patterns for actions
-                                        // Pattern 1: **Title**: Description
-                                        let match = trimmedLine.match(/\*\*(.*?)\*\*:\s*(.*)/);
+                                        // Pattern 1: **Title**: Description (with or without leading bullet/number)
+                                        let match = trimmedLine.match(/^[-*\d]*[\.\)]?\s*\*\*(.*?)\*\*:\s*(.*)/);
                                         if (match) {
                                           return (
-                                            <div key={i} className="bg-black/20 p-4 rounded-lg border border-transparent hover:border-[#3D8DDA] hover:bg-black/30 transition-all cursor-pointer group">
-                                              <div className="flex items-start space-x-3">
-                                                <span className="material-symbols-outlined text-[#3D8DDA] mt-0.5 text-lg flex-shrink-0 group-hover:scale-110 transition-transform">campaign</span>
-                                                <div className="flex-1">
-                                                  <h4 className="font-semibold text-white text-sm mb-1.5 tracking-tight">{match[1]}</h4>
-                                                  <p className="text-xs text-[#B0B0B0] leading-relaxed">{match[2]}</p>
+                                            <li key={i} className="flex items-start group">
+                                              <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform">check_circle</span>
+                                              <div className="flex-1">
+                                                <div className="text-[#E0E0E0] leading-relaxed text-sm">
+                                                  <strong className="font-semibold text-white">{match[1]}</strong>
+                                                  <span className="text-[#E0E0E0]">: {match[2]}</span>
                                                 </div>
                                               </div>
-                                            </div>
+                                            </li>
                                           );
                                         }
 
-                                        // Pattern 2: 1. **Title**: Description or - **Title**: Description
-                                        match = trimmedLine.match(/^[-\d]+[\.\)]\s*\*\*(.*?)\*\*:\s*(.*)/);
-                                        if (match) {
-                                          return (
-                                            <div key={i} className="bg-black/20 p-4 rounded-lg border border-transparent hover:border-[#3D8DDA] hover:bg-black/30 transition-all cursor-pointer group">
-                                              <div className="flex items-start space-x-3">
-                                                <span className="material-symbols-outlined text-[#3D8DDA] mt-0.5 text-lg flex-shrink-0 group-hover:scale-110 transition-transform">campaign</span>
-                                                <div className="flex-1">
-                                                  <h4 className="font-semibold text-white text-sm mb-1.5 tracking-tight">{match[1]}</h4>
-                                                  <p className="text-xs text-[#B0B0B0] leading-relaxed">{match[2]}</p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          );
-                                        }
-
-                                        // Pattern 3: Plain bullet or numbered item
+                                        // Pattern 2: Plain bullet or numbered item
                                         if (trimmedLine.startsWith('-') || trimmedLine.startsWith('*') || trimmedLine.match(/^\d+\./)) {
                                           const content = trimmedLine.replace(/^[-*\d]+[\.\)]\s*/, '');
                                           if (content) {
                                             return (
-                                              <div key={i} className="bg-black/20 p-3 rounded-lg border border-transparent hover:border-[#3D8DDA] hover:bg-black/30 transition-all group">
-                                                <div className="flex items-start space-x-3">
-                                                  <span className="material-symbols-outlined text-[#3D8DDA] mt-0.5 text-base flex-shrink-0">arrow_forward</span>
-                                                  <p className="text-sm text-[#E0E0E0] leading-relaxed" dangerouslySetInnerHTML={{
-                                                    __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
-                                                  }} />
-                                                </div>
-                                              </div>
+                                              <li key={i} className="flex items-start group">
+                                                <span className="material-symbols-outlined text-green-400 text-base mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform">check_circle</span>
+                                                <span className="text-[#E0E0E0] leading-relaxed text-sm" dangerouslySetInnerHTML={{
+                                                  __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
+                                                }} />
+                                              </li>
                                             );
                                           }
                                         }
 
                                         return null;
                                       })}
-                                    </div>
+                                    </ul>
                                   </div>
                                 )}
                               </div>
