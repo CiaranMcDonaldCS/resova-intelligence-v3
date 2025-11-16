@@ -281,7 +281,7 @@ export class CustomerIntelligenceTransformer {
       const typeVouchers = vouchers.filter((v) => v.voucher_type === type || type === 'gift_card');
       const sold = typeVouchers.length;
       const redeemed = Math.floor(sold * 0.75); // Estimate
-      const revenue = typeVouchers.reduce((sum, v) => sum + v.amount, 0);
+      const revenue = typeVouchers.reduce((sum, v) => sum + (typeof v.amount === 'number' ? v.amount : parseFloat(v.amount || '0')), 0);
 
       return {
         voucher_type: type === 'value' ? 'Value Vouchers' : type === 'spaces' ? 'Space Vouchers' : 'Gift Cards',

@@ -163,6 +163,7 @@ export default function SettingsPage() {
       ConfigStorage.save({
         ...existingConfig,
         activityTypes: formData.activityTypes,
+        createdAt: existingConfig?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
@@ -185,6 +186,8 @@ export default function SettingsPage() {
         businessName: formData.businessName.trim() || undefined,
         timezone: formData.timezone,
         currency: formData.currency,
+        activityTypes: existingConfig?.activityTypes || [],
+        createdAt: existingConfig?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
@@ -399,15 +402,15 @@ export default function SettingsPage() {
               )}
 
               <div className="space-y-6">
-                {Object.entries(activityCategories).map(([category, activities]) => (
+                {activityCategories.map(({ category, activities }) => (
                   <div key={category} className="border border-slate-700 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-lg font-semibold text-white">{category}</h3>
                       <button
-                        onClick={() => toggleCategory(activities)}
+                        onClick={() => toggleCategory(activities.map(a => a.value))}
                         className="text-sm text-blue-400 hover:text-blue-300"
                       >
-                        {activities.every(act => formData.activityTypes.includes(act as ActivityType))
+                        {activities.every(act => formData.activityTypes.includes(act.value as ActivityType))
                           ? 'Deselect All'
                           : 'Select All'}
                       </button>
@@ -415,17 +418,17 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {activities.map(activity => (
                         <label
-                          key={activity}
+                          key={activity.value}
                           className="flex items-center space-x-2 p-2 rounded hover:bg-slate-700 cursor-pointer"
                         >
                           <input
                             type="checkbox"
-                            checked={formData.activityTypes.includes(activity as ActivityType)}
-                            onChange={() => toggleActivity(activity as ActivityType)}
+                            checked={formData.activityTypes.includes(activity.value as ActivityType)}
+                            onChange={() => toggleActivity(activity.value as ActivityType)}
                             className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
                           />
                           <span className="text-slate-300 text-sm">
-                            {activity.replace(/_/g, ' ')}
+                            {activity.label}
                           </span>
                         </label>
                       ))}
