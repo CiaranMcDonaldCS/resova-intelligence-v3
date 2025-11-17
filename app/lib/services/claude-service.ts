@@ -16,6 +16,8 @@ import {
 import { logger } from '../utils/logger';
 import { ConfigData } from '../storage/types';
 import { buildActivitySeedPrompt } from '../config/activity-types';
+import fs from 'fs';
+import path from 'path';
 
 export interface ClaudeServiceOptions extends ServiceOptions {
   apiKey: string;
@@ -29,6 +31,7 @@ export class ClaudeService {
   private maxTokens: number;
   private timeout: number;
   private activityConfig?: ConfigData;
+  private calculationsDoc: string | null = null;
 
   constructor(options: ClaudeServiceOptions) {
     this.apiKey = options.apiKey;
@@ -37,6 +40,21 @@ export class ClaudeService {
     this.maxTokens = config.api.claude.maxTokens;
     this.timeout = options.timeout || config.api.claude.timeout;
     this.activityConfig = options.config;
+    this.loadCalculationsDocumentation();
+  }
+
+  /**
+   * Load the analytics calculations documentation
+   */
+  private loadCalculationsDocumentation(): void {
+    try {
+      const docPath = path.join(process.cwd(), 'ANALYTICS_CALCULATIONS.md');
+      this.calculationsDoc = fs.readFileSync(docPath, 'utf-8');
+      logger.info('Loaded analytics calculations documentation');
+    } catch (error) {
+      logger.warn('Failed to load analytics calculations documentation', error);
+      this.calculationsDoc = null;
+    }
   }
 
   /**
@@ -1472,10 +1490,21 @@ Your **12% retention rate** is costing you **$18,400** in potential annual reven
       ? buildActivitySeedPrompt(this.activityConfig.activityTypes)
       : '';
 
-    // Combine base prompt with activity layer
-    return activityPrompt
-      ? `${basePrompt}\n\n${activityPrompt}`
-      : basePrompt;
+    // Add calculations documentation reference if available
+    const calculationsSection = this.calculationsDoc
+      ? `\n\n---\n\n## ANALYTICS CALCULATIONS REFERENCE\n\nFor detailed information about how all metrics are calculated, refer to the following documentation:\n\n${this.calculationsDoc}\n\n---\n\n**CRITICAL**: When users ask "how is X calculated" or when you need to understand a metric's formula, reference this documentation. The formulas, data sources, and calculation methods are authoritative.`
+      : '';
+
+    // Combine all sections
+    let fullPrompt = basePrompt;
+    if (calculationsSection) {
+      fullPrompt += calculationsSection;
+    }
+    if (activityPrompt) {
+      fullPrompt += `\n\n${activityPrompt}`;
+    }
+
+    return fullPrompt;
   }
 
   /**
