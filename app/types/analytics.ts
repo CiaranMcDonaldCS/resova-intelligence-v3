@@ -307,11 +307,47 @@ export interface DayOfWeekSummary {
   dayOfWeek: number;              // 0-6 (Sunday = 0)
   dayName: string;                // 'Sunday', 'Monday', etc.
   totalBookings: number;          // Total bookings for this day of week
-  totalRevenue: number;           // Total revenue for this day of week
+  totalBookingValue: number;      // Total booking value (sum of booking_total) - what was booked
+  totalGrossRevenue: number;      // Total gross revenue (sum of paid amounts) - what was actually paid
   totalGuests: number;            // Total guests for this day of week
-  avgBookingsPerOccurrence: number; // Average bookings per occurrence of this day
-  avgRevenuePerOccurrence: number;  // Average revenue per occurrence of this day
+  avgBookingsPerOccurrence: number;     // Average bookings per occurrence of this day
+  avgBookingValuePerOccurrence: number; // Average booking value per occurrence of this day
+  avgGrossRevenuePerOccurrence: number; // Average gross revenue per occurrence of this day
   occurrences: number;            // How many times this day occurred in the period
+  // Legacy field for backwards compatibility
+  totalRevenue: number;           // DEPRECATED: Use totalGrossRevenue instead
+  avgRevenuePerOccurrence: number; // DEPRECATED: Use avgGrossRevenuePerOccurrence instead
+}
+
+export interface WeekendVsWeekdayComparison {
+  weekend: {
+    totalBookings: number;
+    totalBookingValue: number;     // Total booking value (what was booked)
+    totalGrossRevenue: number;     // Total gross revenue (what was paid)
+    totalGuests: number;
+    avgBookingValuePerDay: number; // Average booking value per weekend day occurrence
+    avgGrossRevenuePerDay: number; // Average gross revenue per weekend day occurrence
+    avgBookingsPerDay: number;     // Average bookings per weekend day occurrence
+    avgGuestsPerDay: number;       // Average guests per weekend day occurrence
+    daysIncluded: number;          // How many weekend days occurred (Saturdays + Sundays)
+  };
+  weekday: {
+    totalBookings: number;
+    totalBookingValue: number;     // Total booking value (what was booked)
+    totalGrossRevenue: number;     // Total gross revenue (what was paid)
+    totalGuests: number;
+    avgBookingValuePerDay: number; // Average booking value per weekday occurrence
+    avgGrossRevenuePerDay: number; // Average gross revenue per weekday occurrence
+    avgBookingsPerDay: number;     // Average bookings per weekday occurrence
+    avgGuestsPerDay: number;       // Average guests per weekday occurrence
+    daysIncluded: number;          // How many weekdays occurred (Mon-Fri)
+  };
+  comparison: {
+    bookingValuePerformanceDifference: number;   // Percentage difference in booking value
+    grossRevenuePerformanceDifference: number;   // Percentage difference in gross revenue (actual payments)
+    bookingsPerformanceDifference: number;       // Percentage difference in bookings
+    guestsPerformanceDifference: number;         // Percentage difference in guests
+  };
 }
 
 export interface AvailabilityInsight {
@@ -611,6 +647,7 @@ export interface AnalyticsData {
   businessInsights?: BusinessInsights;
   dailyBreakdown: DailyBreakdown[];      // Day-by-day breakdown for charts and trend analysis
   dayOfWeekSummary: DayOfWeekSummary[];  // Aggregated by day of week for weekend comparisons
+  weekendVsWeekdayComparison: WeekendVsWeekdayComparison; // Pre-calculated weekend vs weekday analysis
   rawData?: RawApiData; // Raw API responses for AI Assistant
   dateRangeLabel?: string; // Human-readable description of the date range (e.g., "Last 30 days", "Last 12 months")
 }

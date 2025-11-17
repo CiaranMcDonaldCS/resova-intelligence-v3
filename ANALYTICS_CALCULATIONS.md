@@ -6,6 +6,57 @@ This document provides comprehensive documentation of all analytics calculations
 
 ---
 
+## Critical Data Model Understanding
+
+### Bookings vs Sales vs Revenue
+
+**BOOKINGS** (Activity Reservations):
+- Any reservation for an activity (kayaking, surfing, etc.)
+- Always creates a booking record in the system
+- `booking_total` includes the activity price + any extras attached to that specific booking
+- Examples: Customer books kayaking tour, customer books kayaking + adds drinks to that booking
+
+**STANDALONE SALES** (Non-Booking Purchases):
+- Items purchased WITHOUT booking an activity
+- Does NOT create a booking record
+- Creates a transaction but no booking
+- Examples: Customer buys just a voucher, customer buys just a drink at the bar
+
+**Key Metrics Defined**:
+1. **Total Bookings** (`count of booking records`) = Number of activity reservations only
+2. **Booking Value** (`sum of booking_total`) = Value from activity bookings (including attached extras)
+3. **Total Sales** (`sum of transaction.total`) = Booking Value + Standalone Purchases
+4. **Gross Revenue** (`sum of transaction.paid`) = Actual money received from ALL sources
+
+**Critical Relationships**:
+```
+Total Sales ≥ Booking Value
+(Total Sales includes standalone purchases that don't create bookings)
+
+Gross Revenue ≤ Total Sales
+(Gross Revenue only counts what was actually paid, not unpaid amounts)
+
+Total Bookings ≠ Total Sales
+(Bookings count activity reservations; Sales includes items sold without bookings)
+```
+
+**Real-World Example**:
+```
+Saturday Operations:
+- 10 kayaking bookings @ $50 each = $500 booking value, 10 bookings
+- 3 of those bookings had $10 drinks attached = $530 booking value total, still 10 bookings
+- 5 customers bought vouchers at the bar (no activity booking) @ $25 each = $125 standalone sales, 0 bookings
+- 2 bookings unpaid ($100 booking value, $0 paid)
+
+Results:
+Total Bookings: 10 (activity reservations only)
+Booking Value: $530 (kayaking + attached drinks)
+Total Sales: $655 ($530 bookings + $125 standalone vouchers)
+Gross Revenue: $555 ($530 + $125 - $100 unpaid)
+```
+
+---
+
 ## Data Flow Architecture
 
 ```
@@ -284,19 +335,41 @@ totalSales = SUM(transactions[i].total)
 ```
 
 **Variables**:
-- `transactions[i].total`: Total booking amount (before payments)
+- `transactions[i].total`: Total transaction amount (before payments)
 
-**Note**: This represents booked amount, not paid amount. The difference from `gross` is that `totalSales` includes unpaid/partially paid bookings.
+**IMPORTANT - Understanding Total Sales**:
+
+Total Sales represents ALL sales transactions, including:
+1. **Activity Bookings**: Reservations for activities (kayaking, surfing, etc.) - these create booking records
+2. **Extras Attached to Bookings**: Items added to activity bookings (drinks, vouchers, etc. purchased WITH a booking)
+3. **Standalone Item Purchases**: Items sold WITHOUT creating an activity booking (e.g., customer buys just a voucher or drink at the bar)
+
+**Key Distinction**:
+- `Total Sales` (`sum of transaction.total`) = Bookings + Standalone Purchases
+- `Booking Value` (`sum of booking_total`) = Only from activity bookings (including attached extras)
+- `Gross Revenue` (`sum of transaction.paid`) = Actual payments received from ALL sources
+
+**Relationship**:
+```
+Total Sales ≥ Booking Value
+(because Total Sales includes standalone purchases that don't create bookings)
+
+Gross Revenue ≤ Total Sales
+(because Gross Revenue only counts what was paid, not what's unpaid)
+```
 
 **Example Calculation**:
 ```javascript
+// Scenario: Activity booking + standalone purchase
 transactions = [
-  { total: "150.00", paid: "150.00" }, // Fully paid
-  { total: "200.50", paid: "100.00" }, // Partially paid
-  { total: "75.25", paid: "0.00" }     // Unpaid
+  { total: "150.00", paid: "150.00", has_booking: true },  // Activity booking (fully paid)
+  { total: "200.50", paid: "100.00", has_booking: true },  // Activity booking (partially paid)
+  { total: "25.00", paid: "25.00", has_booking: false }    // Standalone voucher purchase (no booking created)
 ]
 
-totalSales = 150.00 + 200.50 + 75.25 = 425.75
+totalSales = 150.00 + 200.50 + 25.00 = 375.50  // All transactions
+bookingValue = 150.00 + 200.50 = 350.50         // Only bookings
+grossRevenue = 150.00 + 100.00 + 25.00 = 275.00 // What was actually paid
 ```
 
 **File Location**: `app/lib/transformers/resova-data-transformer.ts` (lines 330-333)

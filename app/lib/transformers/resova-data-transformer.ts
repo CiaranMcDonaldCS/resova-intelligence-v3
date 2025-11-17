@@ -34,7 +34,8 @@ import {
   CustomerProfile,
   CustomerSegment,
   DailyBreakdown,
-  DayOfWeekSummary
+  DayOfWeekSummary,
+  WeekendVsWeekdayComparison
 } from '@/app/types/analytics';
 
 import {
@@ -71,6 +72,8 @@ export class ResovaDataTransformer {
     const revenueTrends = this.transformRevenueTrends(allBookings, previousAllBookings);
     logger.info(`Transformed revenue trends: ${revenueTrends.length} data points`);
 
+    const dayOfWeekSummary = this.transformDayOfWeekSummary(allBookings, transactions);
+
     return {
       todaysAgenda: this.transformTodaysAgenda(transactions, todaysBookings || allBookings),
       agendaChart: this.transformAgendaChart(todaysBookings || allBookings),
@@ -90,7 +93,8 @@ export class ResovaDataTransformer {
       guestMetrics: this.transformGuestMetrics(allBookings),
       guestSummary: this.transformGuestSummary(allBookings, allPayments, transactions, previousAllBookings, previousAllPayments, previousTransactions),
       dailyBreakdown: this.transformDailyBreakdown(allBookings),
-      dayOfWeekSummary: this.transformDayOfWeekSummary(allBookings)
+      dayOfWeekSummary,
+      weekendVsWeekdayComparison: this.transformWeekendVsWeekdayComparison(dayOfWeekSummary)
     };
   }
 
@@ -1564,12 +1568,17 @@ export class ResovaDataTransformer {
    * - Identify busiest days of the week
    * - Average performance by day of week
    */
-  private static transformDayOfWeekSummary(allBookings: ResovaAllBooking[]): DayOfWeekSummary[] {
+  private static transformDayOfWeekSummary(allBookings: ResovaAllBooking[], transactions: ResovaTransaction[]): DayOfWeekSummary[] {
+    // Create transaction lookup map by transaction_id
+    const transactionMap = new Map<number, ResovaTransaction>();
+    transactions.forEach(t => transactionMap.set(t.id, t));
+
     // Group bookings by day of week
     const dayOfWeekMap = new Map<number, {
       dates: Set<string>;
       bookings: number;
-      revenue: number;
+      bookingValue: number;
+      grossRevenue: number;
       guests: number;
     }>();
 
@@ -1579,13 +1588,21 @@ export class ResovaDataTransformer {
       const existing = dayOfWeekMap.get(dayOfWeek) || {
         dates: new Set<string>(),
         bookings: 0,
-        revenue: 0,
+        bookingValue: 0,
+        grossRevenue: 0,
         guests: 0
       };
 
       existing.dates.add(b.date_short); // Track unique dates for occurrences
       existing.bookings += 1;
-      existing.revenue += parseFloat(b.booking_total || '0');
+      existing.bookingValue += parseFloat(b.booking_total || '0');
+
+      // Get actual gross revenue (paid amount) from transaction
+      const transaction = transactionMap.get(b.transaction_id);
+      if (transaction) {
+        existing.grossRevenue += parseFloat(transaction.paid || '0');
+      }
+
       existing.guests += b.total_quantity;
 
       dayOfWeekMap.set(dayOfWeek, existing);
@@ -1599,7 +1616,8 @@ export class ResovaDataTransformer {
       const data = dayOfWeekMap.get(dayOfWeek) || {
         dates: new Set<string>(),
         bookings: 0,
-        revenue: 0,
+        bookingValue: 0,
+        grossRevenue: 0,
         guests: 0
       };
 
@@ -1609,16 +1627,104 @@ export class ResovaDataTransformer {
         dayOfWeek,
         dayName: dayNames[dayOfWeek],
         totalBookings: data.bookings,
-        totalRevenue: data.revenue,
+        totalBookingValue: data.bookingValue,
+        totalGrossRevenue: data.grossRevenue,
         totalGuests: data.guests,
         avgBookingsPerOccurrence: data.bookings / occurrences,
-        avgRevenuePerOccurrence: data.revenue / occurrences,
-        occurrences
+        avgBookingValuePerOccurrence: data.bookingValue / occurrences,
+        avgGrossRevenuePerOccurrence: data.grossRevenue / occurrences,
+        occurrences,
+        // Legacy fields for backwards compatibility
+        totalRevenue: data.grossRevenue,
+        avgRevenuePerOccurrence: data.grossRevenue / occurrences
       });
     }
 
-    logger.info(`Day of Week Summary - Weekend avg: ${result.filter(d => d.dayOfWeek === 0 || d.dayOfWeek === 6).reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / 2}, Weekday avg: ${result.filter(d => d.dayOfWeek > 0 && d.dayOfWeek < 6).reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / 5}`);
+    logger.info(`Day of Week Summary - Weekend avg gross revenue: ${result.filter(d => d.dayOfWeek === 0 || d.dayOfWeek === 6).reduce((sum, d) => sum + d.avgGrossRevenuePerOccurrence, 0) / 2}, Weekday avg: ${result.filter(d => d.dayOfWeek > 0 && d.dayOfWeek < 6).reduce((sum, d) => sum + d.avgGrossRevenuePerOccurrence, 0) / 5}`);
 
     return result;
+  }
+
+  /**
+   * Transform weekend vs weekday comparison
+   * Calculates aggregate metrics comparing weekend (Sat/Sun) vs weekday (Mon-Fri) performance
+   * Includes both booking value (what was booked) and gross revenue (what was paid)
+   */
+  private static transformWeekendVsWeekdayComparison(dayOfWeekSummary: DayOfWeekSummary[]): WeekendVsWeekdayComparison {
+    // Separate weekend (0=Sunday, 6=Saturday) and weekday (1-5) data
+    const weekendDays = dayOfWeekSummary.filter(d => d.dayOfWeek === 0 || d.dayOfWeek === 6);
+    const weekdayDays = dayOfWeekSummary.filter(d => d.dayOfWeek > 0 && d.dayOfWeek < 6);
+
+    // Calculate weekend totals
+    const weekendTotalBookings = weekendDays.reduce((sum, d) => sum + d.totalBookings, 0);
+    const weekendTotalBookingValue = weekendDays.reduce((sum, d) => sum + d.totalBookingValue, 0);
+    const weekendTotalGrossRevenue = weekendDays.reduce((sum, d) => sum + d.totalGrossRevenue, 0);
+    const weekendTotalGuests = weekendDays.reduce((sum, d) => sum + d.totalGuests, 0);
+    const weekendDaysIncluded = weekendDays.reduce((sum, d) => sum + d.occurrences, 0);
+
+    // Calculate weekday totals
+    const weekdayTotalBookings = weekdayDays.reduce((sum, d) => sum + d.totalBookings, 0);
+    const weekdayTotalBookingValue = weekdayDays.reduce((sum, d) => sum + d.totalBookingValue, 0);
+    const weekdayTotalGrossRevenue = weekdayDays.reduce((sum, d) => sum + d.totalGrossRevenue, 0);
+    const weekdayTotalGuests = weekdayDays.reduce((sum, d) => sum + d.totalGuests, 0);
+    const weekdayDaysIncluded = weekdayDays.reduce((sum, d) => sum + d.occurrences, 0);
+
+    // Calculate averages per day occurrence
+    const weekendAvgBookingValuePerDay = weekendDaysIncluded > 0 ? weekendTotalBookingValue / weekendDaysIncluded : 0;
+    const weekendAvgGrossRevenuePerDay = weekendDaysIncluded > 0 ? weekendTotalGrossRevenue / weekendDaysIncluded : 0;
+    const weekendAvgBookingsPerDay = weekendDaysIncluded > 0 ? weekendTotalBookings / weekendDaysIncluded : 0;
+    const weekendAvgGuestsPerDay = weekendDaysIncluded > 0 ? weekendTotalGuests / weekendDaysIncluded : 0;
+
+    const weekdayAvgBookingValuePerDay = weekdayDaysIncluded > 0 ? weekdayTotalBookingValue / weekdayDaysIncluded : 0;
+    const weekdayAvgGrossRevenuePerDay = weekdayDaysIncluded > 0 ? weekdayTotalGrossRevenue / weekdayDaysIncluded : 0;
+    const weekdayAvgBookingsPerDay = weekdayDaysIncluded > 0 ? weekdayTotalBookings / weekdayDaysIncluded : 0;
+    const weekdayAvgGuestsPerDay = weekdayDaysIncluded > 0 ? weekdayTotalGuests / weekdayDaysIncluded : 0;
+
+    // Calculate percentage differences (positive = weekend outperforms, negative = weekday outperforms)
+    const bookingValuePerformanceDifference = weekdayAvgBookingValuePerDay > 0
+      ? ((weekendAvgBookingValuePerDay - weekdayAvgBookingValuePerDay) / weekdayAvgBookingValuePerDay) * 100
+      : 0;
+    const grossRevenuePerformanceDifference = weekdayAvgGrossRevenuePerDay > 0
+      ? ((weekendAvgGrossRevenuePerDay - weekdayAvgGrossRevenuePerDay) / weekdayAvgGrossRevenuePerDay) * 100
+      : 0;
+    const bookingsPerformanceDifference = weekdayAvgBookingsPerDay > 0
+      ? ((weekendAvgBookingsPerDay - weekdayAvgBookingsPerDay) / weekdayAvgBookingsPerDay) * 100
+      : 0;
+    const guestsPerformanceDifference = weekdayAvgGuestsPerDay > 0
+      ? ((weekendAvgGuestsPerDay - weekdayAvgGuestsPerDay) / weekdayAvgGuestsPerDay) * 100
+      : 0;
+
+    logger.info(`Weekend vs Weekday - Weekend Gross Revenue: $${weekendAvgGrossRevenuePerDay.toFixed(2)}/day, Weekday: $${weekdayAvgGrossRevenuePerDay.toFixed(2)}/day, Difference: ${grossRevenuePerformanceDifference.toFixed(1)}%`);
+
+    return {
+      weekend: {
+        totalBookings: weekendTotalBookings,
+        totalBookingValue: weekendTotalBookingValue,
+        totalGrossRevenue: weekendTotalGrossRevenue,
+        totalGuests: weekendTotalGuests,
+        avgBookingValuePerDay: weekendAvgBookingValuePerDay,
+        avgGrossRevenuePerDay: weekendAvgGrossRevenuePerDay,
+        avgBookingsPerDay: weekendAvgBookingsPerDay,
+        avgGuestsPerDay: weekendAvgGuestsPerDay,
+        daysIncluded: weekendDaysIncluded
+      },
+      weekday: {
+        totalBookings: weekdayTotalBookings,
+        totalBookingValue: weekdayTotalBookingValue,
+        totalGrossRevenue: weekdayTotalGrossRevenue,
+        totalGuests: weekdayTotalGuests,
+        avgBookingValuePerDay: weekdayAvgBookingValuePerDay,
+        avgGrossRevenuePerDay: weekdayAvgGrossRevenuePerDay,
+        avgBookingsPerDay: weekdayAvgBookingsPerDay,
+        avgGuestsPerDay: weekdayAvgGuestsPerDay,
+        daysIncluded: weekdayDaysIncluded
+      },
+      comparison: {
+        bookingValuePerformanceDifference,
+        grossRevenuePerformanceDifference,
+        bookingsPerformanceDifference,
+        guestsPerformanceDifference
+      }
+    };
   }
 }

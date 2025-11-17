@@ -254,6 +254,35 @@ CURRENT ANALYTICS DATA:
 **DATA PERIOD: ${dateRangeLabel || 'Last 365 days (12 months)'}**
 All metrics below reflect data from this time period ONLY, unless otherwise specified.
 
+**CRITICAL DATA MODEL - Understanding Bookings vs Sales vs Revenue:**
+
+BOOKINGS (Activity Reservations):
+- Any reservation for an activity (kayaking, surfing, etc.)
+- Always creates a booking record
+- booking_total includes activity price + any extras attached to that booking
+- Example: Customer books kayaking, or books kayaking + adds drinks
+
+STANDALONE SALES (Non-Booking Purchases):
+- Items purchased WITHOUT booking an activity
+- Does NOT create a booking record (creates transaction only)
+- Example: Customer buys just a voucher or drink at the bar
+
+KEY METRICS EXPLAINED:
+1. Total Bookings = count of activity reservations only
+2. Booking Value = sum of booking_total (activity bookings + attached extras)
+3. Total Sales = sum of transaction.total (Booking Value + Standalone Purchases)
+4. Gross Revenue = sum of transaction.paid (actual money received from ALL sources)
+
+CRITICAL RELATIONSHIPS:
+- Total Sales ≥ Booking Value (Total Sales includes standalone purchases)
+- Gross Revenue ≤ Total Sales (Gross Revenue only counts what was paid)
+- Total Bookings ≠ Total Sales (Bookings = activity count; Sales includes non-booking items)
+
+Example: 10 kayaking bookings @ $50 = $500 booking value, 10 bookings
+         3 bookings had $10 drinks attached = $530 total booking value, still 10 bookings
+         5 standalone vouchers @ $25 = $125 standalone sales, 0 bookings
+         Result: 10 Total Bookings, $530 Booking Value, $655 Total Sales
+
 TODAY'S OPERATIONS (Today):
 - Bookings Today: ${todaysAgenda.bookings}
 - Guests Today: ${todaysAgenda.guests}
@@ -748,24 +777,34 @@ By Day of Week:`;
       analyticsData.dayOfWeekSummary.forEach(day => {
         context += `
 - ${day.dayName}:
-  Total: ${day.totalBookings} bookings, $${day.totalRevenue.toFixed(2)} revenue, ${day.totalGuests} guests
-  Average per ${day.dayName}: ${day.avgBookingsPerOccurrence.toFixed(1)} bookings, $${day.avgRevenuePerOccurrence.toFixed(2)} revenue
+  Total: ${day.totalBookings} bookings, $${day.totalBookingValue.toFixed(2)} booking value, $${day.totalGrossRevenue.toFixed(2)} gross revenue, ${day.totalGuests} guests
+  Average per ${day.dayName}: ${day.avgBookingsPerOccurrence.toFixed(1)} bookings, $${day.avgBookingValuePerOccurrence.toFixed(2)} booking value, $${day.avgGrossRevenuePerOccurrence.toFixed(2)} gross revenue
   Occurred ${day.occurrences} times in period`;
       });
 
-      // Calculate weekend vs weekday averages
-      const weekendDays = analyticsData.dayOfWeekSummary.filter(d => d.dayOfWeek === 0 || d.dayOfWeek === 6);
-      const weekdayDays = analyticsData.dayOfWeekSummary.filter(d => d.dayOfWeek > 0 && d.dayOfWeek < 6);
-
-      const weekendAvgRevenue = weekendDays.reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / weekendDays.length;
-      const weekdayAvgRevenue = weekdayDays.reduce((sum, d) => sum + d.avgRevenuePerOccurrence, 0) / weekdayDays.length;
+      // Use pre-calculated weekend vs weekday comparison
+      const comparison = analyticsData.weekendVsWeekdayComparison;
 
       context += `
 
 Weekend vs Weekday Comparison:
-- Weekend Average (Sat-Sun): $${weekendAvgRevenue.toFixed(2)} per day
-- Weekday Average (Mon-Fri): $${weekdayAvgRevenue.toFixed(2)} per day
-- Difference: ${weekendAvgRevenue > weekdayAvgRevenue ? 'Weekends outperform by' : 'Weekdays outperform by'} $${Math.abs(weekendAvgRevenue - weekdayAvgRevenue).toFixed(2)} (${((Math.abs(weekendAvgRevenue - weekdayAvgRevenue) / Math.min(weekendAvgRevenue, weekdayAvgRevenue)) * 100).toFixed(1)}%)`;
+NOTE: "Booking Value" = total booking amounts (what was booked). "Gross Revenue" = actual payments received (what was paid).
+
+- Weekend (Sat-Sun):
+  Total: ${comparison.weekend.totalBookings} bookings, $${comparison.weekend.totalBookingValue.toFixed(2)} booking value, $${comparison.weekend.totalGrossRevenue.toFixed(2)} gross revenue, ${comparison.weekend.totalGuests} guests
+  Average per weekend day: ${comparison.weekend.avgBookingsPerDay.toFixed(1)} bookings, $${comparison.weekend.avgBookingValuePerDay.toFixed(2)} booking value, $${comparison.weekend.avgGrossRevenuePerDay.toFixed(2)} gross revenue, ${comparison.weekend.avgGuestsPerDay.toFixed(1)} guests
+  Days included: ${comparison.weekend.daysIncluded} weekend days in period
+
+- Weekday (Mon-Fri):
+  Total: ${comparison.weekday.totalBookings} bookings, $${comparison.weekday.totalBookingValue.toFixed(2)} booking value, $${comparison.weekday.totalGrossRevenue.toFixed(2)} gross revenue, ${comparison.weekday.totalGuests} guests
+  Average per weekday: ${comparison.weekday.avgBookingsPerDay.toFixed(1)} bookings, $${comparison.weekday.avgBookingValuePerDay.toFixed(2)} booking value, $${comparison.weekday.avgGrossRevenuePerDay.toFixed(2)} gross revenue, ${comparison.weekday.avgGuestsPerDay.toFixed(1)} guests
+  Days included: ${comparison.weekday.daysIncluded} weekdays in period
+
+- Performance Difference:
+  Booking Value: ${comparison.comparison.bookingValuePerformanceDifference >= 0 ? 'Weekends outperform by' : 'Weekdays outperform by'} ${Math.abs(comparison.comparison.bookingValuePerformanceDifference).toFixed(1)}%
+  Gross Revenue: ${comparison.comparison.grossRevenuePerformanceDifference >= 0 ? 'Weekends outperform by' : 'Weekdays outperform by'} ${Math.abs(comparison.comparison.grossRevenuePerformanceDifference).toFixed(1)}%
+  Bookings: ${comparison.comparison.bookingsPerformanceDifference >= 0 ? 'Weekends outperform by' : 'Weekdays outperform by'} ${Math.abs(comparison.comparison.bookingsPerformanceDifference).toFixed(1)}%
+  Guests: ${comparison.comparison.guestsPerformanceDifference >= 0 ? 'Weekends outperform by' : 'Weekdays outperform by'} ${Math.abs(comparison.comparison.guestsPerformanceDifference).toFixed(1)}%`;
     }
 
     return context.trim();
