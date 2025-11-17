@@ -96,6 +96,9 @@ export default function Landing({ onGetStarted }: LandingProps) {
             <div className="flex items-center space-x-6">
               <a href="#features" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Features</a>
               <a href="https://get.resova.com" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Resova.com</a>
+              <a href="https://get.resova.com/pricing/" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Pricing</a>
+              <a href="https://get.resova.com/support/" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Support</a>
+              <a href="https://login.resova.com/" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-[#2685CF] font-medium transition-colors">Login</a>
               <a
                 href="https://registration.resova.com/"
                 target="_blank"
@@ -115,9 +118,9 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <div className="text-center max-w-4xl mx-auto">
             <div className="mb-8">
               <img
-                src="/RESOVAI Pwrd by CS.png"
+                src="/RESOVAI Pwrd by CS.svg"
                 alt="Resova AI"
-                className="h-32 md:h-40 mx-auto"
+                className="h-24 md:h-32 mx-auto"
               />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
@@ -151,12 +154,99 @@ export default function Landing({ onGetStarted }: LandingProps) {
           {/* Screenshot/Demo */}
           <div className="mt-16 relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-[#2685CF] to-cyan-500 blur-3xl opacity-30 rounded-3xl"></div>
-            <div className="relative rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
-              <img
-                src="/dashboard-preview.png"
-                alt="Resova Intelligence Dashboard"
-                className="w-full h-auto"
-              />
+            <div className="relative bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl border border-slate-700 p-6">
+              {/* Dashboard Header */}
+              <div className="bg-gradient-to-r from-[#2685CF] to-blue-600 rounded-t-lg px-6 py-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg">Resova Intelligence</h3>
+                      <p className="text-blue-100 text-xs">Real-time Analytics Dashboard</p>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center space-x-2 text-xs text-blue-100">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span>Live</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dashboard Content */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                {/* Metric Cards */}
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Today's Revenue</span>
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">$3,247</div>
+                  <div className="text-green-400 text-xs mt-1">+12.5% vs yesterday</div>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Bookings</span>
+                    <BarChart3 className="w-4 h-4 text-[#2685CF]" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">127</div>
+                  <div className="text-[#2685CF] text-xs mt-1">18 this hour</div>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Capacity</span>
+                    <Clock className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">84%</div>
+                  <div className="text-amber-400 text-xs mt-1">Prime time slots</div>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-xs">Avg. Value</span>
+                    <Star className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="text-white text-2xl font-bold">$42</div>
+                  <div className="text-purple-400 text-xs mt-1">Per booking</div>
+                </div>
+              </div>
+
+              {/* Chart Preview */}
+              <div className="bg-slate-900/80 border border-slate-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-white font-semibold text-sm">Revenue Trend (7 Days)</h4>
+                  <Sparkles className="w-4 h-4 text-[#2685CF]" />
+                </div>
+                <div className="h-32 flex items-end justify-between space-x-2">
+                  {[45, 52, 48, 65, 72, 68, 85].map((height, i) => (
+                    <div key={i} className="flex-1 bg-gradient-to-t from-[#2685CF] to-cyan-400 rounded-t opacity-80 hover:opacity-100 transition-opacity" style={{ height: `${height}%` }}></div>
+                  ))}
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-gray-500">
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                  <span>Sun</span>
+                </div>
+              </div>
+
+              {/* AI Insight Banner */}
+              <div className="mt-4 bg-gradient-to-r from-[#2685CF]/20 to-purple-500/20 border border-[#2685CF]/30 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-[#2685CF]/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-4 h-4 text-[#2685CF]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-sm font-medium mb-1">AI Recommendation</p>
+                    <p className="text-gray-300 text-xs leading-relaxed">
+                      Your Saturday afternoon slots are selling 23% faster this week. Consider adding capacity or increasing prices for peak times.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -316,46 +406,83 @@ export default function Landing({ onGetStarted }: LandingProps) {
       {/* Footer */}
       <footer className="bg-slate-900 text-white py-16 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center mb-4">
-                <img
-                  src="/Resova Logo.svg"
-                  alt="Resova"
-                  className="h-7"
-                />
-              </div>
-              <p className="text-gray-400 text-base leading-relaxed max-w-md">
-                Business intelligence and real-time performance analytics for venue operators and owner-managers using Resova. Track revenue, operations, and guest experience all in one place.
-              </p>
-            </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+            {/* Features */}
             <div>
-              <h4 className="font-bold mb-4 text-white">Product</h4>
-              <ul className="space-y-3 text-sm text-gray-400">
-                <li><a href="#features" className="hover:text-[#2685CF] transition-colors">Features</a></li>
-                <li><a href="https://get.resova.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Resova Platform</a></li>
-                <li><a href="#" className="hover:text-[#2685CF] transition-colors">API Documentation</a></li>
+              <h4 className="font-bold mb-4 text-white">Features</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://get.resova.com/speedpay/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">SpeedPay</a></li>
+                <li><a href="https://get.resova.com/features/feature/booking-payments-gifts/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Bookings, Payments & Gifts</a></li>
+                <li><a href="https://get.resova.com/features/feature/advanced-scheduling-pricing/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Advanced Scheduling & Pricing</a></li>
+                <li><a href="https://get.resova.com/features/feature/free-booking-website/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Free Booking Website</a></li>
+                <li><a href="https://get.resova.com/features/feature/cloud-based-calendar/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Cloud Based Calendar</a></li>
+                <li><a href="https://get.resova.com/features/feature/crm-waivers/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">CRM & Waivers</a></li>
+                <li><a href="https://get.resova.com/features/feature/marketing-promotion-tools/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Marketing & Promotion Tools</a></li>
+                <li><a href="https://get.resova.com/features/feature/team-scheduling-management/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Team Scheduling & Management</a></li>
+                <li><a href="https://get.resova.com/features/feature/automated-emails-and-text-messages/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Emails & Text Messages</a></li>
+                <li><a href="https://get.resova.com/features/feature/indepth-reporting-tracking/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">In-depth Reporting & Tracking</a></li>
+                <li><a href="https://get.resova.com/features/feature/all-features/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors font-semibold">View all features</a></li>
               </ul>
             </div>
+
+            {/* Industries & Integrations */}
+            <div>
+              <h4 className="font-bold mb-4 text-white">Industries</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://get.resova.com/built-for/industries/escape-rooms/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Escape Rooms</a></li>
+                <li><a href="https://get.resova.com/built-for/solutions/activities-and-tours/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Activities & Tours</a></li>
+                <li><a href="https://get.resova.com/museum-ticketing-software/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Interactive Art Museums</a></li>
+              </ul>
+
+              <h4 className="font-bold mb-4 text-white mt-6">Integrations</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://get.resova.com/features/integrations/website-integrations/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Website Integrations</a></li>
+                <li><a href="https://get.resova.com/features/integrations/payment-gateways-options/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Payment Gateways & Options</a></li>
+                <li><a href="https://get.resova.com/features/integrations/calendar-sync-integrations/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Calendar Syncing</a></li>
+                <li><a href="https://get.resova.com/features/integrations/all-integrations/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors font-semibold">View all integrations</a></li>
+              </ul>
+            </div>
+
+            {/* Company */}
             <div>
               <h4 className="font-bold mb-4 text-white">Company</h4>
-              <ul className="space-y-3 text-sm text-gray-400">
-                <li><a href="https://get.resova.com/about" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">About Resova</a></li>
-                <li><a href="https://get.resova.com/contact" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Contact Sales</a></li>
-                <li><a href="#" className="hover:text-[#2685CF] transition-colors">Support Center</a></li>
-                <li><a href="#" className="hover:text-[#2685CF] transition-colors">System Status</a></li>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://get.resova.com/pricing/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Pricing & Plans</a></li>
+                <li><a href="https://get.resova.com/about/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">About Us</a></li>
+                <li><a href="https://get.resova.com/security/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Security & PCI</a></li>
+                <li><a href="https://get.resova.com/press-resources/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Press Resources</a></li>
+                <li><a href="https://get.resova.com/contact-us/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Contact Us</a></li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h4 className="font-bold mb-4 text-white">Resources</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://get.resova.com/support/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">24/7 Help & Support</a></li>
+                <li><a href="https://get.resova.com/faq/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">FAQs</a></li>
+                <li><a href="https://info.resova.com/resova-knowledge-center" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Help Center</a></li>
+                <li><a href="https://developers.resova.com/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Developers Hub</a></li>
+                <li><a href="https://status.resova.com/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">App Status</a></li>
+                <li><a href="https://get.resova.com/blog/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Blog</a></li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="font-bold mb-4 text-white">Legal</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://get.resova.com/terms/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Terms of Service</a></li>
+                <li><a href="https://get.resova.com/privacy/" target="_blank" rel="noopener noreferrer" className="hover:text-[#2685CF] transition-colors">Privacy Policy</a></li>
               </ul>
             </div>
           </div>
+
           <div className="border-t border-slate-800 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <p className="text-sm text-gray-500">
-                © 2025 Resova Intelligence. All rights reserved.
-              </p>
-              <div className="flex items-center space-x-6 text-sm text-gray-500">
-                <a href="#" className="hover:text-[#2685CF] transition-colors">Privacy Policy</a>
-                <a href="#" className="hover:text-[#2685CF] transition-colors">Terms of Service</a>
-                <a href="#" className="hover:text-[#2685CF] transition-colors">Security</a>
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-sm text-gray-500">
+              <div>
+                <p>© 2025. All rights reserved | Company No: 09559910.</p>
+                <p>VAT No: GB 263 0458 16.</p>
               </div>
             </div>
           </div>

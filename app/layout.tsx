@@ -8,6 +8,17 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Resova Intelligence",
   description: "Intelligent analytics for Resova booking platform",
+  keywords: "Resova, analytics, business intelligence, AI insights, booking platform",
+  robots: "index, follow",
+  authors: [{ name: "Resova" }],
+  openGraph: {
+    title: "Resova Intelligence",
+    description: "Intelligent analytics for Resova booking platform",
+    type: "website",
+  },
+  verification: {
+    google: "resova-intelligence-official-partner",
+  },
 };
 
 export default function RootLayout({
