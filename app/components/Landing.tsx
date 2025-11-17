@@ -88,7 +88,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <img
-                src="/Resova Logo.svg"
+                src="/RESOVA.svg"
                 alt="Resova"
                 className="h-8"
               />
