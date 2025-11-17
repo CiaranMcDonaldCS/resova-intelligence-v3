@@ -4,6 +4,38 @@
 
 ---
 
+## Critical Data Model - Bookings vs Sales vs Revenue
+
+**IMPORTANT**: Understanding the distinction between these metrics is essential for accurate analytics:
+
+### Core Concepts
+
+**BOOKINGS** (Activity Reservations):
+- Any reservation for an activity (kayaking, surfing, etc.)
+- Always creates a booking record
+- Metric: `Total Bookings` = COUNT of booking records
+- Value: `Booking Value` = SUM(booking_total) - includes activity + attached extras
+
+**STANDALONE SALES** (Non-Booking Purchases):
+- Items purchased WITHOUT booking an activity
+- Creates transaction but NO booking record
+- Examples: Customer buys just a voucher or drink
+
+**Key Metrics**:
+1. **Total Bookings** = Count of activity reservations only
+2. **Booking Value** = SUM(booking_total) from bookings only
+3. **Total Sales** = SUM(transaction.total) - ALL transactions (bookings + standalone)
+4. **Gross Revenue** = SUM(transaction.paid) - Actual money received
+
+**Relationships**:
+- Total Sales ≥ Booking Value (Total Sales includes standalone purchases)
+- Gross Revenue ≤ Total Sales (Gross Revenue only counts paid amounts)
+- Total Bookings ≠ Total Sales (Bookings count activities; Sales includes non-booking items)
+
+📖 See [ANALYTICS_CALCULATIONS.md](ANALYTICS_CALCULATIONS.md) for detailed formulas and examples.
+
+---
+
 ## Owner's Box Metrics
 
 | Metric | Display Name | Data Source | Calculation | Current Value Example | Previous Value Example | Change % |
@@ -22,7 +54,7 @@
 
 | Metric | Display Name | Data Source | Calculation | Time Period | Example Value |
 |--------|-------------|-------------|-------------|-------------|---------------|
-| **totalSales** | Total Sales | Transactions API | `SUM(transactions.total)` | Last 12 months | $26,500 |
+| **totalSales** | Total Sales | Transactions API | `SUM(transactions.total)` - Includes ALL transactions (bookings + standalone purchases like vouchers/drinks sold without activity reservation) | Last 12 months | $26,500 |
 | **totalSalesChange** | Sales Change % | Transactions API (current + previous) | `((current - previous) / previous) × 100` | Year-over-year | +15% |
 | **discounts** | Total Discounts | Transactions API | `SUM(transactions.discount)` | Last 12 months | $1,200 |
 | **discountsChange** | Discounts Change % | Transactions API (current + previous) | `((current - previous) / previous) × 100` | Year-over-year | -5% |
