@@ -127,7 +127,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               Your Operations, Decoded.
             </h1>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              AI insights that Drive Revenue, Operational Efficiency, and Guest Experience.
+              AI insights that Drive Revenue, Streamline Operations and Enhance the Guest Experience.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <button
@@ -251,7 +251,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-3xl font-bold text-white mb-1">1,500+</div>
               <div className="text-sm text-gray-400">Resova Customers</div>
@@ -259,10 +259,6 @@ export default function Landing({ onGetStarted }: LandingProps) {
             <div>
               <div className="text-3xl font-bold text-white mb-1">50K+</div>
               <div className="text-sm text-gray-400">Daily Bookings Analyzed</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-white mb-1">99.9%</div>
-              <div className="text-sm text-gray-400">Uptime SLA</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-white mb-1">24/7</div>
