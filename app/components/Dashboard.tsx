@@ -1138,7 +1138,7 @@ export default function Dashboard() {
                                 )}
                               </div>
                             )}
-                          
+                          </>
                         );
                       })()}
 
@@ -1212,12 +1212,12 @@ export default function Dashboard() {
                             <>
                               <span className="material-symbols-outlined text-[#10B981] text-sm">check</span>
                               <span className="text-[#10B981]">Copied!</span>
-                            
+                            </>
                           ) : (
                             <>
                               <span className="material-symbols-outlined text-[#A0A0A0] group-hover:text-white text-sm">content_copy</span>
                               <span className="text-[#A0A0A0] group-hover:text-white">Copy</span>
-                            
+                            </>
                           )}
                         </button>
                       </div>
