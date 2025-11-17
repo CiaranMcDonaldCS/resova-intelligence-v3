@@ -16,8 +16,6 @@ import {
 import { logger } from '../utils/logger';
 import { ConfigData } from '../storage/types';
 import { buildActivitySeedPrompt } from '../config/activity-types';
-import fs from 'fs';
-import path from 'path';
 
 export interface ClaudeServiceOptions extends ServiceOptions {
   apiKey: string;
@@ -45,14 +43,24 @@ export class ClaudeService {
 
   /**
    * Load the analytics calculations documentation
+   * Only works on server side (Node.js environment)
    */
   private loadCalculationsDocumentation(): void {
-    try {
-      const docPath = path.join(process.cwd(), 'ANALYTICS_CALCULATIONS.md');
-      this.calculationsDoc = fs.readFileSync(docPath, 'utf-8');
-      logger.info('Loaded analytics calculations documentation');
-    } catch (error) {
-      logger.warn('Failed to load analytics calculations documentation', error);
+    // Only load on server side (where fs is available)
+    if (typeof window === 'undefined') {
+      try {
+        // Dynamic require to avoid bundling in client
+        const fs = require('fs');
+        const path = require('path');
+        const docPath = path.join(process.cwd(), 'ANALYTICS_CALCULATIONS.md');
+        this.calculationsDoc = fs.readFileSync(docPath, 'utf-8');
+        logger.info('Loaded analytics calculations documentation');
+      } catch (error) {
+        logger.warn('Failed to load analytics calculations documentation', error);
+        this.calculationsDoc = null;
+      }
+    } else {
+      // Client side - documentation not available
       this.calculationsDoc = null;
     }
   }
