@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useApp, useAnalytics, useChat } from '../context/AppContext';
 import { useRouter } from 'next/navigation';
 import { ConfigStorage } from '@/app/lib/storage/config-storage';
+import Script from 'next/script';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -635,8 +636,13 @@ export default function Dashboard() {
   const totalGuests = analyticsData.guestSummary?.totalGuests || 0;
 
   return (
-    <div className="min-h-screen flex flex-col max-w-4xl mx-auto bg-[#121212] text-white">
-      {/* Header */}
+    <>
+      <Script
+        src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+        strategy="beforeInteractive"
+      />
+      <div className="min-h-screen flex flex-col max-w-4xl mx-auto bg-[#121212] text-white">
+        {/* Header */}
       <header className="bg-transparent pt-4 px-4 sm:px-6 md:px-8 pb-2 flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm bg-black/30">
         <div className="flex items-center space-x-3">
           <img alt="Logo" className="h-11 md:h-14" src="/logo.png" />
@@ -1298,5 +1304,6 @@ export default function Dashboard() {
         </div>
       </main>
     </div>
+    </>
   );
 }
