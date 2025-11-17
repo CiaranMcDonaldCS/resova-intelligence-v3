@@ -1340,13 +1340,16 @@ export class ResovaService {
         })
       ]);
 
-      const todaysBookings = todaysBookingsRaw;
+      // CRITICAL FIX: Filter todaysBookings by actual booking date (date_short)
+      // The Resova API date_range might filter by transaction/creation date, not booking date
+      // We need to ensure we only show bookings scheduled for TODAY
+      const todaysBookings = todaysBookingsRaw.filter(b => b.date_short === today);
       const futureBookings = futureBookingsRaw;
 
       logger.info(`✅ CURRENT PERIOD (12 months): ${transactionsResponse.data.length} transactions, ${allBookings.length} bookings, ${allPayments.length} payments`);
       logger.info(`✅ PREVIOUS PERIOD (year-over-year): ${previousTransactionsResponse.data.length} transactions, ${previousAllBookings.length} bookings, ${previousAllPayments.length} payments`);
       logger.info(`✅ FORWARD-LOOKING (90 days): ${futureBookings.length} future bookings`);
-      logger.info(`✅ TODAY'S AGENDA: ${todaysBookings.length} bookings today`);
+      logger.info(`✅ TODAY'S AGENDA: ${todaysBookings.length} bookings today (filtered from ${todaysBookingsRaw.length} raw bookings)`);
       logger.info(`📊 Additional data: ${itemizedRevenue.length} revenue items, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances, ${extras.length} extras/add-ons, ${reportingVouchers.length} gift vouchers`);
 
       // Transform Resova data to our analytics format (with previous period for accurate comparisons)
