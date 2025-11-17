@@ -1218,7 +1218,8 @@ export class ResovaService {
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
-      const today = `${year}-${month}-${day}`;
+      const today = `${year}-${month}-${day}`; // YYYY-MM-DD format for API calls
+      const todayShort = `${month}/${day}/${year}`; // MM/DD/YYYY format for filtering date_short field
       const todayDateRange = { start_date: today, end_date: today };
 
       // Get future date range (today + 90 days) for forecasting and forward-looking insights
@@ -1343,7 +1344,8 @@ export class ResovaService {
       // CRITICAL FIX: Filter todaysBookings by actual booking date (date_short)
       // The Resova API date_range might filter by transaction/creation date, not booking date
       // We need to ensure we only show bookings scheduled for TODAY
-      const todaysBookings = todaysBookingsRaw.filter(b => b.date_short === today);
+      // NOTE: date_short uses MM/DD/YYYY format (e.g., "11/17/2025"), not YYYY-MM-DD
+      const todaysBookings = todaysBookingsRaw.filter(b => b.date_short === todayShort);
       const futureBookings = futureBookingsRaw;
 
       logger.info(`✅ CURRENT PERIOD (12 months): ${transactionsResponse.data.length} transactions, ${allBookings.length} bookings, ${allPayments.length} payments`);
