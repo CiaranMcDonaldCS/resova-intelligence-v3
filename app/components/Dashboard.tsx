@@ -635,7 +635,7 @@ export default function Dashboard() {
   const totalGuests = analyticsData.guestSummary?.totalGuests || 0;
 
   return (
-    <div className="min-h-screen flex flex-col max-w-4xl mx-auto bg-[#121212] text-white">
+    <div className="min-h-screen flex flex-col max-w-5xl mx-auto bg-[#121212] text-white">
       {/* Header */}
       <header className="bg-transparent pt-4 px-4 sm:px-6 md:px-8 pb-2 flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm bg-black/30">
         <div className="flex items-center space-x-3">
@@ -738,12 +738,12 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-[#A0A0A0] mb-1">Capacity Usage</p>
-                    <p className="text-2xl font-bold text-white">{capacityPercent.toFixed(0)}%</p>
+                    <p className="text-xs text-[#A0A0A0] mb-1">Today's Bookings</p>
+                    <p className="text-2xl font-bold text-white">{upcomingBookings}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-[#10B981]/20">
-                    <p className="text-xs text-[#A0A0A0]">Today's Bookings</p>
-                    <p className="text-sm font-semibold text-white">{upcomingBookings}</p>
+                    <p className="text-xs text-[#A0A0A0]">Capacity Usage</p>
+                    <p className="text-sm font-semibold text-white">{capacityPercent.toFixed(0)}%</p>
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-[#A0A0A0]">Status</p>
