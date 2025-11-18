@@ -12,6 +12,7 @@ import { Credentials, AnalyticsData, Message } from '@/app/types/analytics';
 import { createAnalyticsService, AnalyticsService } from '../lib/services/analytics-service';
 import { AuthStorage } from '../lib/storage/auth-storage';
 import { ConfigStorage } from '../lib/storage/config-storage';
+import { SimpleAuth } from '../lib/simple-auth';
 import { logger } from '../lib/utils/logger';
 
 interface AppState {
@@ -128,6 +129,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Logout and clear storage
   const logout = useCallback(() => {
     logger.info('User logging out');
+
+    // Sign out from SimpleAuth (clears current user session)
+    SimpleAuth.signout();
 
     // Clear storage
     AuthStorage.clear();

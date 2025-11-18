@@ -38,7 +38,7 @@ export default function Dashboard() {
   // Handle logout with redirect
   const handleLogout = () => {
     logout();
-    router.push('/onboarding');
+    router.push('/');
   };
 
   // Auto-scroll chat
