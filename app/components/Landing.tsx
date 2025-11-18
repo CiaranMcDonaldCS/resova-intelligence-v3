@@ -21,12 +21,6 @@ interface LandingProps {
 
 export default function Landing({ onGetStarted }: LandingProps) {
   useEffect(() => {
-    // Clear any stale authentication data on landing page
-    if (typeof window !== 'undefined') {
-      localStorage.clear();
-      console.log('🧹 Cleared localStorage on landing page');
-    }
-
     // Load HubSpot form script
     const script = document.createElement('script');
     script.src = '//js.hsforms.net/forms/embed/v2.js';
