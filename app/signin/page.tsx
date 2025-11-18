@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SimpleAuth } from '../lib/simple-auth';
+import { AuthStorage } from '../lib/storage/auth-storage';
 import Link from 'next/link';
 
 export default function SignInPage() {
@@ -19,7 +20,17 @@ export default function SignInPage() {
 
     try {
       SimpleAuth.signin(email, password);
-      router.push('/dashboard');
+
+      // Check if user has completed onboarding (API credentials stored)
+      const hasApiCredentials = AuthStorage.isAuthenticated();
+
+      if (hasApiCredentials) {
+        // User has API keys, go to dashboard
+        router.push('/dashboard');
+      } else {
+        // User needs to complete onboarding first
+        router.push('/onboarding');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

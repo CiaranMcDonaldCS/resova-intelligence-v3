@@ -3,14 +3,29 @@
  *
  * Manages secure storage of API credentials in localStorage.
  * All credentials are stored client-side only and never sent to our backend.
+ * Credentials are stored per-user (keyed by email).
  */
 
 import { AuthData, STORAGE_KEYS, STORAGE_VERSION } from './types';
+import { SimpleAuth } from '../simple-auth';
 
 /**
  * Manages authentication data persistence
  */
 export class AuthStorage {
+  /**
+   * Get storage key for current user
+   * @returns Storage key scoped to current user email
+   */
+  private static getUserStorageKey(): string {
+    const currentUser = SimpleAuth.getCurrentUser();
+    if (!currentUser) {
+      // Fallback to global key if no user is signed in
+      return STORAGE_KEYS.AUTH;
+    }
+    return `${STORAGE_KEYS.AUTH}:${currentUser}`;
+  }
+
   /**
    * Save authentication credentials to localStorage
    * @param auth Authentication data to persist
@@ -23,7 +38,9 @@ export class AuthStorage {
         lastLogin: new Date().toISOString(),
       };
 
-      localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(data));
+      const storageKey = this.getUserStorageKey();
+      localStorage.setItem(storageKey, JSON.stringify(data));
+      console.log(`[AuthStorage] Saved credentials for user: ${SimpleAuth.getCurrentUser() || 'anonymous'}`);
     } catch (error) {
       console.error('[AuthStorage] Failed to save credentials:', error);
       throw new Error('Failed to save credentials. Please check browser storage settings.');
@@ -36,9 +53,11 @@ export class AuthStorage {
    */
   static load(): AuthData | null {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.AUTH);
+      const storageKey = this.getUserStorageKey();
+      const data = localStorage.getItem(storageKey);
 
       if (!data) {
+        console.log(`[AuthStorage] No credentials found for user: ${SimpleAuth.getCurrentUser() || 'anonymous'}`);
         return null;
       }
 
@@ -57,6 +76,7 @@ export class AuthStorage {
         return this.migrate(parsed);
       }
 
+      console.log(`[AuthStorage] Loaded credentials for user: ${SimpleAuth.getCurrentUser() || 'anonymous'}`);
       return parsed;
     } catch (error) {
       console.error('[AuthStorage] Failed to load credentials:', error);
@@ -69,7 +89,9 @@ export class AuthStorage {
    */
   static clear(): void {
     try {
-      localStorage.removeItem(STORAGE_KEYS.AUTH);
+      const storageKey = this.getUserStorageKey();
+      localStorage.removeItem(storageKey);
+      console.log(`[AuthStorage] Cleared credentials for user: ${SimpleAuth.getCurrentUser() || 'anonymous'}`);
     } catch (error) {
       console.error('[AuthStorage] Failed to clear credentials:', error);
     }
