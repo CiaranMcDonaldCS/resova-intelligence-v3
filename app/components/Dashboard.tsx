@@ -249,18 +249,92 @@ export default function Dashboard() {
   };
 
   // Helper function to get chart data from dataSource
-  const getChartDataFromSource = (dataSource: string) => {
+  const getChartDataFromSource = (dataSource: string, userQuery: string = '') => {
     if (!analyticsData) {
       return { labels: ['No Data'], data: [0] };
     }
 
-    console.log('📊 Chart data request:', { dataSource, availableData: Object.keys(analyticsData) });
+    console.log('📊 Chart data request:', { dataSource, userQuery, availableData: Object.keys(analyticsData) });
+
+    // Check if user query has a date range filter
+    // Import the date range parser utility
+    let dateRangeFilter: any = null;
+    if (userQuery) {
+      // Use the same date range parsing logic from the backend
+      // For now, detect common patterns
+      const lowerQuery = userQuery.toLowerCase();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Weekend detection
+      if (lowerQuery.match(/\b(this weekend|last weekend|this past weekend|previous weekend)\b/)) {
+        const currentDayOfWeek = today.getDay();
+        let saturday: Date, sunday: Date;
+
+        if (currentDayOfWeek === 0) {
+          saturday = new Date(today);
+          saturday.setDate(saturday.getDate() - 1);
+          sunday = new Date(today);
+        } else if (currentDayOfWeek === 6) {
+          saturday = new Date(today);
+          sunday = new Date(today);
+          sunday.setDate(sunday.getDate() + 1);
+        } else {
+          const daysSinceSaturday = (currentDayOfWeek + 1) % 7;
+          saturday = new Date(today);
+          saturday.setDate(saturday.getDate() - daysSinceSaturday);
+          sunday = new Date(saturday);
+          sunday.setDate(sunday.getDate() + 1);
+        }
+
+        const startDateStr = `${String(saturday.getMonth() + 1).padStart(2, '0')}/${String(saturday.getDate()).padStart(2, '0')}/${saturday.getFullYear()}`;
+        const endDateStr = `${String(sunday.getMonth() + 1).padStart(2, '0')}/${String(sunday.getDate()).padStart(2, '0')}/${sunday.getFullYear()}`;
+
+        dateRangeFilter = { startDate: startDateStr, endDate: endDateStr };
+        console.log('🗓️ Detected weekend filter:', dateRangeFilter);
+      }
+
+      // Last week detection
+      if (lowerQuery.match(/\b(last week|previous week)\b/)) {
+        const currentDayOfWeek = today.getDay();
+        const daysFromMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+
+        const thisMonday = new Date(today);
+        thisMonday.setDate(thisMonday.getDate() - daysFromMonday);
+
+        const prevSunday = new Date(thisMonday);
+        prevSunday.setDate(prevSunday.getDate() - 1);
+
+        const prevMonday = new Date(prevSunday);
+        prevMonday.setDate(prevMonday.getDate() - 6);
+
+        const startDateStr = `${String(prevMonday.getMonth() + 1).padStart(2, '0')}/${String(prevMonday.getDate()).padStart(2, '0')}/${prevMonday.getFullYear()}`;
+        const endDateStr = `${String(prevSunday.getMonth() + 1).padStart(2, '0')}/${String(prevSunday.getDate()).padStart(2, '0')}/${prevSunday.getFullYear()}`;
+
+        dateRangeFilter = { startDate: startDateStr, endDate: endDateStr };
+        console.log('🗓️ Detected last week filter:', dateRangeFilter);
+      }
+    }
 
     switch (dataSource) {
       case 'revenue_trend': {
-        const revenueTrend = analyticsData.revenueTrends || analyticsData.dailyBreakdown || [];
+        let revenueTrend = analyticsData.dailyBreakdown || analyticsData.revenueTrends || [];
+
+        // Apply date range filter if detected
+        if (dateRangeFilter && revenueTrend.length > 0) {
+          revenueTrend = revenueTrend.filter((item: any) => {
+            const itemDate = item.date || item.date_short;
+            return itemDate >= dateRangeFilter.startDate && itemDate <= dateRangeFilter.endDate;
+          });
+          console.log('🗓️ Filtered revenue data:', {
+            originalCount: (analyticsData.dailyBreakdown || analyticsData.revenueTrends || []).length,
+            filteredCount: revenueTrend.length,
+            dateRange: `${dateRangeFilter.startDate} to ${dateRangeFilter.endDate}`
+          });
+        }
+
         if (revenueTrend.length === 0) {
-          console.warn('⚠️ No revenue trend data available');
+          console.warn('⚠️ No revenue trend data available for the requested period');
           return { labels: ['No Data'], data: [0] };
         }
 
@@ -404,6 +478,11 @@ export default function Dashboard() {
 
     conversationHistory.forEach((msg: any, idx: number) => {
       if (msg.role === 'assistant' && msg.charts && msg.charts.length > 0) {
+        // Get the user's query from the previous message for context-aware filtering
+        const userQuery = idx > 0 && conversationHistory[idx - 1]?.role === 'user'
+          ? conversationHistory[idx - 1].content
+          : '';
+
         msg.charts.forEach((chartSpec: any, chartIdx: number) => {
           const chartId = `chart-${idx}-${chartIdx}`;
           const canvas = document.getElementById(chartId) as HTMLCanvasElement;
@@ -416,9 +495,9 @@ export default function Dashboard() {
           const ctx = canvas.getContext('2d');
           if (!ctx) return;
 
-          // Get actual data based on dataSource
-          console.log('🎨 Creating chart:', { chartId, dataSource: chartSpec.dataSource, type: chartSpec.type });
-          const chartData = getChartDataFromSource(chartSpec.dataSource);
+          // Get actual data based on dataSource, with user query for date filtering
+          console.log('🎨 Creating chart:', { chartId, dataSource: chartSpec.dataSource, type: chartSpec.type, userQuery });
+          const chartData = getChartDataFromSource(chartSpec.dataSource, userQuery);
           const chartType = chartSpec.type || 'line';
 
           // Different colors for different chart types
@@ -626,13 +705,24 @@ export default function Dashboard() {
   const firstName = userName.split(' ')[0]; // Get first name only
   const todayRevenue = analyticsData.periodSummary?.gross || 0;
   const revenueChange = analyticsData.periodSummary?.grossChange || 0;
-  const upcomingBookings = analyticsData.todaysAgenda?.bookings || 0;
+
+  // Period bookings (not today's upcoming bookings)
+  const periodBookings = analyticsData.salesSummary?.bookings || 0;
   const capacityPercent = analyticsData.businessInsights?.capacityUtilization?.overallUtilization || 0;
 
   // Additional metrics for Owner's Box - Three Pillars
   const avgRevenuePerBooking = analyticsData.salesSummary?.avgRevPerBooking || 0;
-  const repeatCustomerRate = 0; // TODO: Fix after determining correct property
-  const totalGuests = analyticsData.guestSummary?.totalGuests || 0;
+
+  // Calculate repeat customer rate: (returning customers / total visitors) * 100
+  const totalVisitors = analyticsData.guestStatsSummary?.totalVisitors || 0;
+  const returningCustomers = analyticsData.guestStatsSummary?.returningCustomers || 0;
+  const repeatCustomerRate = totalVisitors > 0 ? (returningCustomers / totalVisitors) * 100 : 0;
+
+  // Period guests - use totalVisitors which is the period count (73), not cumulative guestSummary.totalGuests (22,716)
+  const periodGuests = analyticsData.guestStatsSummary?.totalVisitors || 0;
+
+  // Get date range label for context
+  const dateRangeLabel = analyticsData.dateRangeLabel || 'Last 7 days';
 
   return (
     <div className="min-h-screen flex flex-col max-w-5xl mx-auto bg-[#121212] text-white">
@@ -705,75 +795,63 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
               {/* Drive Revenue Pillar */}
               <div className="bg-gradient-to-br from-[#3D8DDA]/10 to-transparent border border-[#3D8DDA]/30 rounded-xl p-5 shadow-lg hover:shadow-xl hover:border-[#3D8DDA]/50 transition-all">
-                <div className="flex items-center mb-4">
-                  <span className="material-symbols-outlined text-[#3D8DDA] text-xl mr-2">trending_up</span>
-                  <h4 className="text-sm font-bold text-[#3D8DDA] uppercase tracking-wide">Drive Revenue</h4>
+                <div className="flex items-start justify-between mb-4 min-h-[2.5rem]">
+                  <div className="flex items-center">
+                    <span className="material-symbols-outlined text-[#3D8DDA] text-xl mr-2">trending_up</span>
+                    <h4 className="text-sm font-bold text-[#3D8DDA] uppercase tracking-wide">Drive Revenue</h4>
+                  </div>
+                  <span className="text-xs text-[#A0A0A0] font-medium whitespace-nowrap ml-2">{dateRangeLabel}</span>
                 </div>
                 <div className="space-y-3">
-                  <div>
+                  <div className="min-h-[4rem]">
                     <p className="text-xs text-[#A0A0A0] mb-1">Period Revenue</p>
                     <p className="text-2xl font-bold text-white">${todayRevenue.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-[#3D8DDA]/20">
-                    <p className="text-xs text-[#A0A0A0]">vs. Previous</p>
-                    <p className={`text-sm font-semibold flex items-center ${revenueChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      <span className="material-symbols-outlined text-xs mr-0.5">
-                        {revenueChange >= 0 ? 'arrow_upward' : 'arrow_downward'}
-                      </span>
-                      {Math.abs(revenueChange).toFixed(1)}%
-                    </p>
-                  </div>
-                  <div className="flex justify-between items-center">
                     <p className="text-xs text-[#A0A0A0]">Avg/Booking</p>
-                    <p className="text-sm font-semibold text-white">${avgRevenuePerBooking.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-white">${avgRevenuePerBooking.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
 
               {/* Operational Efficiency Pillar */}
               <div className="bg-gradient-to-br from-[#10B981]/10 to-transparent border border-[#10B981]/30 rounded-xl p-5 shadow-lg hover:shadow-xl hover:border-[#10B981]/50 transition-all">
-                <div className="flex items-center mb-4">
-                  <span className="material-symbols-outlined text-[#10B981] text-xl mr-2">settings_suggest</span>
-                  <h4 className="text-sm font-bold text-[#10B981] uppercase tracking-wide">Operational Efficiency</h4>
+                <div className="flex items-start justify-between mb-4 min-h-[2.5rem]">
+                  <div className="flex items-center">
+                    <span className="material-symbols-outlined text-[#10B981] text-xl mr-2">settings_suggest</span>
+                    <h4 className="text-sm font-bold text-[#10B981] uppercase tracking-wide">Operational Efficiency</h4>
+                  </div>
+                  <span className="text-xs text-[#A0A0A0] font-medium whitespace-nowrap ml-2">{dateRangeLabel}</span>
                 </div>
                 <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-[#A0A0A0] mb-1">Today's Bookings</p>
-                    <p className="text-2xl font-bold text-white">{upcomingBookings}</p>
+                  <div className="min-h-[4rem]">
+                    <p className="text-xs text-[#A0A0A0] mb-1">Period Bookings</p>
+                    <p className="text-2xl font-bold text-white">{periodBookings}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-[#10B981]/20">
-                    <p className="text-xs text-[#A0A0A0]">Capacity Usage</p>
-                    <p className="text-sm font-semibold text-white">{capacityPercent.toFixed(0)}%</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-[#A0A0A0]">Status</p>
-                    <p className={`text-sm font-semibold ${capacityPercent >= 80 ? 'text-green-400' : capacityPercent >= 50 ? 'text-yellow-400' : 'text-orange-400'}`}>
-                      {capacityPercent >= 80 ? 'Optimized' : capacityPercent >= 50 ? 'Moderate' : 'Low'}
-                    </p>
+                    <p className="text-xs text-[#A0A0A0]">Avg/Booking</p>
+                    <p className="text-sm font-semibold text-white">${avgRevenuePerBooking.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
 
               {/* Guest Experience Pillar */}
               <div className="bg-gradient-to-br from-[#F59E0B]/10 to-transparent border border-[#F59E0B]/30 rounded-xl p-5 shadow-lg hover:shadow-xl hover:border-[#F59E0B]/50 transition-all">
-                <div className="flex items-center mb-4">
-                  <span className="material-symbols-outlined text-[#F59E0B] text-xl mr-2">groups</span>
-                  <h4 className="text-sm font-bold text-[#F59E0B] uppercase tracking-wide">Guest Experience</h4>
+                <div className="flex items-start justify-between mb-4 min-h-[2.5rem]">
+                  <div className="flex items-center">
+                    <span className="material-symbols-outlined text-[#F59E0B] text-xl mr-2">groups</span>
+                    <h4 className="text-sm font-bold text-[#F59E0B] uppercase tracking-wide">Guest Experience</h4>
+                  </div>
+                  <span className="text-xs text-[#A0A0A0] font-medium whitespace-nowrap ml-2">{dateRangeLabel}</span>
                 </div>
                 <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-[#A0A0A0] mb-1">Total Guests</p>
-                    <p className="text-2xl font-bold text-white">{totalGuests.toLocaleString()}</p>
+                  <div className="min-h-[4rem]">
+                    <p className="text-xs text-[#A0A0A0] mb-1">Period Guests</p>
+                    <p className="text-2xl font-bold text-white">{periodGuests.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-[#F59E0B]/20">
                     <p className="text-xs text-[#A0A0A0]">Repeat Rate</p>
                     <p className="text-sm font-semibold text-white">{repeatCustomerRate.toFixed(0)}%</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-[#A0A0A0]">Loyalty</p>
-                    <p className={`text-sm font-semibold ${repeatCustomerRate >= 30 ? 'text-green-400' : repeatCustomerRate >= 15 ? 'text-yellow-400' : 'text-orange-400'}`}>
-                      {repeatCustomerRate >= 30 ? 'Strong' : repeatCustomerRate >= 15 ? 'Moderate' : 'Growing'}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -945,9 +1023,6 @@ export default function Dashboard() {
 
                 {msg.role === 'assistant' && (
                   <div className="flex items-start space-x-4 md:space-x-5 mb-8 group/message">
-                    <div className="bg-gradient-to-br from-[#3D8DDA] to-[#2c79c1] rounded-full p-2.5 md:p-3 mt-1 flex-shrink-0 shadow-xl shadow-[#3D8DDA]/40">
-                      <img src="/logo.png" alt="Resova" className="w-5 h-5 md:w-6 md:h-6" />
-                    </div>
                     <div className="w-full flex-1 min-w-0 relative">
                       <div className="w-full space-y-6 bg-gradient-to-br from-[#1D212B]/40 to-transparent border border-[#383838]/40 rounded-2xl p-5 md:p-7 shadow-lg selectable-text" style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' } as React.CSSProperties}>
                       {(() => {
@@ -1145,7 +1220,13 @@ export default function Dashboard() {
                       {/* Charts from AI response */}
                       {msg.charts && msg.charts.length > 0 && (
                         <div className="space-y-6 mt-6">
-                          {msg.charts.map((chart: any, chartIdx: number) => (
+                          {msg.charts.filter((chart: any) => {
+                            // Filter out charts with no valid data
+                            const chartData = getChartDataFromSource(chart.dataSource, '');
+                            const hasValidData = chartData.data && chartData.data.length > 0 &&
+                                                 !(chartData.labels.includes('No Data') || chartData.data.every((val: number) => val === 0));
+                            return hasValidData;
+                          }).map((chart: any, chartIdx: number) => (
                             <div key={chartIdx} className="bg-gradient-to-br from-[#1D212B] to-[#181C25] border border-[#383838] rounded-2xl p-5 md:p-6 shadow-2xl shadow-black/20 hover:border-[#3D8DDA]/30 transition-all duration-300">
                               <div className="flex items-center mb-5">
                                 <div className="p-2 bg-[#3D8DDA]/10 rounded-lg mr-3">

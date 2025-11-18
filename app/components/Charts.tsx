@@ -70,20 +70,32 @@ const CustomTooltip = ({ active, payload, label, formatter }: any) => {
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
       }}>
         <p className="text-xs font-semibold text-white mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between space-x-4">
-            <div className="flex items-center space-x-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-xs" style={{ color: TEXT_SECONDARY }}>{entry.name}</span>
+        {payload.map((entry: any, index: number) => {
+          // Format based on dataKey - revenue gets $, bookings get count
+          let formattedValue = entry.value;
+          if (entry.dataKey === 'revenue') {
+            formattedValue = `$${entry.value.toLocaleString()}`;
+          } else if (entry.dataKey === 'bookings') {
+            formattedValue = entry.value.toLocaleString();
+          } else if (formatter) {
+            formattedValue = formatter(entry.value);
+          }
+
+          return (
+            <div key={index} className="flex items-center justify-between space-x-4">
+              <div className="flex items-center space-x-2">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-xs" style={{ color: TEXT_SECONDARY }}>{entry.name}</span>
+              </div>
+              <span className="text-xs font-semibold text-white">
+                {formattedValue}
+              </span>
             </div>
-            <span className="text-xs font-semibold text-white">
-              {formatter ? formatter(entry.value) : entry.value}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   }

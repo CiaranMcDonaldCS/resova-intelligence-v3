@@ -93,6 +93,8 @@ export interface PeriodSummary {
   taxesChange: number;
   fees: number;
   feesChange: number;
+  totalTransactions: number;
+  totalTransactionsChange: number;
 }
 
 export interface RevenueTrend {
@@ -198,6 +200,92 @@ export interface GuestSummary {
   // Average guests per booking (Phase 1 - Critical)
   avgGuestsPerBooking: number;
   avgGuestsPerBookingChange: number;
+}
+
+export interface ExtrasSummary {
+  totalPurchased: number;
+  totalPurchasedChange: number;
+  purchasedWithBookings: number;
+  purchasedWithBookingsChange: number;
+  purchasedViaPOS: number;
+  purchasedViaPOSChange: number;
+  totalSales: number;
+  totalSalesChange: number;
+  salesWithBookings: number;
+  salesWithBookingsChange: number;
+  salesViaPOS: number;
+  salesViaPOSChange: number;
+}
+
+export interface GiftVoucherSummary {
+  totalPurchased: number;
+  totalPurchasedChange: number;
+  totalSales: number;
+  totalSalesChange: number;
+  totalRedeemed: number;
+  totalRedeemedChange: number;
+  redeemedValue: number;
+  redeemedValueChange: number;
+  totalRemaining: number;
+  totalRemainingChange: number;
+  remainingValue: number;
+  remainingValueChange: number;
+}
+
+export interface GuestStatsSummary {
+  totalVisitors: number;
+  totalVisitorsChange: number;
+  newCustomers: number;
+  newCustomersChange: number;
+  returningCustomers: number;
+  returningCustomersChange: number;
+  checkedInParticipants: number;
+  checkedInParticipantsChange: number;
+  signedWaivers: number;
+  signedWaiversChange: number;
+}
+
+export interface CapacityStatsSummary {
+  availableTimeSlots: number;
+  availableTimeSlotsChange: number;
+  bookedTimeSlots: number;
+  bookedTimeSlotsChange: number;
+  blockedTimeSlots: number;
+  blockedTimeSlotsChange: number;
+  availableSpaces: number;
+  availableSpacesChange: number;
+  guestCount: number;
+  guestCountChange: number;
+  blockedSpaces: number;
+  blockedSpacesChange: number;
+}
+
+export interface DiscountsStatsSummary {
+  totalDiscountsValue: number;
+  totalDiscountsValueChange: number;
+  codesRedeemed: number;
+  codesRedeemedChange: number;
+  discountCodesValue: number;
+  discountCodesValueChange: number;
+  discountGroupsValue: number;
+  discountGroupsValueChange: number;
+  customDiscountsValue: number;
+  customDiscountsValueChange: number;
+  socialIncentivesValue: number;
+  socialIncentivesValueChange: number;
+}
+
+export interface CartAbandonmentStatsSummary {
+  totalAbandonments: number;
+  totalAbandonmentsChange: number;
+  converted: number;
+  convertedChange: number;
+  convertedSales: number;
+  convertedSalesChange: number;
+  lost: number;
+  lostChange: number;
+  lostPotentialSales: number;
+  lostPotentialSalesChange: number;
 }
 
 export interface ItemDetails {
@@ -644,6 +732,12 @@ export interface AnalyticsData {
   topPurchased: TopPurchased;
   guestMetrics: GuestMetric[];
   guestSummary: GuestSummary;
+  guestStatsSummary: GuestStatsSummary;
+  capacityStatsSummary: CapacityStatsSummary;
+  discountsStatsSummary: DiscountsStatsSummary;
+  cartAbandonmentStatsSummary: CartAbandonmentStatsSummary;
+  extrasSummary: ExtrasSummary;
+  giftVoucherSummary: GiftVoucherSummary;
   businessInsights?: BusinessInsights;
   dailyBreakdown: DailyBreakdown[];      // Day-by-day breakdown for charts and trend analysis
   dayOfWeekSummary: DayOfWeekSummary[];  // Aggregated by day of week for weekend comparisons

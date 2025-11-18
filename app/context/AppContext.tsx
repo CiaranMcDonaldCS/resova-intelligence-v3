@@ -325,7 +325,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  // Auto-fetch analytics when authenticated
+  // Auto-fetch analytics when authenticated (disabled - let pages fetch explicitly)
+  // This prevents automatic fetching on landing page and other public pages
+  // Pages that need data should call fetchAnalytics() explicitly
+  /*
   useEffect(() => {
     console.log('🔄 [AppContext] Auto-fetch check:', {
       isAuthenticated: state.isAuthenticated,
@@ -339,6 +342,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       fetchAnalytics();
     }
   }, [state.isAuthenticated, state.analyticsData, state.analyticsLoading, fetchAnalytics]);
+  */
 
   const value: AppContextType = {
     ...state,

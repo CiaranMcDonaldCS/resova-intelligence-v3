@@ -16,6 +16,12 @@ import {
 import { logger } from '../utils/logger';
 import { ConfigData } from '../storage/types';
 import { buildActivitySeedPrompt } from '../config/activity-types';
+import {
+  parseDateRangeFromQuery,
+  filterDailyBreakdown,
+  calculateAggregateMetrics,
+  calculatePercentageChange
+} from '../utils/date-range-parser';
 
 export interface ClaudeServiceOptions extends ServiceOptions {
   apiKey: string;
@@ -74,7 +80,7 @@ export class ClaudeService {
     conversationHistory: Message[] = []
   ): Promise<ChatResponse> {
     try {
-      const context = analyticsData ? this.buildAnalyticsContext(analyticsData) : '';
+      const context = analyticsData ? this.buildAnalyticsContext(analyticsData, message) : '';
 
       // Sanitize all strings to remove problematic Unicode characters
       const sanitizedMessage = this.sanitizeString(message);
@@ -262,7 +268,7 @@ export class ClaudeService {
   /**
    * Build context from analytics data for Claude
    */
-  private buildAnalyticsContext(analyticsData: AnalyticsData): string {
+  private buildAnalyticsContext(analyticsData: AnalyticsData, userMessage?: string): string {
     const {
       todaysAgenda,
       periodSummary,
@@ -271,12 +277,86 @@ export class ClaudeService {
       guestSummary,
       paymentCollection,
       businessInsights,
-      dateRangeLabel
+      dateRangeLabel,
+      dailyBreakdown
     } = analyticsData;
+
+    // Check if user is asking about a specific date range
+    const dateRangeFilter = userMessage ? parseDateRangeFromQuery(userMessage) : null;
+
+    let filteredMetrics: any = null;
+    let filteredMetricsText = '';
+    let filteredDays: any[] = [];
+    let previousDays: any[] = [];
+
+    if (dateRangeFilter && dailyBreakdown && dailyBreakdown.length > 0) {
+      // DEBUG: Log what dates are in the cache
+      logger.info(`🔍 Date Range Filter: ${dateRangeFilter.label} (${dateRangeFilter.startDate} to ${dateRangeFilter.endDate})`);
+      logger.info(`🔍 Daily breakdown has ${dailyBreakdown.length} days of data`);
+      logger.info(`🔍 Date range in cache: ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`);
+      logger.info(`🔍 Sample dates from cache: ${dailyBreakdown.slice(0, 5).map(d => d.date).join(', ')} ... ${dailyBreakdown.slice(-5).map(d => d.date).join(', ')}`);
+
+      // Filter daily breakdown to requested period
+      filteredDays = filterDailyBreakdown(dailyBreakdown, dateRangeFilter);
+      logger.info(`🔍 Filtered to ${filteredDays.length} days`);
+      if (filteredDays.length > 0) {
+        logger.info(`🔍 Filtered range: ${filteredDays[0].date} to ${filteredDays[filteredDays.length - 1].date}`);
+        logger.info(`🔍 Sample filtered data: ${filteredDays.slice(0, 3).map(d => `${d.date}: ${d.bookings} bookings, $${d.revenue}`).join(' | ')}`);
+      }
+
+      const currentMetrics = calculateAggregateMetrics(filteredDays);
+      logger.info(`🔍 Aggregate metrics: ${currentMetrics.totalBookings} bookings, $${currentMetrics.totalRevenue} revenue`);
+
+      // Calculate previous period metrics if available
+      let previousMetrics: any = null;
+      let percentageChanges: any = null;
+
+      if (dateRangeFilter.previousPeriod) {
+        previousDays = filterDailyBreakdown(dailyBreakdown, {
+          label: dateRangeFilter.previousPeriod.label,
+          startDate: dateRangeFilter.previousPeriod.startDate,
+          endDate: dateRangeFilter.previousPeriod.endDate
+        });
+        previousMetrics = calculateAggregateMetrics(previousDays);
+
+        // Calculate percentage changes
+        percentageChanges = {
+          bookings: calculatePercentageChange(currentMetrics.totalBookings, previousMetrics.totalBookings),
+          revenue: calculatePercentageChange(currentMetrics.totalRevenue, previousMetrics.totalRevenue),
+          guests: calculatePercentageChange(currentMetrics.totalGuests, previousMetrics.totalGuests)
+        };
+      }
+
+      // Build text summary
+      filteredMetricsText = `
+
+🎯 **FILTERED METRICS FOR YOUR QUERY: "${dateRangeFilter.label}" (${dateRangeFilter.startDate} to ${dateRangeFilter.endDate})**
+
+**CRITICAL: USE THESE NUMBERS - These are the exact metrics for the period requested:**
+- Total Bookings: ${currentMetrics.totalBookings}${percentageChanges ? ` (${percentageChanges.bookings >= 0 ? '+' : ''}${percentageChanges.bookings}% vs ${dateRangeFilter.previousPeriod?.label})` : ''}
+- Total Revenue: $${currentMetrics.totalRevenue.toLocaleString()}${percentageChanges ? ` (${percentageChanges.revenue >= 0 ? '+' : ''}${percentageChanges.revenue}% vs ${dateRangeFilter.previousPeriod?.label})` : ''}
+- Total Guests: ${currentMetrics.totalGuests}${percentageChanges ? ` (${percentageChanges.guests >= 0 ? '+' : ''}${percentageChanges.guests}% vs ${dateRangeFilter.previousPeriod?.label})` : ''}
+- Average per Day: ${currentMetrics.avgBookingsPerDay.toFixed(1)} bookings, $${currentMetrics.avgRevenuePerDay.toLocaleString()} revenue
+
+${previousMetrics ? `**Comparison Period (${dateRangeFilter.previousPeriod?.label}: ${dateRangeFilter.previousPeriod?.startDate} to ${dateRangeFilter.previousPeriod?.endDate}):**
+- Bookings: ${previousMetrics.totalBookings}
+- Revenue: $${previousMetrics.totalRevenue.toLocaleString()}
+- Guests: ${previousMetrics.totalGuests}` : ''}
+
+**IMPORTANT:** When answering questions about "${dateRangeFilter.label}", you MUST use the numbers above, NOT the full period metrics below.
+`;
+
+      filteredMetrics = {
+        current: currentMetrics,
+        previous: previousMetrics,
+        changes: percentageChanges,
+        filter: dateRangeFilter
+      };
+    }
 
     let context = `
 CURRENT ANALYTICS DATA:
-
+${filteredMetricsText}
 **DATA PERIOD: ${dateRangeLabel || 'Last 365 days (12 months)'}**
 All metrics below reflect data from this time period ONLY, unless otherwise specified.
 
@@ -833,6 +913,99 @@ NOTE: "Booking Value" = total booking amounts (what was booked). "Gross Revenue"
   Guests: ${comparison.comparison.guestsPerformanceDifference >= 0 ? 'Weekends outperform by' : 'Weekdays outperform by'} ${Math.abs(comparison.comparison.guestsPerformanceDifference).toFixed(1)}%`;
     }
 
+    // Add daily breakdown data for time-series analysis
+    if (dailyBreakdown && dailyBreakdown.length > 0) {
+      // Get current date for context
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+
+      // If a date range filter is active, ONLY show data for that range
+      // Don't include full dataset to avoid confusing Claude
+      if (dateRangeFilter && filteredDays && filteredDays.length > 0) {
+        context += `
+
+DAILY BREAKDOWN FOR FILTERED PERIOD (${dateRangeFilter.label}):
+NOTE: These are the ONLY dates relevant to the user's question. DO NOT use dates outside this range.
+Today's date is: ${todayStr}
+
+Filtered Days (${filteredDays.length} days from ${dateRangeFilter.startDate} to ${dateRangeFilter.endDate}):`;
+
+        // Sort filtered days by date descending (most recent first)
+        const sortedFilteredDays = [...filteredDays].sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        sortedFilteredDays.forEach((day) => {
+          context += `
+${day.date} (${day.dayName}): ${day.bookings} bookings, $${day.revenue.toLocaleString()} revenue, ${day.guests} guests${day.topItem ? `, top item: ${day.topItem} (${day.topItemBookings} bookings)` : ''}`;
+        });
+
+        // If there's a previous period, show that too
+        if (dateRangeFilter.previousPeriod && previousDays && previousDays.length > 0) {
+          context += `
+
+Previous Period (${dateRangeFilter.previousPeriod.label}: ${dateRangeFilter.previousPeriod.startDate} to ${dateRangeFilter.previousPeriod.endDate}):`;
+
+          const sortedPreviousDays = [...previousDays].sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB.getTime() - dateA.getTime();
+          });
+
+          sortedPreviousDays.forEach((day) => {
+            context += `
+${day.date} (${day.dayName}): ${day.bookings} bookings, $${day.revenue.toLocaleString()} revenue, ${day.guests} guests`;
+          });
+        }
+
+        context += `
+
+CRITICAL: The user asked about "${dateRangeFilter.label}". Use ONLY the dates shown above (${dateRangeFilter.startDate} to ${dateRangeFilter.endDate}). Do NOT reference dates outside this range.`;
+
+      } else {
+        // No date range filter - show recent data as before
+        // Calculate date range
+        const dates = dailyBreakdown.map(d => d.date).sort();
+        const earliestDate = dates[0];
+        const latestDate = dates[dates.length - 1];
+
+        context += `
+
+DAILY BOOKING DATA (${earliestDate} to ${latestDate}):
+NOTE: Use this data when users ask about "last week", "last month", "bookings by day", "daily trends", etc.
+Today's date is: ${todayStr}
+
+Total days with data: ${dailyBreakdown.length}
+
+Recent 90 Days (most recent first):`;
+
+        // Sort by date descending (most recent first) to prioritize November 2025 over December 2024
+        const sortedDailyBreakdown = [...dailyBreakdown]
+          .sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB.getTime() - dateA.getTime();
+          })
+          .slice(0, 90);
+
+        sortedDailyBreakdown.forEach((day) => {
+          context += `
+${day.date} (${day.dayName}): ${day.bookings} bookings, $${day.revenue.toLocaleString()} revenue, ${day.guests} guests${day.topItem ? `, top item: ${day.topItem} (${day.topItemBookings} bookings)` : ''}`;
+        });
+
+        context += `
+
+IMPORTANT: When answering questions about specific date ranges:
+- "Last week" means the 7 days BEFORE today (${todayStr})
+- "Last month" means the 30 days BEFORE today
+- Always use the ACTUAL DATES from this daily breakdown data
+- Do NOT make up or estimate dates
+- Do NOT use dates that are not in this dataset`;
+      }
+    }
+
     return context.trim();
   }
 
@@ -1280,22 +1453,43 @@ Charts are HIGHLY ENCOURAGED for data-driven responses. Include charts whenever 
 - Questions already answered by visible dashboard metrics
 - When the user explicitly asks for text-only information
 - Repetitive data that doesn't add new insights (avoid showing payment_status multiple times in same conversation)
+- **CRITICAL: When there is NO DATA** - If a data source would return completely empty data (0 data points), omit that chart entirely. For comparison queries (weekend, top items, etc.), even 2-5 data points are valuable for visualization.
 
 **Available Data Sources:**
-- revenue_trend - Daily revenue over time
-- payment_status - Paid vs Unpaid breakdown (use sparingly)
-- bookings_by_day - Bookings per day of week
-- bookings_by_service - Bookings by activity/service
-- revenue_by_service - Revenue distribution by service
-- guest_trend - Guest counts over time
-- sales_metrics - Booking and revenue metrics per day
-- guest_metrics - Guest count and revenue per guest per day
+- revenue_trend - Daily revenue over time (CURRENCY - shows $)
+- payment_status - Paid vs Unpaid breakdown (CURRENCY - use sparingly)
+- bookings_by_day - Bookings per day of week (COUNT - NO $)
+- bookings_by_service - Bookings by activity/service (COUNT - NO $)
+- revenue_by_service - Revenue distribution by service (CURRENCY - shows $)
+- guest_trend - Guest counts over time (COUNT - NO $)
+- sales_metrics - Booking and revenue metrics per day (MIXED - bookings=COUNT, revenue=CURRENCY)
+- guest_metrics - Guest count and revenue per guest per day (MIXED - guests=COUNT, revenue=CURRENCY)
+
+**CRITICAL - Data Source Selection:**
+- For COUNT data (bookings, guests, tickets, reservations): Use bookings_by_*, guest_trend - these will display as numbers WITHOUT dollar signs
+- For CURRENCY data (revenue, sales, payments): Use revenue_*, payment_status - these will display WITH dollar signs
+- NEVER use revenue_trend for booking counts
+- NEVER use bookings_by_day for revenue amounts
 
 **Available Chart Types:**
 - line - Trends over time
 - bar - Category comparisons
 - pie - Proportion breakdowns
 - funnel - Conversion analysis
+
+**CRITICAL CHART VALIDATION RULES:**
+
+ONLY create charts when ALL conditions are met:
+1. Has Data - At least 1 valid data point (even 2 points for weekends or 5 points for top items is valuable)
+2. Valid Format - Data is properly formatted and not corrupted
+3. Data Makes Sense - No negative values for counts or invalid data entries
+4. Adds Value - Visualization helps understand the data (comparisons, trends, rankings)
+
+When to SKIP charts:
+- Zero data points (completely empty dataset)
+- Data is corrupted or malformed
+- A simple number answer is clearer than a visual (e.g., "What's my total revenue?" → just the number)
+- User is asking for a single specific metric only
 
 **Format:** If charts would be helpful, end your response with a JSON block between <CHARTS> tags:
 

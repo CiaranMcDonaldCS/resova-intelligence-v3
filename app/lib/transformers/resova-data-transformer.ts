@@ -23,6 +23,12 @@ import {
   PurchasedItem,
   GuestMetric,
   GuestSummary,
+  GuestStatsSummary,
+  CapacityStatsSummary,
+  DiscountsStatsSummary,
+  CartAbandonmentStatsSummary,
+  ExtrasSummary,
+  GiftVoucherSummary,
   BusinessInsights,
   ItemDetails,
   CustomerInsight,
@@ -45,9 +51,11 @@ import {
   ResovaAllPayment,
   ResovaItem,
   ResovaInventoryItem,
-  ResovaAvailabilityInstance
+  ResovaAvailabilityInstance,
+  ResovaExtra,
+  ResovaGiftVoucherReporting
 } from '../services/resova-service';
-import { ResovaGiftVoucher } from '@/app/types/resova-core';
+import { ResovaBasket, ResovaGiftVoucher } from '@/app/types/resova-core';
 import { logger } from '../utils/logger';
 
 export class ResovaDataTransformer {
@@ -63,7 +71,15 @@ export class ResovaDataTransformer {
     // Previous period data for accurate comparisons
     previousTransactions?: ResovaTransaction[],
     previousAllBookings?: ResovaAllBooking[],
-    previousAllPayments?: ResovaAllPayment[]
+    previousAllPayments?: ResovaAllPayment[],
+    // Additional data for report summaries
+    extras?: ResovaExtra[],
+    reportingVouchers?: ResovaGiftVoucherReporting[],
+    availabilityInstances?: ResovaAvailabilityInstance[],
+    abandonedCarts?: ResovaBasket[],
+    // Previous period report data for trend calculations
+    previousExtras?: ResovaExtra[],
+    previousReportingVouchers?: ResovaGiftVoucherReporting[]
   ): AnalyticsData {
     logger.info('Transforming Resova data to analytics format');
     logger.info(`Input data counts: ${transactions.length} transactions, ${itemizedRevenue.length} revenue items, ${allBookings.length} bookings, ${allPayments.length} payments, ${todaysBookings?.length || 0} today's bookings`);
@@ -92,6 +108,12 @@ export class ResovaDataTransformer {
       topPurchased: this.transformTopPurchased(allBookings),
       guestMetrics: this.transformGuestMetrics(allBookings),
       guestSummary: this.transformGuestSummary(allBookings, allPayments, transactions, previousAllBookings, previousAllPayments, previousTransactions),
+      guestStatsSummary: this.transformGuestStatsSummary(allBookings),
+      capacityStatsSummary: this.transformCapacityStatsSummary(availabilityInstances, allBookings),
+      discountsStatsSummary: this.transformDiscountsStatsSummary(),
+      cartAbandonmentStatsSummary: this.transformCartAbandonmentStatsSummary(abandonedCarts),
+      extrasSummary: this.transformExtrasSummary(extras, previousExtras),
+      giftVoucherSummary: this.transformGiftVoucherSummary(reportingVouchers, previousReportingVouchers),
       dailyBreakdown: this.transformDailyBreakdown(allBookings),
       dayOfWeekSummary,
       weekendVsWeekdayComparison: this.transformWeekendVsWeekdayComparison(dayOfWeekSummary)
@@ -320,15 +342,15 @@ export class ResovaDataTransformer {
   /**
    * Transform period summary - Financial Health Metrics
    *
-   * Per spec:
-   * - Gross Revenue = Sum of all captured payment amounts (allPayments.amount)
-   * - Total Sales = Sum of transaction totals (transactions.total)
+   * Per spec (per ANALYTICS_CALCULATIONS.md):
+   * - Gross Revenue = Sum of all captured payment amounts (actual money received)
+   * - Total Sales = Sum of transaction totals (full invoiced amount)
    * - Net Revenue = Gross Revenue - Total Refunded
    * - Discounts, Taxes, Fees, Refunds from Transactions API
    *
    * Data Sources:
-   * - Gross Revenue: All Payments API (amount field)
-   * - Total Sales: Transactions API (total field)
+   * - Gross Revenue: Transactions API (paid field) - actual payments received
+   * - Total Sales: Transactions API (total field) - full invoiced amounts
    * - Discounts/Taxes/Fees/Refunds: Transactions API
    */
   private static transformPeriodSummary(
@@ -368,6 +390,10 @@ export class ResovaDataTransformer {
     // Net = Total sales minus any refunds
     const net = gross - refunded;
 
+    // CURRENT PERIOD - Total Transactions = Count of all transactions
+    // From Transactions API: COUNT(transactions)
+    const totalTransactions = transactions.length;
+
     // PREVIOUS PERIOD - Calculate same metrics for comparison
     let previousGross = 0;
     let previousNet = 0;
@@ -376,6 +402,7 @@ export class ResovaDataTransformer {
     let previousRefunded = 0;
     let previousTaxes = 0;
     let previousFees = 0;
+    let previousTotalTransactions = 0;
 
     if (previousTransactions && previousTransactions.length > 0) {
       previousGross = previousTransactions.reduce((sum, t) => sum + parseFloat(t.paid || '0'), 0);
@@ -385,6 +412,7 @@ export class ResovaDataTransformer {
       previousTaxes = previousTransactions.reduce((sum, t) => sum + parseFloat(t.tax || '0'), 0);
       previousFees = previousTransactions.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
       previousNet = previousGross - previousRefunded;
+      previousTotalTransactions = previousTransactions.length;
 
       logger.info(`REAL COMPARISON - Current gross: $${gross.toFixed(2)}, Previous gross: $${previousGross.toFixed(2)}`);
     } else {
@@ -396,6 +424,7 @@ export class ResovaDataTransformer {
       previousRefunded = 0;
       previousTaxes = 0;
       previousFees = 0;
+      previousTotalTransactions = 0;
 
       logger.warn('No previous period data available - showing zero for comparison');
     }
@@ -414,7 +443,9 @@ export class ResovaDataTransformer {
       taxes,
       taxesChange: this.calculatePercentChange(taxes, previousTaxes),
       fees,
-      feesChange: this.calculatePercentChange(fees, previousFees)
+      feesChange: this.calculatePercentChange(fees, previousFees),
+      totalTransactions,
+      totalTransactionsChange: this.calculatePercentChange(totalTransactions, previousTotalTransactions)
     };
   }
 
@@ -962,6 +993,343 @@ export class ResovaDataTransformer {
       noShowChange: 0, // No previous period data available
       avgGuestsPerBooking,
       avgGuestsPerBookingChange: this.calculatePercentChange(avgGuestsPerBooking, previousAvgGuestsPerBooking)
+    };
+  }
+
+  /**
+   * Transform extras summary data
+   * Returns metrics from Resova Extras Report
+   */
+  private static transformExtrasSummary(extras?: ResovaExtra[], previousExtras?: ResovaExtra[]): ExtrasSummary {
+    if (!extras || extras.length === 0) {
+      return {
+        totalPurchased: 0,
+        totalPurchasedChange: 0,
+        purchasedWithBookings: 0,
+        purchasedWithBookingsChange: 0,
+        purchasedViaPOS: 0,
+        purchasedViaPOSChange: 0,
+        totalSales: 0,
+        totalSalesChange: 0,
+        salesWithBookings: 0,
+        salesWithBookingsChange: 0,
+        salesViaPOS: 0,
+        salesViaPOSChange: 0
+      };
+    }
+
+    // Calculate total purchases and sales from extras data
+    const totalPurchased = extras.reduce((sum, e) => sum + (e.total_bookings || 0), 0);
+    const totalSales = extras.reduce((sum, e) => sum + parseFloat(e.total_sales || '0'), 0);
+
+    // Calculate previous period values for comparison
+    const prevTotalPurchased = previousExtras?.reduce((sum, e) => sum + (e.total_bookings || 0), 0) || 0;
+    const prevTotalSales = previousExtras?.reduce((sum, e) => sum + parseFloat(e.total_sales || '0'), 0) || 0;
+
+    // Note: Current API doesn't distinguish between "with bookings" vs "POS" for extras
+    // Setting all purchases/sales to "with bookings" since extras are typically part of bookings
+    // TODO: Update when Resova provides source breakdown (booking vs POS vs standalone)
+    return {
+      totalPurchased,
+      totalPurchasedChange: this.calculatePercentChange(totalPurchased, prevTotalPurchased),
+      purchasedWithBookings: totalPurchased, // Assume all extras purchased with bookings for now
+      purchasedWithBookingsChange: this.calculatePercentChange(totalPurchased, prevTotalPurchased),
+      purchasedViaPOS: 0, // Not available in current API
+      purchasedViaPOSChange: 0,
+      totalSales,
+      totalSalesChange: this.calculatePercentChange(totalSales, prevTotalSales),
+      salesWithBookings: totalSales, // Assume all sales with bookings for now
+      salesWithBookingsChange: this.calculatePercentChange(totalSales, prevTotalSales),
+      salesViaPOS: 0, // Not available in current API
+      salesViaPOSChange: 0
+    };
+  }
+
+  /**
+   * Transform gift voucher summary data
+   * Returns metrics from Resova Gift Voucher Report
+   *
+   * Based on sample data:
+   * - Gift Vouchers: 005 (total purchased)
+   * - Gift Vouchers: $529.00 (total sales)
+   * - Redeemed: 000 (total)
+   * - Redeemed: $0.00 (value)
+   * - Redemptions: 005 (total remaining)
+   * - Redemptions: $529.00 (remaining value)
+   */
+  private static transformGiftVoucherSummary(vouchers?: ResovaGiftVoucherReporting[], previousVouchers?: ResovaGiftVoucherReporting[]): GiftVoucherSummary {
+    if (!vouchers || vouchers.length === 0) {
+      return {
+        totalPurchased: 0,
+        totalPurchasedChange: 0,
+        totalSales: 0,
+        totalSalesChange: 0,
+        totalRedeemed: 0,
+        totalRedeemedChange: 0,
+        redeemedValue: 0,
+        redeemedValueChange: 0,
+        totalRemaining: 0,
+        totalRemainingChange: 0,
+        remainingValue: 0,
+        remainingValueChange: 0
+      };
+    }
+
+    // Calculate metrics from vouchers data
+    const totalPurchased = vouchers.length;
+    const totalSales = vouchers.reduce((sum, v) => sum + parseFloat(v.total_amount || '0'), 0);
+    const totalRedeemed = vouchers.filter(v => parseFloat(v.total_redeemed || '0') > 0).length;
+    const redeemedValue = vouchers.reduce((sum, v) => sum + parseFloat(v.total_redeemed || '0'), 0);
+    const totalRemaining = vouchers.filter(v => parseFloat(v.total_remaining || '0') > 0).length;
+    const remainingValue = vouchers.reduce((sum, v) => sum + parseFloat(v.total_remaining || '0'), 0);
+
+    // Calculate previous period values for comparison
+    const prevTotalPurchased = previousVouchers?.length || 0;
+    const prevTotalSales = previousVouchers?.reduce((sum, v) => sum + parseFloat(v.total_amount || '0'), 0) || 0;
+    const prevTotalRedeemed = previousVouchers?.filter(v => parseFloat(v.total_redeemed || '0') > 0).length || 0;
+    const prevRedeemedValue = previousVouchers?.reduce((sum, v) => sum + parseFloat(v.total_redeemed || '0'), 0) || 0;
+    const prevTotalRemaining = previousVouchers?.filter(v => parseFloat(v.total_remaining || '0') > 0).length || 0;
+    const prevRemainingValue = previousVouchers?.reduce((sum, v) => sum + parseFloat(v.total_remaining || '0'), 0) || 0;
+
+    return {
+      totalPurchased,
+      totalPurchasedChange: this.calculatePercentChange(totalPurchased, prevTotalPurchased),
+      totalSales,
+      totalSalesChange: this.calculatePercentChange(totalSales, prevTotalSales),
+      totalRedeemed,
+      totalRedeemedChange: this.calculatePercentChange(totalRedeemed, prevTotalRedeemed),
+      redeemedValue,
+      redeemedValueChange: this.calculatePercentChange(redeemedValue, prevRedeemedValue),
+      totalRemaining,
+      totalRemainingChange: this.calculatePercentChange(totalRemaining, prevTotalRemaining),
+      remainingValue,
+      remainingValueChange: this.calculatePercentChange(remainingValue, prevRemainingValue)
+    };
+  }
+
+  /**
+   * Transform guest stats summary data
+   * Returns metrics from Resova Guest Stats Report
+   *
+   * Based on sample data (both "by date purchased" and "by date attended"):
+   * - Visitors: 291 (total)
+   * - New Customers: 194
+   * - Returning Customers: 097
+   * - Checked-in Participants: 000
+   * - Signed Waivers: 000
+   */
+  private static transformGuestStatsSummary(allBookings?: ResovaAllBooking[]): GuestStatsSummary {
+    if (!allBookings || allBookings.length === 0) {
+      return {
+        totalVisitors: 0,
+        totalVisitorsChange: 0,
+        newCustomers: 0,
+        newCustomersChange: 0,
+        returningCustomers: 0,
+        returningCustomersChange: 0,
+        checkedInParticipants: 0,
+        checkedInParticipantsChange: 0,
+        signedWaivers: 0,
+        signedWaiversChange: 0
+      };
+    }
+
+    // Get unique customers by email (since customer ID is not available)
+    const uniqueCustomers = new Map<string, {email: string, bookingCount: number, status: string}>();
+
+    allBookings.forEach(booking => {
+      if (booking.customer_email) {
+        const custEmail = booking.customer_email.toLowerCase();
+        if (uniqueCustomers.has(custEmail)) {
+          const cust = uniqueCustomers.get(custEmail)!;
+          cust.bookingCount++;
+        } else {
+          uniqueCustomers.set(custEmail, {
+            email: custEmail,
+            bookingCount: 1,
+            status: booking.status || ''
+          });
+        }
+      }
+    });
+
+    const totalVisitors = uniqueCustomers.size;
+    const newCustomers = Array.from(uniqueCustomers.values()).filter(c => c.bookingCount === 1).length;
+    const returningCustomers = Array.from(uniqueCustomers.values()).filter(c => c.bookingCount > 1).length;
+
+    // Count checked-in participants (status = 'completed' or 'checked_in')
+    const checkedInParticipants = allBookings.filter(b =>
+      b.status === 'completed' || b.status === 'checked_in'
+    ).length;
+
+    // TODO: Waivers data not currently in allBookings API response
+    // Will need separate Waivers endpoint or additional field in booking data
+    const signedWaivers = 0;
+
+    return {
+      totalVisitors,
+      totalVisitorsChange: 0, // TODO: Add previous period comparison
+      newCustomers,
+      newCustomersChange: 0,
+      returningCustomers,
+      returningCustomersChange: 0,
+      checkedInParticipants,
+      checkedInParticipantsChange: 0,
+      signedWaivers,
+      signedWaiversChange: 0
+    };
+  }
+
+  /**
+   * Transform capacity stats summary data
+   * Returns metrics from Resova Capacity Stats Report
+   *
+   * Based on sample data (Last 30 Days):
+   * - Available Time Slots: 2126
+   * - Booked Time Slots: 343
+   * - Blocked/Closed Time Slots: 925
+   * - Available Spaces: 20034
+   * - Guest Count: 1496
+   * - Blocked/Closed Spaces: 9222
+   *
+   * Note: Partial implementation - can calculate 3 of 6 metrics from available API data
+   */
+  private static transformCapacityStatsSummary(
+    availabilityInstances?: ResovaAvailabilityInstance[],
+    allBookings?: ResovaAllBooking[]
+  ): CapacityStatsSummary {
+    // Calculate what we can from available data
+    const availableTimeSlots = availabilityInstances?.length || 0;
+    const bookedTimeSlots = allBookings?.length || 0;
+
+    // Calculate total guest count from bookings
+    const guestCount = allBookings?.reduce((sum, booking) => {
+      // Use total_quantity field which represents number of participants/guests
+      const participants = booking.total_quantity || 1;
+      return sum + participants;
+    }, 0) || 0;
+
+    // Metrics NOT available in current API (require dedicated Capacity Reporting API):
+    // - blockedTimeSlots: Not in availability instances response
+    // - availableSpaces: Not in availability instances response
+    // - blockedSpaces: Not in availability instances response
+    // TODO: Update when Resova adds these fields to API response
+
+    return {
+      availableTimeSlots,
+      availableTimeSlotsChange: 0, // TODO: Add previous period comparison
+      bookedTimeSlots,
+      bookedTimeSlotsChange: 0, // TODO: Add previous period comparison
+      blockedTimeSlots: 0, // Not available in current API
+      blockedTimeSlotsChange: 0,
+      availableSpaces: 0, // Not available in current API
+      availableSpacesChange: 0,
+      guestCount,
+      guestCountChange: 0, // TODO: Add previous period comparison
+      blockedSpaces: 0, // Not available in current API
+      blockedSpacesChange: 0
+    };
+  }
+
+  /**
+   * Transform discounts stats summary data
+   * Returns metrics from Resova Discounts Stats Report
+   *
+   * Based on sample data (Last 30 Days):
+   * - All Discounts: -$78.98 (total value)
+   * - Discount Codes: 004 (codes redeemed)
+   * - Discount Codes: -$15.00 (total value)
+   * - Discount Groups: -$63.98 (total value)
+   * - Custom Discounts: -$0.00 (total value)
+   * - Social Incentives: -$0.00 (total value)
+   *
+   * ⚠️ COMING SOON: Awaiting Resova Discounts Reporting API
+   * Currently returns all zeros as no Discounts Reporting API is available yet.
+   * The Resova platform has a Discounts Stats report, but there is no corresponding
+   * API endpoint to fetch this data programmatically.
+   */
+  private static transformDiscountsStatsSummary(): DiscountsStatsSummary {
+    // COMING SOON: Awaiting Resova Discounts Reporting API
+    // When available, calculate these metrics:
+    // - totalDiscountsValue: Total value of all discounts applied (negative number)
+    // - codesRedeemed: Count of discount codes that were redeemed
+    // - discountCodesValue: Total value from discount codes (negative number)
+    // - discountGroupsValue: Total value from discount groups (negative number)
+    // - customDiscountsValue: Total value from custom discounts (negative number)
+    // - socialIncentivesValue: Total value from social incentives (negative number)
+    //
+    // Note: Resova has a Discounts Stats report in their platform but no API endpoint yet.
+    // All values return 0 until API becomes available.
+
+    return {
+      totalDiscountsValue: 0, // COMING SOON: Awaiting Resova API
+      totalDiscountsValueChange: 0,
+      codesRedeemed: 0, // COMING SOON: Awaiting Resova API
+      codesRedeemedChange: 0,
+      discountCodesValue: 0, // COMING SOON: Awaiting Resova API
+      discountCodesValueChange: 0,
+      discountGroupsValue: 0, // COMING SOON: Awaiting Resova API
+      discountGroupsValueChange: 0,
+      customDiscountsValue: 0, // COMING SOON: Awaiting Resova API
+      customDiscountsValueChange: 0,
+      socialIncentivesValue: 0, // COMING SOON: Awaiting Resova API
+      socialIncentivesValueChange: 0
+    };
+  }
+
+  /**
+   * Transform Cart Abandonment Stats Summary
+   * Calculates cart abandonment metrics from Resova baskets data
+   *
+   * Based on sample data (Last 30 Days):
+   * - Total Abandonments: 040
+   * - Converted: 003 (total)
+   * - Converted Sales: $702.81
+   * - Lost: 005 (total)
+   * - Lost Potential Sales: $472.86
+   */
+  private static transformCartAbandonmentStatsSummary(baskets?: ResovaBasket[]): CartAbandonmentStatsSummary {
+    if (!baskets || baskets.length === 0) {
+      return {
+        totalAbandonments: 0,
+        totalAbandonmentsChange: 0,
+        converted: 0,
+        convertedChange: 0,
+        convertedSales: 0,
+        convertedSalesChange: 0,
+        lost: 0,
+        lostChange: 0,
+        lostPotentialSales: 0,
+        lostPotentialSalesChange: 0
+      };
+    }
+
+    // Calculate metrics from baskets data
+    // Note: Baskets can have status: 'active', 'abandoned', 'converted', 'expired'
+    const abandonedBaskets = baskets.filter(b => b.status === 'abandoned' || b.status === 'expired');
+    const convertedBaskets = baskets.filter(b => b.status === 'converted');
+
+    const totalAbandonments = abandonedBaskets.length;
+    const converted = convertedBaskets.length;
+    const convertedSales = convertedBaskets.reduce((sum, b) => sum + (b.total || 0), 0);
+
+    // Lost = abandoned carts that were never recovered
+    // For now, we'll treat all abandoned as "lost" since we don't have recovery tracking
+    const lost = abandonedBaskets.length;
+    const lostPotentialSales = abandonedBaskets.reduce((sum, b) => sum + (b.total || 0), 0);
+
+    // TODO: Add previous period comparison for % change when we have previous period basket data
+    return {
+      totalAbandonments,
+      totalAbandonmentsChange: 0, // TODO: Add previous period comparison
+      converted,
+      convertedChange: 0, // TODO: Add previous period comparison
+      convertedSales,
+      convertedSalesChange: 0, // TODO: Add previous period comparison
+      lost,
+      lostChange: 0, // TODO: Add previous period comparison
+      lostPotentialSales,
+      lostPotentialSalesChange: 0 // TODO: Add previous period comparison
     };
   }
 

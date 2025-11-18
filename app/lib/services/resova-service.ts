@@ -479,25 +479,30 @@ export class ResovaService {
    */
   async getItemizedRevenue(payload: ItemizedRevenuePayload): Promise<ResovaItemizedRevenue[]> {
     try {
-      // Build query parameters from date_range object
-      const params = new URLSearchParams();
+      // Build request body per Resova API documentation
+      const body: any = {
+        date_range: {}
+      };
+
+      // Add date_range
       if (payload.date_range.range) {
-        params.append('range', payload.date_range.range);
+        body.date_range.range = payload.date_range.range;
       }
       if (payload.date_range.start_date) {
-        params.append('start_date', payload.date_range.start_date);
+        body.date_range.start_date = payload.date_range.start_date;
       }
       if (payload.date_range.end_date) {
-        params.append('end_date', payload.date_range.end_date);
+        body.date_range.end_date = payload.date_range.end_date;
       }
 
-      const url = `${this.baseUrl}/reporting/transactions/sales/itemizedRevenues?${params.toString()}`;
+      const url = `${this.baseUrl}/reporting/transactions/sales/itemizedRevenues`;
 
       logger.info(`Fetching itemized revenue from: ${url}`);
 
       return await this.fetchWithTimeout(url, {
-        method: 'GET',
+        method: 'POST',
         headers: this.getHeaders(),
+        body: JSON.stringify(body)
       });
     } catch (error) {
       this.handleError(error, 'getItemizedRevenue');
@@ -511,28 +516,35 @@ export class ResovaService {
    */
   async getAllBookings(payload: AllBookingsPayload): Promise<ResovaAllBooking[]> {
     try {
-      // Build query parameters from payload
-      const params = new URLSearchParams();
-      if (payload.type) params.append('type', payload.type);
+      // Build request body per Resova API documentation
+      const body: any = {
+        date_range: {}
+      };
 
-      // Add date_range parameters
+      // Add type
+      if (payload.type) {
+        body.type = payload.type;
+      }
+
+      // Add date_range
       if (payload.date_range.range) {
-        params.append('range', payload.date_range.range);
+        body.date_range.range = payload.date_range.range;
       }
       if (payload.date_range.start_date) {
-        params.append('start_date', payload.date_range.start_date);
+        body.date_range.start_date = payload.date_range.start_date;
       }
       if (payload.date_range.end_date) {
-        params.append('end_date', payload.date_range.end_date);
+        body.date_range.end_date = payload.date_range.end_date;
       }
 
-      const url = `${this.baseUrl}/reporting/transactions/bookings/allBookings?${params.toString()}`;
+      const url = `${this.baseUrl}/reporting/transactions/bookings/allBookings`;
 
       logger.info(`Fetching all bookings (type: ${payload.type || 'all'}) from: ${url}`);
 
       return await this.fetchWithTimeout(url, {
-        method: 'GET',
+        method: 'POST',
         headers: this.getHeaders(),
+        body: JSON.stringify(body)
       });
     } catch (error) {
       this.handleError(error, 'getAllBookings');
@@ -542,32 +554,39 @@ export class ResovaService {
 
   /**
    * Fetch all payments data
-   * GET /v1/reporting/transactions/payments/allPayments
+   * POST /v1/reporting/transactions/payments/allPayments
    */
   async getAllPayments(payload: AllPaymentsPayload): Promise<ResovaAllPayment[]> {
     try {
-      // Build query parameters from payload
-      const params = new URLSearchParams();
-      if (payload.type) params.append('type', payload.type);
+      // Build request body per Resova API documentation
+      const body: any = {
+        date_range: {}
+      };
 
-      // Add date_range parameters
+      // Add type
+      if (payload.type) {
+        body.type = payload.type;
+      }
+
+      // Add date_range
       if (payload.date_range.range) {
-        params.append('range', payload.date_range.range);
+        body.date_range.range = payload.date_range.range;
       }
       if (payload.date_range.start_date) {
-        params.append('start_date', payload.date_range.start_date);
+        body.date_range.start_date = payload.date_range.start_date;
       }
       if (payload.date_range.end_date) {
-        params.append('end_date', payload.date_range.end_date);
+        body.date_range.end_date = payload.date_range.end_date;
       }
 
-      const url = `${this.baseUrl}/reporting/transactions/payments/allPayments?${params.toString()}`;
+      const url = `${this.baseUrl}/reporting/transactions/payments/allPayments`;
 
       logger.info(`Fetching all payments (type: ${payload.type || 'all'}) from: ${url}`);
 
       return await this.fetchWithTimeout(url, {
-        method: 'GET',
+        method: 'POST',
         headers: this.getHeaders(),
+        body: JSON.stringify(body)
       });
     } catch (error) {
       this.handleError(error, 'getAllPayments');
@@ -1152,7 +1171,7 @@ export class ResovaService {
         throw error;
       }
 
-      logger.error('Failed to fetch baskets', error);
+      logger.debug('Failed to fetch baskets', error);
       throw new NetworkError('Failed to fetch baskets from Resova API', error);
     }
   }
@@ -1184,7 +1203,7 @@ export class ResovaService {
       logger.info(`Fetched total of ${allCarts.length} abandoned carts across ${currentPage} pages`);
       return allCarts;
     } catch (error) {
-      logger.error('Failed to fetch abandoned carts', error);
+      logger.debug('Failed to fetch abandoned carts', error);
       throw error;
     }
   }
@@ -1197,15 +1216,15 @@ export class ResovaService {
    */
   async getAnalytics(dateRange?: string, includeBusinessInsights: boolean = true): Promise<AnalyticsData> {
     try {
-      logger.info(`Fetching analytics from Resova Reporting APIs (${dateRange || 'Last 12 months + 90 days forward'})`);
+      logger.info(`Fetching analytics from Resova Reporting APIs (${dateRange || 'Last 30 days + 90 days forward'})`);
 
       // Parse date range for API calls
-      // Default to 365 days (12 months) for comprehensive trend analysis
+      // Default to 30 days for dashboard overview
       const resovaDateRange = dateRange ?
         ResovaService.parseDateRange(dateRange) :
-        { range: '365' as const };
+        { range: '30' as const };
 
-      // Calculate previous period for comparison (year-over-year for 12 months)
+      // Calculate previous period for comparison
       const previousPeriodRange = ResovaService.calculatePreviousPeriod(resovaDateRange);
       logger.info(`Date ranges - Current: ${JSON.stringify(resovaDateRange)}, Previous: ${JSON.stringify(previousPeriodRange)}`);
 
@@ -1220,18 +1239,28 @@ export class ResovaService {
       const day = String(now.getDate()).padStart(2, '0');
       const today = `${year}-${month}-${day}`; // YYYY-MM-DD format for API calls
       const todayShort = `${month}/${day}/${year}`; // MM/DD/YYYY format for filtering date_short field
-      const todayDateRange = { start_date: today, end_date: today };
 
-      // Get future date range (today + 90 days) for forecasting and forward-looking insights
+      // Calculate 90 days in the PAST - for fetching bookings purchased in advance
+      const past90Date = new Date();
+      past90Date.setDate(past90Date.getDate() - 90);
+      const pastYear = past90Date.getFullYear();
+      const pastMonth = String(past90Date.getMonth() + 1).padStart(2, '0');
+      const pastDay = String(past90Date.getDate()).padStart(2, '0');
+      const past90Days = `${pastYear}-${pastMonth}-${pastDay}`;
+
+      // Calculate 90 days in the FUTURE for forward-looking analysis
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 90);
       const futureYear = futureDate.getFullYear();
       const futureMonth = String(futureDate.getMonth() + 1).padStart(2, '0');
       const futureDay = String(futureDate.getDate()).padStart(2, '0');
       const future90Days = `${futureYear}-${futureMonth}-${futureDay}`;
-      const futureBookingsRange = { start_date: today, end_date: future90Days };
 
-      logger.info(`Historical period: 12 months back | Forward-looking period: 90 days ahead (${today} - ${future90Days})`);
+      // For future bookings: fetch from 90 days ago to 90 days forward (by purchase date)
+      // Then filter client-side by event date for today's bookings
+      const futureBookingsRange = { start_date: past90Days, end_date: future90Days };
+
+      logger.info(`Historical period: 12 months back | Forward-looking period: ${past90Days} to ${future90Days} (captures advance bookings)`);
 
       // Calculate explicit dates for availability calendar
       if (resovaDateRange.start_date && resovaDateRange.end_date) {
@@ -1250,109 +1279,213 @@ export class ResovaService {
         availabilityEndDate = today;
       }
 
-      // Fetch data from all Reporting APIs in parallel (current + previous period)
-      const [
-        transactionsResponse,
-        itemizedRevenue,
-        allBookings,
-        allPayments,
-        todaysBookingsRaw,
-        futureBookingsRaw,
-        inventoryItems,
-        availabilityInstances,
-        extras, // Add-ons/extras data
-        reportingVouchers, // Gift vouchers from Reporting API (with redemption data)
-        // Previous period data for accurate comparisons
-        previousTransactionsResponse,
-        previousAllBookings,
-        previousAllPayments
-      ] = await Promise.all([
-        // CURRENT PERIOD DATA (12 months historical)
+      // Fetch data in small sequential batches (max 2 concurrent) with delays to avoid overwhelming Resova's database
+      logger.info('📦 Fetching data slowly in small batches to protect Resova API (this will take ~10-15 seconds)...');
+
+      // Helper to delay between batches (1.5 seconds gives database plenty of time to recover)
+      const delayBetweenBatches = () => new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Batch 1/8: Transactions + itemized revenue
+      logger.info('📦 Batch 1/8: Transactions + itemized revenue');
+      const [transactionsResponse, itemizedRevenue] = await Promise.all([
         this.getTransactions({
-          limit: 500, // Increased limit for 12 months of data
+          limit: 300, // Reduced from 500 to lower memory/CPU usage
           date_field: 'created_at',
           range: resovaDateRange.range,
           start_date: resovaDateRange.start_date,
           end_date: resovaDateRange.end_date
         }),
-        this.getItemizedRevenue({
-          date_range: resovaDateRange
-        }),
-        // Get bookings for the selected date range
-        // Note: This returns bookings where the booking date (date_short) falls within the range
-        this.getAllBookings({
-          type: 'all',
-          date_range: resovaDateRange
-        }),
-        this.getAllPayments({
-          type: 'all',
-          date_range: resovaDateRange
-        }),
-        // Separate call for today's bookings to ensure Today's Agenda always has data
-        this.getAllBookings({
-          type: 'all',
-          date_range: todayDateRange
-        }),
-        // Get future bookings (today + 90 days) for AI Assistant forward-looking analysis
-        this.getAllBookings({
-          type: 'all',
-          date_range: futureBookingsRange
-        }),
-        // Get inventory items with sales data for profitability analysis
-        this.getInventoryItems({
-          date_range: resovaDateRange,
-          type: 'all_bookings',
-          period: 'event_date',
-          booking_status: 'completed'
-        }),
-        // Get availability calendar instances for capacity utilization analysis
-        this.getAvailabilityCalendar({
+        this.getItemizedRevenue({ date_range: resovaDateRange })
+      ]);
+      await delayBetweenBatches();
+
+      // Batch 2/8: Current period bookings + payments
+      logger.info('📦 Batch 2/8: Current period bookings + payments');
+      const [allBookings, allPayments] = await Promise.all([
+        this.getAllBookings({ type: 'all', date_range: resovaDateRange }),
+        this.getAllPayments({ type: 'all', date_range: resovaDateRange })
+      ]);
+      await delayBetweenBatches();
+
+      // Batch 3/8: Future bookings + inventory
+      logger.info('📦 Batch 3/8: Future bookings + inventory');
+
+      // Future bookings (optional - may not be available for all accounts)
+      let futureBookingsRaw: any[] = [];
+      try {
+        futureBookingsRaw = await this.getAllBookings({ type: 'all', date_range: futureBookingsRange });
+        logger.info(`✅ Fetched ${futureBookingsRaw.length} future bookings`);
+      } catch (error) {
+        logger.warn('⚠️ Future bookings endpoint not available - continuing without future bookings data', error);
+      }
+
+      // Inventory items (required for core analytics)
+      const inventoryItems = await this.getInventoryItems({
+        date_range: resovaDateRange,
+        type: 'all_bookings',
+        period: 'event_date',
+        booking_status: 'completed'
+      });
+
+      await delayBetweenBatches();
+
+      // Batch 4/8: Availability + extras
+      logger.info('📦 Batch 4/8: Availability + extras');
+
+      // Availability calendar (optional - capacity data)
+      let availabilityInstances: any[] = [];
+      try {
+        availabilityInstances = await this.getAvailabilityCalendar({
           start_date: availabilityStartDate,
           end_date: availabilityEndDate
-        }),
-        // Get extras/add-ons with sales data for upsell analysis
-        this.getExtras({
+        });
+        logger.info(`✅ Fetched ${availabilityInstances.length} availability instances`);
+      } catch (error) {
+        logger.warn('⚠️ Availability calendar endpoint not available - continuing without capacity data', error);
+      }
+
+      // Extras (optional)
+      let extras: any[] = [];
+      try {
+        extras = await this.getExtras({
           date_range: resovaDateRange,
           extras: 'all',
           transaction_status: 'active'
-        }),
-        // Get gift vouchers from Reporting API (with redemption tracking)
-        this.getReportingGiftVouchers({
+        });
+        logger.info(`✅ Fetched ${extras.length} extras`);
+      } catch (error) {
+        logger.warn('⚠️ Extras endpoint not available - continuing without extras data', error);
+      }
+
+      await delayBetweenBatches();
+
+      // Batch 5/8: Gift vouchers + abandoned carts
+      logger.info('📦 Batch 5/8: Gift vouchers + abandoned carts');
+
+      // Fetch vouchers (optional)
+      let reportingVouchers: any[] = [];
+      try {
+        reportingVouchers = await this.getReportingGiftVouchers({
           date_range: resovaDateRange,
           type: 'all_gifts',
           transaction_status: 'active',
           gift_status: 'all'
-        }),
-        // PREVIOUS PERIOD DATA (for accurate year-over-year comparisons)
+        });
+        logger.info(`✅ Fetched ${reportingVouchers.length} gift vouchers`);
+      } catch (error) {
+        logger.warn('⚠️ Gift vouchers endpoint not available - continuing without gift voucher data', error);
+      }
+
+      // Fetch abandoned carts (optional - may not be available for all accounts)
+      let abandonedCarts: ResovaBasket[] = [];
+      try {
+        abandonedCarts = await this.getAbandonedCarts(1); // Max 100 carts
+        logger.info(`✅ Fetched ${abandonedCarts.length} abandoned carts`);
+      } catch (error) {
+        logger.warn('⚠️ Abandoned carts endpoint not available - continuing without abandoned cart data', error);
+      }
+
+      await delayBetweenBatches();
+
+      // Batch 6/8: Previous period transactions + bookings
+      logger.info('📦 Batch 6/8: Previous period transactions + bookings');
+      const [previousTransactionsResponse, previousAllBookings] = await Promise.all([
         this.getTransactions({
-          limit: 500, // Increased limit for 12 months of previous data
+          limit: 300, // Reduced from 500
           date_field: 'created_at',
           range: previousPeriodRange.range,
           start_date: previousPeriodRange.start_date,
           end_date: previousPeriodRange.end_date
         }),
-        this.getAllBookings({
-          type: 'all',
-          date_range: previousPeriodRange
-        }),
-        this.getAllPayments({
-          type: 'all',
-          date_range: previousPeriodRange
-        })
+        this.getAllBookings({ type: 'all', date_range: previousPeriodRange })
       ]);
+      await delayBetweenBatches();
 
-      // CRITICAL FIX: Filter todaysBookings by actual booking date (date_short)
-      // The Resova API date_range might filter by transaction/creation date, not booking date
-      // We need to ensure we only show bookings scheduled for TODAY
-      // NOTE: date_short uses MM/DD/YYYY format (e.g., "11/17/2025"), not YYYY-MM-DD
-      const todaysBookings = todaysBookingsRaw.filter(b => b.date_short === todayShort);
-      const futureBookings = futureBookingsRaw;
+      // Batch 7/8: Previous period payments + extras
+      logger.info('📦 Batch 7/8: Previous period payments + extras');
+
+      // Previous payments (required)
+      const previousAllPayments = await this.getAllPayments({ type: 'all', date_range: previousPeriodRange });
+
+      // Previous extras (optional)
+      let previousExtras: any[] = [];
+      try {
+        previousExtras = await this.getExtras({
+          date_range: previousPeriodRange,
+          extras: 'all',
+          transaction_status: 'active'
+        });
+        logger.info(`✅ Fetched ${previousExtras.length} previous period extras`);
+      } catch (error) {
+        logger.warn('⚠️ Previous period extras endpoint not available - continuing without previous extras data', error);
+      }
+
+      await delayBetweenBatches();
+
+      // Batch 8/8: Previous period gift vouchers (final batch)
+      logger.info('📦 Batch 8/8: Previous period gift vouchers');
+
+      // Previous vouchers (optional)
+      let previousReportingVouchers: any[] = [];
+      try {
+        previousReportingVouchers = await this.getReportingGiftVouchers({
+          date_range: previousPeriodRange,
+          type: 'all_gifts',
+          transaction_status: 'active',
+          gift_status: 'all'
+        });
+        logger.info(`✅ Fetched ${previousReportingVouchers.length} previous period gift vouchers`);
+      } catch (error) {
+        logger.warn('⚠️ Previous period gift vouchers endpoint not available - continuing without previous voucher data', error);
+      }
+
+      logger.info('✅ All data fetched successfully in 8 sequential batches with delays');
+
+      // Unwrap futureBookingsRaw for forward-looking analysis
+      const futureBookingsArray = Array.isArray(futureBookingsRaw) ? futureBookingsRaw : ((futureBookingsRaw as any).data || []);
+      const futureBookings = futureBookingsArray;
+
+      // Filter today's bookings by date_short field (event date)
+      // This captures advance bookings (purchased weeks/months ago but events today)
+      // Note: date_short is in MM/DD/YYYY format (e.g., "11/17/2025")
+      const todaysBookings = futureBookingsArray.filter((booking: any) => {
+        return booking.date_short === todayShort;
+      });
+
+      logger.info(`\n========== TODAY'S BOOKINGS DEBUG ==========`);
+      logger.info(`📅 Today's date: ${today} (${todayShort})`);
+      logger.info(`📦 Future bookings fetched (${past90Days} to ${future90Days}): ${futureBookingsArray.length}`);
+
+      // Debug: Show ALL date_short values to understand what's in the response
+      if (futureBookingsArray.length > 0) {
+        const allDates = futureBookingsArray.map((b: any) => b.date_short).sort();
+        logger.info(`📅 All event dates in response: ${JSON.stringify(allDates.slice(0, 20))}${allDates.length > 20 ? ` ... and ${allDates.length - 20} more` : ''}`);
+
+        // Check if today's date exists in any format
+        const matchingDates = futureBookingsArray.filter((b: any) => b.date_short && b.date_short.includes('11/17'));
+        logger.info(`🔍 Bookings containing "11/17": ${matchingDates.length}`);
+        if (matchingDates.length > 0) {
+          matchingDates.forEach((b: any) => {
+            logger.info(`  - date_short="${b.date_short}", booking_time="${b.booking_time}", item="${b.item?.name}", tx_id=${b.transaction_id}`);
+          });
+        }
+      }
+
+      logger.info(`📦 Today's bookings filtered by date_short: ${todaysBookings.length}`);
+      if (todaysBookings.length > 0) {
+        logger.info(`\n📋 Sample today's bookings (first 3):`);
+        todaysBookings.slice(0, 3).forEach((booking: any, index: number) => {
+          logger.info(`  Booking ${index + 1}: ${booking.item?.name || 'N/A'} at ${booking.booking_time} (Date: ${booking.date_short}, Status: ${booking.status})`);
+        });
+      }
+      logger.info(`========================================\n`);
 
       logger.info(`✅ CURRENT PERIOD (12 months): ${transactionsResponse.data.length} transactions, ${allBookings.length} bookings, ${allPayments.length} payments`);
       logger.info(`✅ PREVIOUS PERIOD (year-over-year): ${previousTransactionsResponse.data.length} transactions, ${previousAllBookings.length} bookings, ${previousAllPayments.length} payments`);
       logger.info(`✅ FORWARD-LOOKING (90 days): ${futureBookings.length} future bookings`);
-      logger.info(`✅ TODAY'S AGENDA: ${todaysBookings.length} bookings today (filtered from ${todaysBookingsRaw.length} raw bookings)`);
-      logger.info(`📊 Additional data: ${itemizedRevenue.length} revenue items, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances, ${extras.length} extras/add-ons, ${reportingVouchers.length} gift vouchers`);
+      logger.info(`✅ TODAY'S AGENDA: ${todaysBookings.length} bookings today (filtered by date_short from ${futureBookingsArray.length} future bookings)`);
+      logger.info(`📊 Additional data: ${itemizedRevenue.length} revenue items, ${inventoryItems.length} inventory items, ${availabilityInstances.length} availability instances`);
+      logger.info(`📊 Report data: ${extras.length} extras, ${reportingVouchers.length} vouchers, ${abandonedCarts.length} abandoned carts | Previous: ${previousExtras.length} extras, ${previousReportingVouchers.length} vouchers`);
 
       // Transform Resova data to our analytics format (with previous period for accurate comparisons)
       const analyticsData = ResovaDataTransformer.transform(
@@ -1364,7 +1497,15 @@ export class ResovaService {
         // Previous period data for accurate trend calculations
         previousTransactionsResponse.data,
         previousAllBookings,
-        previousAllPayments
+        previousAllPayments,
+        // Additional data for report summaries
+        extras,
+        reportingVouchers,
+        availabilityInstances,
+        abandonedCarts,
+        // Previous period report data for trend calculations
+        previousExtras,
+        previousReportingVouchers
       );
 
       // Optionally fetch business insights from Core APIs
@@ -1502,51 +1643,38 @@ export class ResovaService {
         };
       }
 
-      // Calculate actual date range from data (not requested range)
-      // Use earliest transaction to determine real period
-      let dateRangeLabel = 'Last 365 days (12 months)'; // Default fallback
+      // Generate date range label based on REQUESTED range (not actual data)
+      // This ensures AI understands what period was requested, even if data is sparse
+      let dateRangeLabel = 'Last 30 days'; // Default for 30 days
 
-      if (transactionsResponse.data && transactionsResponse.data.length > 0) {
-        // Find earliest and latest transaction dates
-        const dates = transactionsResponse.data
-          .map(t => new Date(t.created_dt))
-          .filter(d => !isNaN(d.getTime()))
-          .sort((a, b) => a.getTime() - b.getTime());
+      // Map based on requested range
+      if (resovaDateRange.range) {
+        const rangeLabelMap: Record<string, string> = {
+          'today': 'Today',
+          'yesterday': 'Yesterday',
+          '7': 'Last 7 days',
+          '14': 'Last 14 days',
+          '30': 'Last 30 days',
+          '60': 'Last 2 months',
+          '90': 'Last 3 months',
+          '180': 'Last 6 months',
+          '270': 'Last 9 months',
+          '365': 'Last 12 months',
+          'current_week': 'This week',
+          'previous_week': 'Last week',
+          'current_month': 'This month',
+          'previous_month': 'Last month',
+          'current_quarter': 'This quarter',
+          'previous_quarter': 'Last quarter',
+        };
 
-        if (dates.length > 0) {
-          const earliestDate = dates[0];
-          const latestDate = dates[dates.length - 1];
-          const now = new Date();
-
-          // Calculate days between earliest and now
-          const daysDiff = Math.floor((now.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24));
-
-          // Create human-readable label
-          if (daysDiff <= 7) {
-            dateRangeLabel = 'Last 7 days';
-          } else if (daysDiff <= 14) {
-            dateRangeLabel = 'Last 14 days';
-          } else if (daysDiff <= 30) {
-            dateRangeLabel = 'Last 30 days';
-          } else if (daysDiff <= 60) {
-            dateRangeLabel = 'Last 2 months';
-          } else if (daysDiff <= 90) {
-            dateRangeLabel = 'Last 3 months';
-          } else if (daysDiff <= 180) {
-            dateRangeLabel = 'Last 6 months';
-          } else if (daysDiff <= 270) {
-            dateRangeLabel = 'Last 9 months';
-          } else if (daysDiff <= 365) {
-            dateRangeLabel = 'Last 12 months';
-          } else {
-            // More than a year - show actual date range
-            const months = Math.floor(daysDiff / 30);
-            dateRangeLabel = `Last ${months} months`;
-          }
-
-          logger.info(`Actual data range: ${earliestDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()} (${daysDiff} days) -> Label: "${dateRangeLabel}"`);
-        }
+        dateRangeLabel = rangeLabelMap[resovaDateRange.range] || 'Last 30 days';
+      } else if (resovaDateRange.start_date && resovaDateRange.end_date) {
+        // For explicit date ranges, show the actual dates
+        dateRangeLabel = `${resovaDateRange.start_date} to ${resovaDateRange.end_date}`;
       }
+
+      logger.info(`Date range label: "${dateRangeLabel}" (requested range: ${JSON.stringify(resovaDateRange)})`);
 
       analyticsData.dateRangeLabel = dateRangeLabel;
 
@@ -1698,6 +1826,7 @@ export class ResovaService {
   /**
    * Calculate previous period date range for comparison
    * Returns the equivalent previous period based on the current range
+   * For 12-month periods (365 days), splits into first 6 months vs last 6 months
    */
   static calculatePreviousPeriod(currentRange: ResovaDateRange): ResovaDateRange {
     // If using a named range, map to equivalent previous period
@@ -1716,17 +1845,19 @@ export class ResovaService {
       return { range: previousRangeMap[currentRange.range] };
     }
 
-    // For explicit date ranges or numeric ranges, calculate previous period
+    // For explicit date ranges, calculate previous period as first half vs second half
     if (currentRange.start_date && currentRange.end_date) {
       const startDate = new Date(currentRange.start_date);
       const endDate = new Date(currentRange.end_date);
       const durationDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      // Calculate previous period dates
+      // Split period in half for comparison
+      const halfDuration = Math.floor(durationDays / 2);
+
+      // Previous period = first half of the total period
+      const prevStartDate = new Date(startDate);
       const prevEndDate = new Date(startDate);
-      prevEndDate.setDate(prevEndDate.getDate() - 1);
-      const prevStartDate = new Date(prevEndDate);
-      prevStartDate.setDate(prevStartDate.getDate() - durationDays + 1);
+      prevEndDate.setDate(prevEndDate.getDate() + halfDuration - 1);
 
       return {
         start_date: this.formatDate(prevStartDate),
@@ -1734,21 +1865,28 @@ export class ResovaService {
       };
     }
 
-    // For numeric ranges (7, 30, 90), use same range
-    // This will get data from the period before the current period
-    // e.g., if current is "30" (last 30 days), previous will also be "30" (the 30 days before that)
+    // For numeric ranges (365 days = 12 months), split into 6-month periods
+    // Previous period = first 6 months, Current period = last 6 months
     if (currentRange.range) {
       const days = parseInt(currentRange.range, 10);
       if (!isNaN(days)) {
         const today = new Date();
-        const endDate = new Date(today);
-        endDate.setDate(endDate.getDate() - days);
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - days);
+
+        // Calculate the start of the full period (e.g., 365 days ago)
+        const periodStart = new Date(today);
+        periodStart.setDate(periodStart.getDate() - days);
+
+        // Split into two equal halves
+        const halfDays = Math.floor(days / 2);
+
+        // Previous period = first half (e.g., Nov 17, 2024 - May 16, 2025)
+        const prevStartDate = new Date(periodStart);
+        const prevEndDate = new Date(periodStart);
+        prevEndDate.setDate(prevEndDate.getDate() + halfDays - 1);
 
         return {
-          start_date: this.formatDate(startDate),
-          end_date: this.formatDate(endDate)
+          start_date: this.formatDate(prevStartDate),
+          end_date: this.formatDate(prevEndDate)
         };
       }
     }

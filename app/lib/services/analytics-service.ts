@@ -15,10 +15,12 @@ import { ClaudeService } from './claude-service';
 import { logger } from '../utils/logger';
 import { retry } from '../utils/retry';
 import { ConfigStorage } from '../storage/config-storage';
+import { FileCache } from '../utils/cache';
 
 export class AnalyticsService {
   private resovaService: ResovaService;
   private claudeService: ClaudeService;
+  private static readonly CACHE_TTL = 5 * 24 * 60 * 60 * 1000; // 5 days (for demo/conference)
 
   constructor(credentials: Credentials) {
     logger.info('🚀 AnalyticsService Initialization:');
@@ -41,16 +43,47 @@ export class AnalyticsService {
   }
 
   /**
-   * Get analytics data
+   * Generate cache key based on date range
+   */
+  private getCacheKey(dateRange?: string): string {
+    return `analytics:${dateRange || 'default'}`;
+  }
+
+  /**
+   * Get analytics data with caching
    */
   async getAnalytics(dateRange?: string, options?: ServiceOptions): Promise<AnalyticsData> {
-    logger.service('analytics', 'Fetching analytics (PRODUCTION mode)');
+    const cacheKey = this.getCacheKey(dateRange);
+
+    // Try to get from cache first
+    const cachedData = FileCache.get<AnalyticsData>(cacheKey);
+    if (cachedData) {
+      logger.info('📦 Returning cached analytics data (avoids Resova API calls)');
+      return cachedData;
+    }
+
+    logger.service('analytics', 'Fetching analytics from Resova API (cache miss)');
 
     // Use retry logic for production API calls
-    return await retry(
+    const data = await retry(
       () => this.resovaService.getAnalytics(dateRange),
       { maxRetries: options?.retries || 3 }
     );
+
+    logger.info(`📊 Data fetched successfully, now caching with key: ${cacheKey}`);
+
+    // Cache the result
+    try {
+      logger.info(`🔄 About to call FileCache.set()...`);
+      FileCache.set(cacheKey, data, AnalyticsService.CACHE_TTL);
+      logger.info(`✅ FileCache.set() completed successfully`);
+    } catch (cacheError) {
+      logger.error(`❌ FileCache.set() threw an error:`, cacheError);
+    }
+
+    logger.info(`✅ Cache set complete, returning data`);
+
+    return data;
   }
 
   /**

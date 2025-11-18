@@ -7,6 +7,19 @@ const nextConfig: NextConfig = {
   // Disable static optimization to prevent prerendering issues with React Context
   output: 'standalone',
 
+  // Webpack configuration
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't bundle Node.js modules in client bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+      };
+    }
+    return config;
+  },
+
   // Compiler options
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
